@@ -32,7 +32,7 @@ class APIAdminContract(with_metaclass(ABCMeta, object)):
         """
 
     @abstractmethod
-    def get(self, name_or_id):
+    def retrieve(self, name_or_id):
         """
         :param name_or_id: The unique identifier or the name of the API to retrieve
         :type name_or_id: basestring | uuid.UUID
@@ -48,7 +48,7 @@ class APIAdminContract(with_metaclass(ABCMeta, object)):
         """
 
     @abstractmethod
-    def list(self, id=None, name=None, public_dns=None, target_url=None, size=100, offset=0):
+    def list(self, id=None, name=None, public_dns=None, target_url=None, size=100, offset=None):
         """
         :param id: A filter on the list based on the apis id field.
         :type id: uuid.UUID
@@ -61,7 +61,7 @@ class APIAdminContract(with_metaclass(ABCMeta, object)):
         :param size: A limit on the number of objects to be returned.
         :type size: int
         :param offset: A cursor used for pagination. offset is an object identifier that defines a place in the list.
-        :type offset: int
+        :type offset: uuid.UUID
         :rtype: dict
         :return: Dictionary containing dictionaries containing the API description. Example:
                 {
@@ -154,7 +154,7 @@ class ConsumerAdminContract(with_metaclass(ABCMeta, object)):
         """
 
     @abstractmethod
-    def list(self, id=None, custom_id=None, username=None, size=100, offset=0):
+    def list(self, id=None, custom_id=None, username=None, size=100, offset=None):
         """
         :param id: A filter on the list based on the consumer id field.
         :type id: uuid.UUID
@@ -165,7 +165,7 @@ class ConsumerAdminContract(with_metaclass(ABCMeta, object)):
         :param size: A limit on the number of objects to be returned.
         :type size: int
         :param offset: A cursor used for pagination. offset is an object identifier that defines a place in the list.
-        :type offset: int
+        :type offset: uuid.UUID
         :rtype: dict
         :return: Dictionary containing dictionaries containing the Consumer description. Example:
                 {
@@ -244,7 +244,7 @@ class PluginConfigurationAdminContract(with_metaclass(ABCMeta, object)):
         """
 
     @abstractmethod
-    def list(self, id=None, name=None, api_id=None, consumer_id=None, size=100, offset=0):
+    def list(self, id=None, name=None, api_id=None, consumer_id=None, size=100, offset=None):
         """
         :param id: A filter on the list based on the id field.
         :type id: uuid.UUID
@@ -256,8 +256,8 @@ class PluginConfigurationAdminContract(with_metaclass(ABCMeta, object)):
         :type consumer_id: uuid.UUID
         :param size: A limit on the number of objects to be returned.
         :type size: int
-        :param offset:
-        :type offset: int
+        :param offset: A cursor used for pagination. offset is an object identifier that defines a place in the list.
+        :type offset: uuid.UUID
         :rtype: dict
         :return: Dictionary containing dictionaries containing PluginConfiguration descriptions. Example:
                 {
