@@ -1,0 +1,26 @@
+machine:
+    services:
+        - docker
+    python:
+        version: 2.7.6
+    environment:
+        KONG_API_TESTS_HOST: 127.0.0.1
+        KONG_API_TESTS_PORT: 8000
+        KONG_API_MGMT_TESTS_PORT: 8001
+dependencies:
+    cache_directories:
+        - "~/docker"
+    override:
+        - pip install tox
+        - docker info
+        - if [[ -e ~/docker/cassandra.tar ]]; then docker load --input ~/docker/cassandra.tar; fi
+        - docker pull mashape/cassandra
+        - mkdir -p ~/docker; docker save mashape/cassandra > ~/docker/cassandra.tar
+        - if [[ -e ~/docker/kong.tar ]]; then docker load --input ~/docker/kong.tar; fi
+        - docker pull dirkmoors/kong
+        - mkdir -p ~/docker; docker save dirkmoors/kong > ~/docker/kong.tar
+test:
+    override:
+        - ./scripts/docker/cassandra.sh;
+        - ./scripts/docker/kong.sh; sleep 5
+        - tox

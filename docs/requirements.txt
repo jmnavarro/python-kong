@@ -1,0 +1,4 @@
+sphinx
+sphinxcontrib-napoleon
+sphinx_py3doc_enhanced_theme
+-e .
