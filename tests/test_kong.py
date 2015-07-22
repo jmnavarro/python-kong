@@ -12,6 +12,9 @@ API_URL = os.environ.get('PYKONG_TEST_API_URL', 'http://localhost:8001')
 
 
 class KongAdminTesting(object):
+    """
+    Important: Do not remove nesting!
+    """
     class KongAdminTestCase(with_metaclass(ABCMeta, TestCase)):
         @abstractmethod
         def on_create_client(self):
