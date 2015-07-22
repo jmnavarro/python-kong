@@ -2,6 +2,7 @@
 from __future__ import unicode_literals, print_function
 import time
 import uuid
+import copy
 from json import dumps
 from urllib import urlencode, unquote
 from urlparse import urlparse, parse_qsl, ParseResult
@@ -28,8 +29,30 @@ def uuid_or_string(data):
     raise ValueError('Expected string or UUID')
 
 
-def field_filter(**fields):
-    return fields.items()
+def filter_api_struct(api_struct, filter_dict):
+    result = copy.copy(api_struct)
+
+    keys_to_remove = []
+
+    for key in filter_dict:
+        if result[key] == filter_dict[key]:
+            keys_to_remove.append(key)
+
+    for key in keys_to_remove:
+        del result[key]
+
+    return result
+
+
+def filter_dict_list(list_of_dicts, **field_filter):
+    def _filter(_dicts, key, value):
+        return [d for d in _dicts if d[key] == value]
+
+    list_of_dicts = copy.copy(list_of_dicts)
+    for key in field_filter:
+        list_of_dicts = _filter(list_of_dicts, key, field_filter[key])
+
+    return list_of_dicts
 
 
 def add_url_params(url, params):
@@ -74,3 +97,14 @@ def add_url_params(url, params):
     ).geturl()
 
     return new_url
+
+
+def assert_dict_keys_in(d, allowed_keys):
+    for key in d:
+        assert key in allowed_keys
+
+
+def ensure_trailing_slash(url):
+    if not url.endswith('/'):
+        url = '%s/' % url
+    return url

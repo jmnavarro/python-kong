@@ -2,80 +2,63 @@
 from __future__ import unicode_literals, print_function
 from collections import OrderedDict
 import uuid
-import copy
 
 from .contract import KongAdminContract, APIAdminContract, ConsumerAdminContract, PluginConfigurationAdminContract
-from .utils import timestamp, uuid_or_string, field_filter, add_url_params
+from .utils import timestamp, uuid_or_string, add_url_params, filter_api_struct, filter_dict_list, assert_dict_keys_in, \
+    ensure_trailing_slash
 
 
-class APIAdminSimulator(APIAdminContract):
-    API_STRUCT_FILTER = {
-        'public_dns': None,
-        'path': None,
-        'strip_path': False
-    }
+class SimulatorDataStore(object):
+    def __init__(self, base_url, data_struct_filter=None):
+        self._base_url = base_url
+        self._data_struct_filter = data_struct_filter or {}
+        self._data = OrderedDict()
 
-    def __init__(self, base_url=None):
-        self._base_url = base_url or 'http://localhost:8001/apis/'
-        self._apis = OrderedDict()
+    def count(self):
+        return len(self._data)
 
-    def add(self, target_url, name=None, public_dns=None, path=None, strip_path=False):
-        assert target_url is not None
-        assert public_dns or path
+    def create(self, data_struct):
+        assert 'id' not in data_struct
 
-        # Generate a new API id
-        api_id = str(uuid.uuid4())
+        id = str(uuid.uuid4())
+        data_struct['id'] = id
 
-        result = {
-            'id': api_id,
-            'name': name or public_dns,
-            'public_dns': public_dns,
-            'path': path,
-            'target_url': target_url,
-            'strip_path': strip_path,
-            'created_at': timestamp()
-        }
+        self._data[id] = data_struct
+        return filter_api_struct(data_struct, self._data_struct_filter)
 
-        self._apis[api_id] = result
+    def update(self, value_or_id, key, data_struct_update):
+        value_or_id = uuid_or_string(value_or_id)
 
-        return self._filter_api_struct(result)
+        if value_or_id in self._data:
+            self._data[value_or_id].update(data_struct_update)
+            return filter_api_struct(self._data[value_or_id], self._data_struct_filter)
 
-    def retrieve(self, name_or_id):
-        name_or_id = uuid_or_string(name_or_id)
+        for id in self._data:
+            if self._data[id][key] == value_or_id:
+                self._data[id].update(data_struct_update)
+                return filter_api_struct(self._data[id], self._data_struct_filter)
 
-        if name_or_id in self._apis:
-            return self._apis[name_or_id]
+    def retrieve(self, value_or_id, key):
+        value_or_id = uuid_or_string(value_or_id)
 
-        for api_id in self._apis:
-            if self._apis[api_id]['name'] == name_or_id:
-                return self._filter_api_struct(self._apis[api_id])
+        if value_or_id in self._data:
+            return filter_api_struct(self._data[value_or_id], self._data_struct_filter)
 
-    def list(self, id=None, name=None, public_dns=None, target_url=None, size=100, offset=None):
-        data = []
+        for id in self._data:
+            if self._data[id][key] == value_or_id:
+                return filter_api_struct(self._data[id], self._data_struct_filter)
 
-        if id is not None:
-            return self._apis.get(str(id), None)
+    def list(self, size, offset, **filter_fields):
+        data_list = [filter_api_struct(data_struct, self._data_struct_filter)
+                     for data_struct in filter_dict_list(self._data.values(), **filter_fields)]
 
-        for api_id in self._apis:
-            conflict = False
-
-            for key, value in field_filter(name=name, public_dns=public_dns, target_url=target_url):
-                if value is not None and self._apis[api_id][key] != value:
-                    conflict = True
-                    continue
-
-            if conflict:
-                continue
-
-            data.append(self._filter_api_struct(self._apis[api_id]))
-
-        offset_index = self._apis.keys().index(uuid_or_string(offset))
-        sliced_data = data[offset_index:size]
+        offset_index = self._data.keys().index(uuid_or_string(offset))
+        sliced_data = data_list[offset_index:size]
 
         next_url = None
         next_index = offset_index + size + 1
-        if next_index < len(data):
-            next_offset = data[next_index]['id']
+        if next_index < len(data_list):
+            next_offset = data_list[next_index]['id']
             next_url = add_url_params(self._base_url, {
                 'size': size,
                 'offset': next_offset
@@ -89,85 +72,127 @@ class APIAdminSimulator(APIAdminContract):
 
         return result
 
-    def delete(self, name_or_id):
-        name_or_id = uuid_or_string(name_or_id)
+    def delete(self, value_or_id, key):
+        value_or_id = uuid_or_string(value_or_id)
 
-        if name_or_id in self._apis:
-            del self._apis[name_or_id]
+        if value_or_id in self._data:
+            del self._data[value_or_id]
 
-        for api_id in self._apis:
-            if self._apis[api_id]['name'] == name_or_id:
-                del self._apis[name_or_id]
+        for id in self._data:
+            if self._data[id][key] == value_or_id:
+                del self._data[id]
                 break
 
-    def update(self, name_or_id, target_url, name=None, public_dns=None, path=None, strip_path=False):
-        name_or_id = uuid_or_string(name_or_id)
+    def clear(self):
+        self._data = OrderedDict()
 
-        new_data = {
-            'name': name,
+
+class APIAdminSimulator(APIAdminContract):
+    def __init__(self, base_url=None):
+        self._store = SimulatorDataStore(
+            base_url or 'http://localhost:8001/apis/',
+            data_struct_filter={
+                'public_dns': None,
+                'path': None,
+                'strip_path': False
+            })
+
+    def count(self):
+        return self._store.count()
+
+    def add(self, target_url, name=None, public_dns=None, path=None, strip_path=False):
+        assert target_url is not None
+        assert public_dns or path
+
+        # ensure trailing slash
+        target_url = ensure_trailing_slash(target_url)
+
+        return self._store.create({
+            'name': name or public_dns,
             'public_dns': public_dns,
             'path': path,
             'target_url': target_url,
-            'strip_path': strip_path
-        }
+            'strip_path': strip_path,
+            'created_at': timestamp()
+        })
 
-        if name_or_id in self._apis:
-            self._apis[name_or_id].update(new_data)
-            return self._filter_api_struct(self._apis[name_or_id])
+    def update(self, name_or_id, target_url, **fields):
+        # ensure trailing slash
+        target_url = ensure_trailing_slash(target_url)
 
-        for api_id in self._apis:
-            if self._apis[api_id]['name'] == name_or_id:
-                self._apis[name_or_id].update(new_data)
-                return self._filter_api_struct(self._apis[name_or_id])
+        return self._store.update(name_or_id, 'name', dict({
+            'target_url': target_url
+        }, **fields))
 
-    def _filter_api_struct(self, api_struct):
-        result = copy.copy(api_struct)
+    def retrieve(self, name_or_id):
+        return self._store.retrieve(name_or_id, 'name')
 
-        keys_to_remove = []
+    def list(self, size=100, offset=None, **filter_fields):
+        assert_dict_keys_in(filter_fields, ['id', 'name', 'public_dns', 'target_url'])
+        return self._store.list(size, offset, **filter_fields)
 
-        for key in APIAdminSimulator.API_STRUCT_FILTER:
-            if result[key] == APIAdminSimulator.API_STRUCT_FILTER[key]:
-                keys_to_remove.append(key)
+    def delete(self, name_or_id):
+        return self._store.delete(name_or_id, 'name')
 
-        for key in keys_to_remove:
-            del result[key]
-
-        return result
+    def clear(self):
+        self._store.clear()
 
 
 class ConsumerAdminSimulator(ConsumerAdminContract):
+    def __init__(self, base_url=None):
+        self._store = SimulatorDataStore(
+            base_url or 'http://localhost:8001/consumers/',
+            data_struct_filter={
+                'custom_id': None,
+                'username': None
+            })
+
+    def count(self):
+        return self._store.count()
+
     def create(self, username=None, custom_id=None):
-        return super(ConsumerAdminSimulator, self).create(username, custom_id)
+        assert username or custom_id
 
-    def list(self, id=None, custom_id=None, username=None, size=100, offset=None):
-        return super(ConsumerAdminSimulator, self).list(id, custom_id, username, size, offset)
+        return self._store.create({
+            'username': username,
+            'custom_id': custom_id,
+            'created_at': timestamp()
+        })
 
-    def delete(self, username_or_id):
-        super(ConsumerAdminSimulator, self).delete(username_or_id)
+    def update(self, username_or_id, **fields):
+        return self._store.update(username_or_id, 'username', **fields)
 
     def retrieve(self, username_or_id):
-        return super(ConsumerAdminSimulator, self).retrieve(username_or_id)
+        return self._store.retrieve(username_or_id, 'username')
 
-    def update(self, username_or_id, username=None, custom_id=None):
-        return super(ConsumerAdminSimulator, self).update(username_or_id, username, custom_id)
+    def list(self, size=100, offset=None, **filter_fields):
+        return self._store.list(size, offset, **filter_fields)
+
+    def delete(self, username_or_id):
+        return self._store.delete(username_or_id, 'username')
+
+    def clear(self):
+        self._store.clear()
 
 
 class PluginConfigurationAdminSimulator(PluginConfigurationAdminContract):
     def create(self, api_name_or_id, name, value, consumer_id=None):
         return super(PluginConfigurationAdminSimulator, self).create(api_name_or_id, name, value, consumer_id)
 
-    def list(self, id=None, name=None, api_id=None, consumer_id=None, size=100, offset=None):
-        return super(PluginConfigurationAdminSimulator, self).list(id, name, api_id, consumer_id, size, offset)
+    def list(self, size=100, offset=None, **filter_fields):
+        return super(PluginConfigurationAdminSimulator, self).list(size, offset, **filter_fields)
 
     def delete(self, api_name_or_id, plugin_configuration_name_or_id):
         super(PluginConfigurationAdminSimulator, self).delete(api_name_or_id, plugin_configuration_name_or_id)
 
-    def update(self, api_name_or_id, plugin_configuration_name_or_id, name, value, consumer_id=None):
+    def update(self, api_name_or_id, plugin_configuration_name_or_id, name, value, **fields):
         return super(PluginConfigurationAdminSimulator, self).update(api_name_or_id, plugin_configuration_name_or_id,
-                                                                     name, value, consumer_id)
+                                                                     name, value, **fields)
 
 
 class KongAdminSimulator(KongAdminContract):
-    apis = APIAdminSimulator()
-    consumers = ConsumerAdminSimulator()
-    plugin_configurations = PluginConfigurationAdminSimulator()
+    def __init__(self):
+        super(KongAdminSimulator, self).__init__(
+            apis=APIAdminSimulator(),
+            consumers=ConsumerAdminSimulator(),
+            plugin_configurations=PluginConfigurationAdminSimulator())
