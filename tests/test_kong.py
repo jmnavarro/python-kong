@@ -194,6 +194,25 @@ class KongAdminTesting(object):
             self.client.plugins('Mockbin').delete(result3['id'])
             self.assertEqual(self.client.plugins('Mockbin').count(), 0)
 
+        def test_list_plugin_configuration(self):
+            result = self.client.add(
+                target_url='http://mockbin.com', name=self._cleanup_afterwards('Mockbin'), public_dns='mockbin.com')
+            self.assertIsNotNone(result)
+            self.assertEqual(self.client.plugins('Mockbin').count(), 0)
+
+            result2 = self.client.plugins('Mockbin').create('ratelimiting', enabled=False, second=20)
+            self.assertIsNotNone(result2)
+            self.assertEqual(self.client.plugins('Mockbin').count(), 1)
+
+            result3 = self.client.plugins('Mockbin').create('requestsizelimiting', allowed_payload_size=512)
+            self.assertIsNotNone(result3)
+            self.assertEqual(self.client.plugins('Mockbin').count(), 2)
+
+            result4 = self.client.plugins('Mockbin').list()
+            data = result4['data']
+
+            self.assertEqual(len(data), 2)
+
         def _cleanup_afterwards(self, name_or_id):
             self._cleanup.append(name_or_id)
             return name_or_id

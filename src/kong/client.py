@@ -55,7 +55,20 @@ class APIPluginConfigurationAdminClient(APIPluginConfigurationAdminContract, Res
         return super(APIPluginConfigurationAdminClient, self).update(plugin_name_or_id, consumer_id, **fields)
 
     def list(self, size=100, offset=None, **filter_fields):
-        return super(APIPluginConfigurationAdminClient, self).list(size, offset, **filter_fields)
+        assert_dict_keys_in(filter_fields, ['id', 'name', 'api_id', 'consumer_id'])
+
+        query_params = filter_fields
+        query_params['size'] = size
+
+        if offset:
+            query_params['offset'] = offset
+
+        url = self.get_url('apis', self.api_name_or_id, 'plugins', **query_params)
+        response = self.session.get(url)
+
+        assert response.status_code == OK
+
+        return response.json()
 
     def delete(self, plugin_name_or_id):
         response = self.session.delete(self.get_url('apis', self.api_name_or_id, 'plugins', plugin_name_or_id))
