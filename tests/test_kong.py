@@ -84,6 +84,7 @@ class KongAdminTesting(object):
 
             # Update by name
             result2 = self.client.update('Mockbin', 'http://mockbin.com', path='/someservice', strip_path=True)
+            self.assertEqual(result2['id'], result['id'])
             self.assertEqual(result2['path'], '/someservice')
             self.assertEqual(result2['public_dns'], 'mockbin.com')
             self.assertTrue(result2['strip_path'])
@@ -91,6 +92,7 @@ class KongAdminTesting(object):
             # Update by id
             result3 = self.client.update(
                 result['id'], 'http://mockbin2.com', path='/someotherservice', public_dns='example.com')
+            self.assertEqual(result3['id'], result['id'])
             self.assertEqual(result3['target_url'], 'http://mockbin2.com/')
             self.assertEqual(result3['path'], '/someotherservice')
             self.assertEqual(result3['public_dns'], 'example.com')
