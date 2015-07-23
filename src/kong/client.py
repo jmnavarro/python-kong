@@ -114,6 +114,15 @@ class ConsumerAdminClient(ConsumerAdminContract, RestClient):
 
         return result
 
+    def update(self, username_or_id, **fields):
+        assert_dict_keys_in(fields, ['username', 'custom_id'])
+        response = self.session.patch(self.get_url('consumers', username_or_id), data=fields)
+        result = response.json()
+
+        assert response.status_code == OK
+
+        return result
+
     def list(self, size=100, offset=None, **filter_fields):
         return super(ConsumerAdminClient, self).list(size, offset, **filter_fields)
 
@@ -123,11 +132,11 @@ class ConsumerAdminClient(ConsumerAdminContract, RestClient):
         assert response.status_code == NO_CONTENT
 
     def retrieve(self, username_or_id):
-        return super(ConsumerAdminClient, self).retrieve(username_or_id)
+        response = self.session.get(self.get_url('consumers', username_or_id))
 
-    def update(self, username_or_id, **fields):
-        return super(ConsumerAdminClient, self).update(username_or_id, **fields)
+        assert response.status_code == OK
 
+        return response.json()
 
 class PluginConfigurationAdminClient(PluginConfigurationAdminContract, RestClient):
     def __init__(self, api_url):

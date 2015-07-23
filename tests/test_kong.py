@@ -223,6 +223,30 @@ class KongAdminTesting(object):
             self.assertTrue(error_thrown)
             self.assertIsNone(result2)
 
+        def test_update(self):
+            result1 = self.client.create(username='abc123', custom_id='123456789')
+            self.assertIsNotNone(result1)
+            self._cleanup_afterwards(result1['id'])
+
+            # update by username
+            result2 = self.client.update(result1['username'], username='abc456')
+            self.assertIsNotNone(result2)
+            self.assertEqual(result2['id'], result1['id'])
+            self.assertEqual(result2['username'], 'abc456')
+
+            # update by id
+            result3 = self.client.update(result1['id'], username='abc789', custom_id='987654321')
+            self.assertIsNotNone(result3)
+            self.assertEqual(result3['id'], result1['id'])
+            self.assertEqual(result3['username'], 'abc789')
+            self.assertEqual(result3['custom_id'], '987654321')
+
+            # retrieve to check
+            result4 = self.client.retrieve(result1['id'])
+            self.assertIsNotNone(result4)
+            self.assertEqual(result4['username'], 'abc789')
+            self.assertEqual(result4['custom_id'], '987654321')
+
         def _cleanup_afterwards(self, username_or_id):
             self._cleanup.append(username_or_id)
             return username_or_id

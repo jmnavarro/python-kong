@@ -184,7 +184,7 @@ class ConsumerAdminSimulator(ConsumerAdminContract):
         }, check_conflict_keys=('username', 'custom_id'))
 
     def update(self, username_or_id, **fields):
-        return self._store.update(username_or_id, 'username', **fields)
+        return self._store.update(username_or_id, 'username', fields)
 
     def retrieve(self, username_or_id):
         return self._store.retrieve(username_or_id, 'username')
