@@ -277,6 +277,15 @@ class APIAdminSimulator(APIAdminContract):
         return self._store.list(size, offset, **filter_fields)
 
     def delete(self, name_or_id):
+        api_id = self.retrieve(name_or_id).get('id')
+
+        if api_id is None:
+            raise ValueError('Unknown name_or_id: %s' % name_or_id)
+
+        if api_id in self._plugin_admins:
+            self._plugin_admins[api_id].api_admin = None
+            del self._plugin_admins[api_id]
+
         return self._store.delete(name_or_id, 'name')
 
     def clear(self):
