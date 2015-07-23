@@ -17,6 +17,8 @@ develop-eggs
 .installed.cfg
 lib
 lib64
+venv*/
+pyvenv*/
 
 # Installer logs
 pip-log.txt
@@ -36,6 +38,8 @@ htmlcov
 .project
 .pydevproject
 .idea
+*.iml
+*.komodoproject
 
 # Complexity
 output/*.html
@@ -49,5 +53,8 @@ docs/_build
 .*.sw[po]
 .build
 .ve
+.env
+.cache
+.pytest
 .bootstrap
 *.bak

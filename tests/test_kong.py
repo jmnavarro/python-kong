@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals, print_function
+from future.standard_library import hooks
 from abc import ABCMeta, abstractmethod
 import os
 import sys
-import urllib
+import collections
 import unittest
 from unittest import TestCase
 
@@ -15,12 +16,15 @@ from kong.exceptions import ConflictError
 from kong.simulator import KongAdminSimulator
 from kong.client import KongAdminClient
 
+with hooks():
+    from urllib.request import urlopen
+
 API_URL = os.environ.get('PYKONG_TEST_API_URL', 'http://localhost:8001')
 
 
 def kong_testserver_is_up():
     try:
-        return urllib.urlopen(API_URL).getcode() == 200
+        return urlopen(API_URL).getcode() == 200
     except IOError:
         return False
 
@@ -126,7 +130,7 @@ class KongAdminTesting(object):
         def test_list(self):
             amount = 10
 
-            for i in xrange(amount):
+            for i in range(amount):
                 self.client.apis.add(
                     target_url='http://mockbin%s.com' % i,
                     name=self._cleanup_afterwards('Mockbin%s' % i),
@@ -359,7 +363,7 @@ class KongAdminTesting(object):
         def test_list(self):
             amount = 10
 
-            for i in xrange(amount):
+            for i in range(amount):
                 self.client.consumers.create(
                     username=self._cleanup_afterwards('abc1234_%s' % i),
                     custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345_%s' % i)
@@ -409,7 +413,7 @@ class KongAdminTesting(object):
             result = self.client.plugins.list()
             self.assertIsNotNone(result)
             self.assertTrue('enabled_plugins' in result)
-            self.assertTrue(isinstance(result['enabled_plugins'], list))
+            self.assertTrue(isinstance(result['enabled_plugins'], collections.Iterable))
 
         def test_retrieve_schema(self):
             result = self.client.plugins.list()

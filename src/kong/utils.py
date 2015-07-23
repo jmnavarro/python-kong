@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals, print_function
+from future.standard_library import hooks
+
 import time
 import uuid
 import copy
 from json import dumps
-from urllib import urlencode, unquote
-from urlparse import urlparse, parse_qsl, ParseResult
+
+with hooks():
+    from urllib.parse import urlparse, urlencode, unquote, parse_qsl, ParseResult
 
 
 def timestamp():
@@ -24,7 +27,7 @@ def uuid_or_string(data):
     """
     if isinstance(data, uuid.UUID):
         return str(data)
-    elif isinstance(data, basestring):
+    elif isinstance(data, str):
         return data
     raise ValueError('Expected string or UUID')
 

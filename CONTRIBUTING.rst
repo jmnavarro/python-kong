@@ -8,7 +8,7 @@ little bit helps, and credit will always be given.
 Bug reports
 ===========
 
-When `reporting a bug <https://github.com/vikingco/python-kong/issues>`_ please include:
+When `reporting a bug <https://github.com/dirkmoors/python-kong/issues>`_ please include:
 
     * Your operating system name and version.
     * Any details about your local setup that might be helpful in troubleshooting.
@@ -17,14 +17,14 @@ When `reporting a bug <https://github.com/vikingco/python-kong/issues>`_ please 
 Documentation improvements
 ==========================
 
-Python API Client for Kong could always use more documentation, whether as part of the
-official Python API Client for Kong docs, in docstrings, or even on the web in blog posts,
+python-kong could always use more documentation, whether as part of the
+official python-kong docs, in docstrings, or even on the web in blog posts,
 articles, and such.
 
 Feature requests and feedback
 =============================
 
-The best way to send feedback is to file an issue at https://github.com/vikingco/python-kong/issues.
+The best way to send feedback is to file an issue at https://github.com/dirkmoors/python-kong/issues.
 
 If you are proposing a feature:
 
@@ -37,7 +37,7 @@ Development
 
 To set up `python-kong` for local development:
 
-1. `Fork python-kong on GitHub <https://github.com/vikingco/python-kong/fork>`_.
+1. `Fork python-kong on GitHub <https://github.com/dirkmoors/python-kong/fork>`_.
 2. Clone your fork locally::
 
     git clone git@github.com:your_name_here/python-kong.git
@@ -67,10 +67,15 @@ If you need some code review or feedback while you're developing the code just m
 
 For merging, you should:
 
-1. Include passing tests (run ``tox``).
+1. Include passing tests (run ``tox``) [1]_.
 2. Update documentation when there's new API, functionality etc. 
 3. Add a note to ``CHANGELOG.rst`` about the changes.
 4. Add yourself to ``AUTHORS.rst``.
+
+.. [1] If you don't have all the necessary python versions available locally you can rely on Travis - it will 
+       `run the tests <https://travis-ci.org/dirkmoors/python-kong/pull_requests>`_ for each change you add in the pull request.
+       
+       It will be slower though ...
        
 Tips
 ----

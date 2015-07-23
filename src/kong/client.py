@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals, print_function
+from future.standard_library import hooks
 import requests
-from urlparse import urljoin
-from httplib import OK, CREATED, CONFLICT, NO_CONTENT
+
+with hooks():
+    from urllib.parse import urljoin
+
+from http.client import OK, CREATED, CONFLICT, NO_CONTENT
 
 from .contract import KongAdminContract, APIAdminContract, ConsumerAdminContract, PluginAdminContract, \
     APIPluginConfigurationAdminContract

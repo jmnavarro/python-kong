@@ -18,12 +18,12 @@ class APIPluginConfigurationAdminContract(with_metaclass(ABCMeta, object)):
         """
         :param plugin_name: The name of the Plugin that's going to be added. Currently the Plugin must be installed in
             every Kong instance separately.
-        :type plugin_name: basestring
+        :type plugin_name: str
         :param enabled: Whether or not the pluginconfiguration is enabled
         :type enabled: bool
         :param consumer_id: The unique identifier of the consumer that overrides the existing settings for this
             specific consumer on incoming requests.
-        :type consumer_id: basestring | uuid.UUID
+        :type consumer_id: str | uuid.UUID
         :param fields: The configuration properties for the Plugin which can be found on the plugins documentation page
             in the Plugin Gallery.
         :type fields: dict
@@ -87,12 +87,12 @@ class APIPluginConfigurationAdminContract(with_metaclass(ABCMeta, object)):
         """
         :param plugin_name_or_id: The unique identifier or the name of the plugin for which to update the configuration
             on this API
-        :type plugin_name_or_id: basestring | uuid.UUID
+        :type plugin_name_or_id: str | uuid.UUID
         :param enabled: Whether or not the pluginconfiguration is enabled
         :type enabled: bool
         :param consumer_id: The unique identifier of the consumer that overrides the existing settings for this specific
             consumer on incoming requests.
-        :type consumer_id: basestring | uuid.UUID
+        :type consumer_id: str | uuid.UUID
         :param fields: Optional dictionary which values will be used to overwrite the existing values
         :type fields: dict
         :rtype: dict
@@ -115,7 +115,7 @@ class APIPluginConfigurationAdminContract(with_metaclass(ABCMeta, object)):
         """
         :param plugin_name_or_id: The unique identifier or the name of the plugin for which to delete the configuration
             on this API
-        :type plugin_name_or_id: basestring | uuid.UUID
+        :type plugin_name_or_id: str | uuid.UUID
         """
 
 class APIAdminContract(with_metaclass(ABCMeta, object)):
@@ -131,13 +131,13 @@ class APIAdminContract(with_metaclass(ABCMeta, object)):
         """
         :param target_url: The base target URL that points to your API server, this URL will be used for proxying
             requests. For example, https://mockbin.com.
-        :type target_url: basestring
+        :type target_url: str
         :param name:
-        :type name: basestring
+        :type name: str
         :param public_dns:
-        :type public_dns: basestring
+        :type public_dns: str
         :param path:
-        :type path: basestring
+        :type path: str
         :param strip_path:
         :type strip_path: bool
         :rtype: dict
@@ -155,7 +155,7 @@ class APIAdminContract(with_metaclass(ABCMeta, object)):
     def retrieve(self, name_or_id):
         """
         :param name_or_id: The unique identifier or the name of the API to retrieve
-        :type name_or_id: basestring | uuid.UUID
+        :type name_or_id: str | uuid.UUID
         :rtype: dict
         :return: Dictionary containing the API description. Example:
                 {
@@ -204,10 +204,10 @@ class APIAdminContract(with_metaclass(ABCMeta, object)):
     def update(self, name_or_id, target_url, **fields):
         """
         :param name_or_id: The unique identifier or the name of the API to update
-        :type name_or_id: basestring | uuid.UUID
+        :type name_or_id: str | uuid.UUID
         :param target_url: The base target URL that points to your API server, this URL will be used for proxying
             requests. For example, https://mockbin.com.
-        :type target_url: basestring
+        :type target_url: str
         :param fields: Optional dictionary which values will be used to overwrite the existing values
         :type fields: dict
         :rtype: dict
@@ -225,7 +225,7 @@ class APIAdminContract(with_metaclass(ABCMeta, object)):
     def delete(self, name_or_id):
         """
         :param name_or_id: The unique identifier or the name of the API to delete
-        :type name_or_id: basestring | uuid.UUID
+        :type name_or_id: str | uuid.UUID
         """
 
     @abstractmethod
@@ -249,10 +249,10 @@ class ConsumerAdminContract(with_metaclass(ABCMeta, object)):
     def create(self, username=None, custom_id=None):
         """
         :param username: The username of the consumer. You must send either this field or custom_id with the request.
-        :type username: basestring
+        :type username: str
         :param custom_id: Field for storing an existing ID for the consumer, useful for mapping Kong with users in your
             existing database. You must send either this field or username with the request.
-        :type custom_id: basestring
+        :type custom_id: str
         :rtype: dict
         :return: Dictionary containing the Consumer description. Example:
                 {
@@ -266,7 +266,7 @@ class ConsumerAdminContract(with_metaclass(ABCMeta, object)):
     def retrieve(self, username_or_id):
         """
         :param username_or_id: The unique identifier or the username of the consumer to retrieve
-        :type username_or_id: basestring | uuid.UUID
+        :type username_or_id: str | uuid.UUID
         :rtype: dict
         :return: Dictionary containing the Consumer description. Example:
                 {
@@ -309,7 +309,7 @@ class ConsumerAdminContract(with_metaclass(ABCMeta, object)):
     def update(self, username_or_id, **fields):
         """
         :param username_or_id: The unique identifier or the username of the consumer to update
-        :type username_or_id: basestring | uuid.UUID
+        :type username_or_id: str | uuid.UUID
         :param fields: Optional dictionary which values will be used to overwrite the existing values
         :type fields: dict
         :rtype: dict
@@ -325,7 +325,7 @@ class ConsumerAdminContract(with_metaclass(ABCMeta, object)):
     def delete(self, username_or_id):
         """
         :param username_or_id: The unique identifier or the name of the consumer to delete
-        :type username_or_id: basestring | uuid.UUID
+        :type username_or_id: str | uuid.UUID
         """
 
 
@@ -341,7 +341,7 @@ class PluginAdminContract(with_metaclass(ABCMeta, object)):
     def retrieve_schema(self, plugin_name):
         """
         :param plugin_name:
-        :type plugin_name: basestring
+        :type plugin_name: str
         :rtype: dict
         :return: Returns the schema of a plugin's configuration.
         """

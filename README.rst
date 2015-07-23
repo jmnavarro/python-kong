@@ -1,55 +1,67 @@
-==========================
-Python API Client for Kong
-==========================
+===========
+python-kong
+===========
 
-| |circleci| |coveralls| |landscape| |scrutinizer|
-| |version| |downloads| |wheel| |pyversions| |implementation|
+.. list-table::
+    :stub-columns: 1
 
-.. |circleci| image:: https://img.shields.io/circleci/project/vikingco/python-kong/master.svg?style=flat
-    :alt: CircleCI Build Status
-    :target: https://circleci.com/gh/vikingco/python-kong
+    * - docs
+      - |docs|
+    * - tests
+      - | |travis| |appveyor|
+        | |coveralls| |landscape| |scrutinizer|
+    * - package
+      - |version| |downloads|
 
-.. |coveralls| image:: https://coveralls.io/repos/vikingco/python-kong/badge.svg?branch=master&service=github&style=flat
-    :target: https://coveralls.io/github/vikingco/python-kong?branch=master
-    :alt: Coveralls
+.. |docs| image:: https://readthedocs.org/projects/python-kong/badge/?style=flat
+    :target: https://readthedocs.org/projects/python-kong
+    :alt: Documentation Status
 
-.. |landscape| image:: https://landscape.io/github/vikingco/python-kong/master/landscape.svg?style=flat
-    :target: https://landscape.io/github/vikingco/python-kong
+.. |travis| image:: http://img.shields.io/travis/dirkmoors/python-kong/master.svg?style=flat&label=Travis
+    :alt: Travis-CI Build Status
+    :target: https://travis-ci.org/dirkmoors/python-kong
+
+.. |appveyor| image:: https://img.shields.io/appveyor/ci/dirkmoors/python-kong/master.svg?style=flat&label=AppVeyor
+    :alt: AppVeyor Build Status
+    :target: https://ci.appveyor.com/project/dirkmoors/python-kong
+
+.. |coveralls| image:: http://img.shields.io/coveralls/dirkmoors/python-kong/master.svg?style=flat&label=Coveralls
+    :alt: Coverage Status
+    :target: https://coveralls.io/r/dirkmoors/python-kong
+
+
+
+.. |landscape| image:: https://landscape.io/github/dirkmoors/python-kong/master/landscape.svg?style=flat
+    :target: https://landscape.io/github/dirkmoors/python-kong/master
     :alt: Code Quality Status
 
-.. |version| image:: http://img.shields.io/pypi/v/python-kong.png?style=flat
+.. |version| image:: http://img.shields.io/pypi/v/kong.svg?style=flat
     :alt: PyPI Package latest release
-    :target: https://pypi.python.org/pypi/python-kong
+    :target: https://pypi.python.org/pypi/kong
 
-.. |downloads| image:: http://img.shields.io/pypi/dm/python-kong.png?style=flat
+.. |downloads| image:: http://img.shields.io/pypi/dm/kong.svg?style=flat
     :alt: PyPI Package monthly downloads
-    :target: https://pypi.python.org/pypi/python-kong
+    :target: https://pypi.python.org/pypi/kong
 
-.. |wheel| image:: https://img.shields.io/pypi/wheel/python-kong.svg?style=flat
-    :alt: PyPI Wheel
-    :target: https://pypi.python.org/pypi/python-kong
+.. |scrutinizer| image:: https://img.shields.io/scrutinizer/g/dirkmoors/python-kong/master.svg?style=flat
+    :alt: Scrutinizer Status
+    :target: https://scrutinizer-ci.com/g/dirkmoors/python-kong/
 
-.. |pyversions| image:: https://img.shields.io/pypi/pyversions/python-kong.svg?style=flat
-    :alt: Supported versions
-    :target: https://pypi.python.org/pypi/python-kong
+A Python client for the Kong API (http://getkong.org/)
 
-.. |implementation| image:: https://img.shields.io/pypi/implementation/python-kong.svg?style=flat
-    :alt: Supported imlementations
-    :target: https://pypi.python.org/pypi/python-kong
-
-.. |scrutinizer| image:: https://img.shields.io/scrutinizer/g/vikingco/python-kong/master.png?style=flat
-    :alt: Scrtinizer Status
-    :target: https://scrutinizer-ci.com/g/vikingco/python-kong/
-
-* Free software: MIT license
+* Free software: BSD license
 
 Installation
 ============
 
 ::
 
-    pip install python-kong
+    pip install kong
 
+Documentation
+=============
+
+https://python-kong.readthedocs.org/
 
 Development
 ===========

@@ -2,4 +2,4 @@
 Authors
 =======
 
-* Dirk Moors - www.vikingco.com
+* Dirk Moors - http://www.vikingco.com
