@@ -154,7 +154,7 @@ class KongAdminTesting(object):
             self.client.delete(result1['id'])
             self.assertEqual(self.client.count(), 1)
 
-            # Delete by id
+            # Delete by name
             self.client.delete(result2['name'])
             self.assertEqual(self.client.count(), 0)
 
@@ -276,6 +276,40 @@ class KongAdminTesting(object):
             result3 = self.client.retrieve(result['id'])
             self.assertEqual(result3, result)
             self.assertEqual(result3, result2)
+
+        def test_list(self):
+            amount = 10
+
+            for i in xrange(amount):
+                self.client.create(
+                    username=self._cleanup_afterwards('abc1234_%s' % i),
+                    custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345_%s' % i)
+
+            self.assertEqual(self.client.count(), amount)
+
+            result = self.client.list()
+            self.assertTrue('data' in result)
+
+            data = result['data']
+
+            self.assertEqual(len(data), amount)
+
+        def test_delete(self):
+            result1 = self.client.create(
+                username='abc1234', custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+            result2 = self.client.create(
+                username='abc12345', custom_id='51245871-1s7q-awdd35aw-d8a6s2d12346')
+            self.assertEqual(self.client.count(), 2)
+            self.assertEqual(result1['username'], 'abc1234')
+            self.assertEqual(result2['username'], 'abc12345')
+
+            # Delete by id
+            self.client.delete(result1['id'])
+            self.assertEqual(self.client.count(), 1)
+
+            # Delete by username
+            self.client.delete(result2['username'])
+            self.assertEqual(self.client.count(), 0)
 
         def _cleanup_afterwards(self, username_or_id):
             self._cleanup.append(username_or_id)

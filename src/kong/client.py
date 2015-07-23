@@ -124,7 +124,20 @@ class ConsumerAdminClient(ConsumerAdminContract, RestClient):
         return result
 
     def list(self, size=100, offset=None, **filter_fields):
-        return super(ConsumerAdminClient, self).list(size, offset, **filter_fields)
+        assert_dict_keys_in(filter_fields, ['id', 'custom_id', 'username'])
+
+        query_params = filter_fields
+        query_params['size'] = size
+
+        if offset:
+            query_params['offset'] = offset
+
+        url = self.get_url('consumers', **query_params)
+        response = self.session.get(url)
+
+        assert response.status_code == OK
+
+        return response.json()
 
     def delete(self, username_or_id):
         response = self.session.delete(self.get_url('consumers', username_or_id))
