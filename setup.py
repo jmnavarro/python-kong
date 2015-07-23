@@ -48,7 +48,7 @@ install_reqs = parse_requirements('./requirements.txt', session=False)
 requirements = [str(ir.req) for ir in install_reqs]
 
 setup(
-    name="kong",
+    name="python-kong",
     version=version,
     license="BSD",
     description="A Python client for the Kong API (http://getkong.org/)",
