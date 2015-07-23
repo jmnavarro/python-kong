@@ -136,10 +136,15 @@ class KongAdminTesting(object):
 
             result = self.client.list()
             self.assertTrue('data' in result)
-
             data = result['data']
 
             self.assertEqual(len(data), amount)
+
+            result = self.client.list(public_dns='mockbin3.com')
+            self.assertTrue('data' in result)
+            data = result['data']
+
+            self.assertEqual(len(data), 1)
 
         def test_delete(self):
             result1 = self.client.add(
