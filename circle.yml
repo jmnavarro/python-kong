@@ -8,6 +8,9 @@ machine:
         KONG_API_TESTS_PORT: 8000
         KONG_API_MGMT_TESTS_PORT: 8001
         PYKONG_TEST_API_URL: http://localhost:8001
+    post:
+        - pyenv global 2.6.8 2.7.9 3.3.3 3.4.2
+
 dependencies:
     cache_directories:
         - "~/docker"
