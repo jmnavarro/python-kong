@@ -12,6 +12,8 @@ from os.path import join
 from os.path import relpath
 from os.path import splitext
 
+from pip.req import parse_requirements
+
 from setuptools import find_packages
 from setuptools import setup
 
@@ -21,6 +23,9 @@ def read(*names, **kwargs):
         encoding=kwargs.get('encoding', 'utf8')
     ).read()
 
+# parse_requirements() returns generator of pip.req.InstallRequirement objects
+requirements = [str(ir.req) for ir in parse_requirements('./requirements.txt', session=False)]
+# requirements_test = [str(ir.req) for ir in parse_requirements('./requirements-test.txt', session=False)]
 
 setup(
     name='kong',
@@ -57,9 +62,7 @@ setup(
     keywords=[
         # eg: 'keyword1', 'keyword2', 'keyword3',
     ],
-    install_requires=[
-        # eg: 'aspectlib==1.1.1', 'six>=1.7',
-    ],
+    install_requires=requirements,
     extras_require={
         # eg:
         #   'rst': ['docutils>=0.11'],
