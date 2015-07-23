@@ -2,12 +2,8 @@
 Python API Client for Kong
 ==========================
 
-| |docs| |circleci| |coveralls| |landscape| |scrutinizer|
+| |circleci| |coveralls| |landscape| |scrutinizer|
 | |version| |downloads| |wheel| |pyversions| |implementation|
-
-.. |docs| image:: https://readthedocs.org/projects/python-kong/badge/?style=flat
-    :target: https://python-kong.readthedocs.org/en/latest/
-    :alt: Documentation Status
 
 .. |circleci| image:: https://img.shields.io/circleci/project/vikingco/python-kong/master.svg?style=flat
     :alt: CircleCI Build Status
@@ -53,11 +49,6 @@ Installation
 ::
 
     pip install python-kong
-
-Documentation
-=============
-
-    https://python-kong.readthedocs.org/
 
 
 Development
