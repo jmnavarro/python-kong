@@ -354,10 +354,15 @@ class KongAdminTesting(object):
 
             result = self.client.list()
             self.assertTrue('data' in result)
-
             data = result['data']
 
             self.assertEqual(len(data), amount)
+
+            result = self.client.list(custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345_6')
+            self.assertTrue('data' in result)
+            data = result['data']
+
+            self.assertEqual(len(data), 1)
 
         def test_delete(self):
             result1 = self.client.create(
