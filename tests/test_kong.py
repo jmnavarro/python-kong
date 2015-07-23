@@ -11,8 +11,8 @@ if __name__ == '__main__':
     sys.path.append('../src/')
 
 from kong.exceptions import ConflictError
-from kong.simulator import APIAdminSimulator
-from kong.client import APIAdminClient
+from kong.simulator import APIAdminSimulator, ConsumerAdminSimulator
+from kong.client import APIAdminClient, ConsumerAdminClient
 
 API_URL = os.environ.get('PYKONG_TEST_API_URL', 'http://localhost:8001')
 
@@ -21,12 +21,15 @@ class KongAdminTesting(object):
     """
     Important: Do not remove nesting!
     """
-    class APITestCase(TestCase):
+    class ClientFactoryMixin(object):
         __metaclass__ = ABCMeta
 
         @abstractmethod
         def on_create_client(self):
             pass
+
+    class APITestCase(ClientFactoryMixin, TestCase):
+        __metaclass__ = ABCMeta
 
         def setUp(self):
             self.client = self.on_create_client()
@@ -137,15 +140,38 @@ class KongAdminTesting(object):
             self._api_cleanup.append(name_or_id)
             return name_or_id
 
+    class ConsumerTestCase(ClientFactoryMixin, TestCase):
+        __metaclass__ = ABCMeta
+
+        def setUp(self):
+            self.client = self.on_create_client()
+            self.assertTrue(self.client.count() == 0)
+            self._cleanup = []
+
+        def tearDown(self):
+            for name_or_id in set(self._cleanup):
+                self.client.delete(name_or_id)
+            self.assertEqual(self.client.count(), 0)
+
 
 class SimulatorAPITestCase(KongAdminTesting.APITestCase):
     def on_create_client(self):
         return APIAdminSimulator()
 
 
+class SimulatorConsumerTestCase(KongAdminTesting.ConsumerTestCase):
+    def on_create_client(self):
+        return ConsumerAdminSimulator()
+
+
 class ClientAPITestCase(KongAdminTesting.APITestCase):
     def on_create_client(self):
         return APIAdminClient(API_URL)
+
+
+class ClientConsumerTestCase(KongAdminTesting.ConsumerTestCase):
+    def on_create_client(self):
+        return ConsumerAdminClient(API_URL)
 
 
 if __name__ == '__main__':
