@@ -11,8 +11,8 @@ from .exceptions import ConflictError
 
 
 class SimulatorDataStore(object):
-    def __init__(self, base_url, data_struct_filter=None):
-        self.base_url = base_url
+    def __init__(self, api_url, data_struct_filter=None):
+        self.api_url = api_url
         self._data_struct_filter = data_struct_filter or {}
         self._data = OrderedDict()
 
@@ -77,7 +77,7 @@ class SimulatorDataStore(object):
         next_index = offset_index + size + 1
         if next_index < len(data_list):
             next_offset = data_list[next_index]['id']
-            next_url = add_url_params(self.base_url, {
+            next_url = add_url_params(self.api_url, {
                 'size': size,
                 'offset': next_offset
             })
@@ -113,10 +113,10 @@ class SimulatorDataStore(object):
 
 
 class APIPluginConfigurationAdminSimulator(APIPluginConfigurationAdminContract):
-    def __init__(self, api_admin, api_name_or_id, base_url):
+    def __init__(self, api_admin, api_name_or_id, api_url):
         self.api_admin = api_admin
         self.api_name_or_id = api_name_or_id
-        self.base_url = base_url
+        self.api_url = api_url
         self._data = OrderedDict()
 
     def create(self, plugin_name, enabled=True, consumer_id=None, **fields):
@@ -201,7 +201,7 @@ class APIPluginConfigurationAdminSimulator(APIPluginConfigurationAdminContract):
         next_index = offset_index + size + 1
         if next_index < len(data_list):
             next_offset = data_list[next_index]['id']
-            next_url = add_url_params(self.base_url, {
+            next_url = add_url_params(self.api_url, {
                 'size': size,
                 'offset': next_offset
             })
@@ -232,15 +232,19 @@ class APIPluginConfigurationAdminSimulator(APIPluginConfigurationAdminContract):
 
 
 class APIAdminSimulator(APIAdminContract):
-    def __init__(self, base_url=None):
+    def __init__(self, api_url=None):
         self._store = SimulatorDataStore(
-            base_url or 'http://localhost:8001/apis/',
+            api_url or 'http://localhost:8001/apis/',
             data_struct_filter={
                 'public_dns': None,
                 'path': None,
                 'strip_path': False
             })
         self._plugin_admins = {}
+
+    @property
+    def api_url(self):
+        return self._store.api_url
 
     def count(self):
         return self._store.count()
@@ -298,19 +302,23 @@ class APIAdminSimulator(APIAdminContract):
             raise ValueError('Unknown name_or_id: %s' % name_or_id)
 
         if api_id not in self._plugin_admins:
-            self._plugin_admins[api_id] = APIPluginConfigurationAdminSimulator(self, name_or_id, self._store.base_url)
+            self._plugin_admins[api_id] = APIPluginConfigurationAdminSimulator(self, name_or_id, self._store.api_url)
 
         return self._plugin_admins[api_id]
 
 
 class ConsumerAdminSimulator(ConsumerAdminContract):
-    def __init__(self, base_url=None):
+    def __init__(self, api_url=None):
         self._store = SimulatorDataStore(
-            base_url or 'http://localhost:8001/consumers/',
+            api_url or 'http://localhost:8001/consumers/',
             data_struct_filter={
                 'custom_id': None,
                 'username': None
             })
+
+    @property
+    def api_url(self):
+        return self._store.api_url
 
     def count(self):
         return self._store.count()

@@ -369,7 +369,7 @@ class KongAdminContract(object):
         return self._consumers
 
     @property
-    def plugin_configurations(self):
+    def plugins(self):
         """
         :rtype: PluginAdminContract
         :return:
