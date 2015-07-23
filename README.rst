@@ -13,9 +13,9 @@ Python API Client for Kong
     :alt: CircleCI Build Status
     :target: https://circleci.com/gh/vikingco/python-kong
 
-.. |coveralls| image:: http://img.shields.io/coveralls/vikingco/python-kong/master.png?style=flat
-    :alt: Coverage Status
-    :target: https://coveralls.io/r/vikingco/python-kong
+.. |coveralls| image:: https://coveralls.io/repos/vikingco/python-kong/badge.svg?branch=master&service=github&style=flat
+    :target: https://coveralls.io/github/vikingco/python-kong?branch=master
+    :alt: Coveralls
 
 .. |landscape| image:: https://landscape.io/github/vikingco/python-kong/master/landscape.svg?style=flat
     :target: https://landscape.io/github/vikingco/python-kong
