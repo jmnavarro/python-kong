@@ -18,19 +18,20 @@ class SimulatorDataStore(object):
     def count(self):
         return len(self._data)
 
-    def create(self, data_struct):
+    def create(self, data_struct, check_conflict_keys=None):
         assert 'id' not in data_struct
 
         # Prevent conflicts
-        errors = []
-        for key in ('name', 'target_url'):
-            assert key in data_struct
+        if check_conflict_keys:
+            errors = []
+            for key in check_conflict_keys:
+                assert key in data_struct
 
-            existing_value = self._get_by_field(key, data_struct[key])
-            if existing_value is not None:
-                errors.append('%s already exists with value \'%s\'' % (key, existing_value[key]))
-        if errors:
-            raise ConflictError(', '.join(errors))
+                existing_value = self._get_by_field(key, data_struct[key])
+                if existing_value is not None:
+                    errors.append('%s already exists with value \'%s\'' % (key, existing_value[key]))
+            if errors:
+                raise ConflictError(', '.join(errors))
 
         id = str(uuid.uuid4())
         data_struct['id'] = id
@@ -137,7 +138,7 @@ class APIAdminSimulator(APIAdminContract):
             'target_url': target_url,
             'strip_path': strip_path,
             'created_at': timestamp()
-        })
+        }, check_conflict_keys=('name', 'target_url'))
 
     def update(self, name_or_id, target_url, **fields):
         # ensure trailing slash
@@ -180,7 +181,7 @@ class ConsumerAdminSimulator(ConsumerAdminContract):
             'username': username,
             'custom_id': custom_id,
             'created_at': timestamp()
-        })
+        }, check_conflict_keys=('username', 'custom_id'))
 
     def update(self, username_or_id, **fields):
         return self._store.update(username_or_id, 'username', **fields)

@@ -96,19 +96,31 @@ class ConsumerAdminClient(ConsumerAdminContract, RestClient):
         super(ConsumerAdminClient, self).__init__(api_url)
 
     def count(self):
-        response = self.session.get(self.get_url('consumers', size=1))
+        response = self.session.get(self.get_url('consumers'))
         result = response.json()
         amount = result.get('total', len(result.get('data')))
         return amount
 
     def create(self, username=None, custom_id=None):
-        return super(ConsumerAdminClient, self).create(username, custom_id)
+        response = self.session.post(self.get_url('consumers'), data={
+            'username': username,
+            'custom_id': custom_id,
+        })
+        result = response.json()
+        if response.status_code == CONFLICT:
+            raise ConflictError(', '.join(result.values()))
+
+        assert response.status_code == CREATED
+
+        return result
 
     def list(self, size=100, offset=None, **filter_fields):
         return super(ConsumerAdminClient, self).list(size, offset, **filter_fields)
 
     def delete(self, username_or_id):
-        super(ConsumerAdminClient, self).delete(username_or_id)
+        response = self.session.delete(self.get_url('consumers', username_or_id))
+
+        assert response.status_code == NO_CONTENT
 
     def retrieve(self, username_or_id):
         return super(ConsumerAdminClient, self).retrieve(username_or_id)
