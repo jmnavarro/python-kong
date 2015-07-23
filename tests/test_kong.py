@@ -258,6 +258,22 @@ class KongAdminTesting(object):
             self.assertEqual(result4['username'], 'abc789')
             self.assertEqual(result4['custom_id'], '987654321')
 
+        def test_retrieve(self):
+            result = self.client.create(
+                username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+            self.assertIsNotNone(result)
+            self.assertEqual(result['username'], 'abc1234')
+            self.assertEqual(result['custom_id'], '41245871-1s7q-awdd35aw-d8a6s2d12345')
+
+            # Retrieve by username
+            result2 = self.client.retrieve('abc1234')
+            self.assertEqual(result2, result)
+
+            # Retrieve by id
+            result3 = self.client.retrieve(result['id'])
+            self.assertEqual(result3, result)
+            self.assertEqual(result3, result2)
+
         def _cleanup_afterwards(self, username_or_id):
             self._cleanup.append(username_or_id)
             return username_or_id
