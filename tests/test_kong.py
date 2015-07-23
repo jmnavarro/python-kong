@@ -165,16 +165,16 @@ class KongAdminTesting(object):
 
         def test_create(self):
             result = self.client.create(
-                username=self._cleanup_afterwards('i5009821'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+                username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
             self.assertIsNotNone(result)
-            self.assertEqual(result['username'], 'i5009821')
+            self.assertEqual(result['username'], 'abc1234')
             self.assertEqual(result['custom_id'], '41245871-1s7q-awdd35aw-d8a6s2d12345')
 
         def test_create_only_username(self):
-            result = self.client.create(username=self._cleanup_afterwards('i5009820'))
+            result = self.client.create(username=self._cleanup_afterwards('abc123'))
             self.assertIsNotNone(result)
             self.assertFalse('custom_id' in result)
-            self.assertEqual(result['username'], 'i5009820')
+            self.assertEqual(result['username'], 'abc123')
 
         def test_create_only_custom_id(self):
             result = self.client.create(custom_id='41245871-1s7q-awdd35aw-d8a6s2d4a8q9')
@@ -185,27 +185,27 @@ class KongAdminTesting(object):
 
         def test_create_conflict(self):
             result1 = self.client.create(
-                username=self._cleanup_afterwards('i5009821'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+                username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
             self.assertIsNotNone(result1)
 
             result2 = None
             error_thrown = False
             try:
                 result2 = self.client.create(
-                    username=self._cleanup_afterwards('i5009821'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+                    username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
             except ConflictError:
                 error_thrown = True
             self.assertTrue(error_thrown)
             self.assertIsNone(result2)
 
         def test_create_conflict_only_username(self):
-            result1 = self.client.create(username=self._cleanup_afterwards('i5009820'))
+            result1 = self.client.create(username=self._cleanup_afterwards('abc123'))
             self.assertIsNotNone(result1)
 
             result2 = None
             error_thrown = False
             try:
-                result2 = self.client.create(username=self._cleanup_afterwards('i5009820'))
+                result2 = self.client.create(username=self._cleanup_afterwards('abc123'))
             except ConflictError:
                 error_thrown = True
             self.assertTrue(error_thrown)
