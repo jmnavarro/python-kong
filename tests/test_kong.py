@@ -213,6 +213,11 @@ class KongAdminTesting(object):
 
             self.assertEqual(len(data), 2)
 
+            result5 = self.client.plugins('Mockbin').list(name='requestsizelimiting')
+            data = result5['data']
+
+            self.assertEqual(len(data), 1)
+
         def _cleanup_afterwards(self, name_or_id):
             self._cleanup.append(name_or_id)
             return name_or_id
