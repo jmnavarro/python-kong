@@ -38,7 +38,7 @@ class KongAdminTesting(object):
                 self.client.delete(name_or_id)
             self.assertEqual(self.client.count(), 0)
 
-        def test_apis_add(self):
+        def test_add(self):
             result = self.client.add(
                 target_url='http://mockbin.com', name=self._cleanup_api('Mockbin'), public_dns='mockbin.com')
             self.assertEqual(self.client.count(), 1)
@@ -49,7 +49,7 @@ class KongAdminTesting(object):
             self.assertIsNotNone(result['created_at'])
             self.assertFalse('path' in result)
 
-        def test_apis_add_conflict(self):
+        def test_add_conflict(self):
             result = self.client.add(
                 target_url='http://mockbin.com', name=self._cleanup_api('Mockbin'), public_dns='mockbin.com')
             self.assertIsNotNone(result)
@@ -67,7 +67,7 @@ class KongAdminTesting(object):
 
             self.assertEqual(self.client.count(), 1)
 
-        def test_apis_update(self):
+        def test_update(self):
             result = self.client.add(
                 target_url='http://mockbin.com', name=self._cleanup_api('Mockbin'), public_dns='mockbin.com')
 
@@ -85,7 +85,7 @@ class KongAdminTesting(object):
             self.assertEqual(result3['public_dns'], 'example.com')
             self.assertTrue(result3['strip_path'])
 
-        def test_apis_retrieve(self):
+        def test_retrieve(self):
             result = self.client.add(
                 target_url='http://mockbin.com', name=self._cleanup_api('Mockbin'), public_dns='mockbin.com')
 
@@ -98,7 +98,7 @@ class KongAdminTesting(object):
             self.assertEqual(result3, result)
             self.assertEqual(result3, result2)
 
-        def test_apis_list(self):
+        def test_list(self):
             amount = 10
 
             for i in xrange(amount):
@@ -116,7 +116,7 @@ class KongAdminTesting(object):
 
             self.assertEqual(len(data), amount)
 
-        def test_apis_delete(self):
+        def test_delete(self):
             result1 = self.client.add(
                 target_url='http://mockbin1.com', name='Mockbin1', public_dns='mockbin1.com')
             result2 = self.client.add(
