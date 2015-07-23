@@ -64,7 +64,11 @@ class SimulatorDataStore(object):
         data_list = [filter_api_struct(data_struct, self._data_struct_filter)
                      for data_struct in filter_dict_list(self._data.values(), **filter_fields)]
 
-        offset_index = self._data.keys().index(uuid_or_string(offset))
+        if offset is not None:
+            offset_index = self._data.keys().index(uuid_or_string(offset))
+        else:
+            offset_index = 0
+
         sliced_data = data_list[offset_index:size]
 
         next_url = None
@@ -77,10 +81,12 @@ class SimulatorDataStore(object):
             })
 
         result = {
-            'total': len(sliced_data),
+            # 'total': len(sliced_data),  # Appearantly, the real API doesn't return this value either...
             'data': sliced_data,
-            'next': next_url
         }
+
+        if next_url:
+            result['next'] = next_url
 
         return result
 

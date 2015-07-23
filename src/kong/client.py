@@ -30,7 +30,7 @@ class APIAdminClient(APIAdminContract, RestClient):
         super(APIAdminClient, self).__init__(api_url)
 
     def count(self):
-        response = self.session.get(self.get_url('apis', size=1))
+        response = self.session.get(self.get_url('apis'))
         result = response.json()
         amount = result.get('total', len(result.get('data')))
         return amount
@@ -76,7 +76,15 @@ class APIAdminClient(APIAdminContract, RestClient):
 
     def list(self, size=100, offset=None, **filter_fields):
         assert_dict_keys_in(filter_fields, ['id', 'name', 'public_dns', 'target_url'])
-        response = self.session.get(self.get_url('apis', query_params=filter_fields))
+
+        query_params = filter_fields
+        query_params['size'] = size
+
+        if offset:
+            query_params['offset'] = offset
+
+        url = self.get_url('apis', **query_params)
+        response = self.session.get(url)
 
         assert response.status_code == OK
 

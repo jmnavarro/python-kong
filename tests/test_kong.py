@@ -91,6 +91,25 @@ class KongAdminTesting(object):
             self.assertEqual(result3, result)
             self.assertEqual(result3, result2)
 
+        def test_apis_list(self):
+            amount = 10
+
+            for i in xrange(amount):
+                self.client.apis.add(
+                    target_url='http://mockbin%s.com' % i,
+                    name=self._cleanup_api('Mockbin%s' % i),
+                    public_dns='mockbin%s.com' % i)
+
+            self.assertEqual(self.client.apis.count(), amount)
+
+            result = self.client.apis.list()
+            self.assertTrue('data' in result)
+
+            data = result['data']
+
+            self.assertEqual(len(data), amount)
+
+
         def _cleanup_api(self, name_or_id):
             self._api_cleanup.append(name_or_id)
             return name_or_id
