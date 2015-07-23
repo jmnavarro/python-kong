@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals, print_function
-from six import with_metaclass
 from abc import ABCMeta, abstractmethod
 import os
 import sys
@@ -22,7 +21,9 @@ class KongAdminTesting(object):
     """
     Important: Do not remove nesting!
     """
-    class KongAdminTestCase(with_metaclass(ABCMeta, TestCase)):
+    class KongAdminTestCase(TestCase):
+        __metaclass__ = ABCMeta
+
         @abstractmethod
         def on_create_client(self):
             pass
