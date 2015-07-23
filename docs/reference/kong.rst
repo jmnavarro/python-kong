@@ -1,5 +1,0 @@
-kong
-====
-
-.. automodule:: kong
-    :members:
