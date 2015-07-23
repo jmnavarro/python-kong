@@ -116,6 +116,22 @@ class KongAdminTesting(object):
 
             self.assertEqual(len(data), amount)
 
+        def test_apis_delete(self):
+            result1 = self.client.apis.add(
+                target_url='http://mockbin1.com', name='Mockbin1', public_dns='mockbin1.com')
+            result2 = self.client.apis.add(
+                target_url='http://mockbin2.com', name='Mockbin2', public_dns='mockbin2.com')
+            self.assertEqual(self.client.apis.count(), 2)
+            self.assertEqual(result1['target_url'], 'http://mockbin1.com/')
+            self.assertEqual(result2['target_url'], 'http://mockbin2.com/')
+
+            # Delete by id
+            self.client.apis.delete(result1['id'])
+            self.assertEqual(self.client.apis.count(), 1)
+
+            # Delete by id
+            self.client.apis.delete(result2['name'])
+            self.assertEqual(self.client.apis.count(), 0)
 
         def _cleanup_api(self, name_or_id):
             self._api_cleanup.append(name_or_id)
