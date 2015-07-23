@@ -3,9 +3,15 @@ from __future__ import unicode_literals, print_function
 from six import with_metaclass
 from abc import ABCMeta, abstractmethod
 import os
+import sys
+import unittest
 from unittest import TestCase
-from kong.exceptions import ConflictError
 
+# To run the standalone test script
+if __name__ == '__main__':
+    sys.path.append('../src/')
+
+from kong.exceptions import ConflictError
 from kong.simulator import KongAdminSimulator
 from kong.client import KongAdminClient
 
@@ -123,3 +129,7 @@ class SimulatorTestCase(KongAdminTesting.KongAdminTestCase):
 class ClientTestCase(KongAdminTesting.KongAdminTestCase):
     def on_create_client(self):
         return KongAdminClient(API_URL)
+
+
+if __name__ == '__main__':
+    unittest.main()
