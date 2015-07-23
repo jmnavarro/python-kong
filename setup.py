@@ -30,7 +30,7 @@ setup(
     long_description='%s\n%s' % (read('README.rst'), re.sub(':[a-z]+:`~?(.*?)`', r'``\1``', read('CHANGELOG.rst'))),
     author='Dirk Moors',
     author_email='dirk.moors@vikingco.com',
-    url='https://github.com/dirkmoors/python-kong',
+    url='https://github.com/vikingco/python-kong',
     packages=find_packages('src'),
     package_dir={'': 'src'},
     py_modules=[splitext(basename(path))[0] for path in glob('src/*.py')],
