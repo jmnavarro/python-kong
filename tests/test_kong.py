@@ -98,6 +98,15 @@ class KongAdminTesting(object):
             self.assertEqual(result3['public_dns'], 'example.com')
             self.assertTrue(result3['strip_path'])
 
+            # retrieve to check
+            result4 = self.client.retrieve(result['id'])
+            self.assertIsNotNone(result4)
+            self.assertEqual(result4['id'], result['id'])
+            self.assertEqual(result4['target_url'], 'http://mockbin2.com/')
+            self.assertEqual(result4['path'], '/someotherservice')
+            self.assertEqual(result4['public_dns'], 'example.com')
+            self.assertTrue(result4['strip_path'])
+
         def test_retrieve(self):
             result = self.client.add(
                 target_url='http://mockbin.com', name=self._cleanup_afterwards('Mockbin'), public_dns='mockbin.com')
