@@ -34,16 +34,16 @@ class KongAdminTesting(object):
         def setUp(self):
             self.client = self.on_create_client()
             self.assertTrue(self.client.count() == 0)
-            self._api_cleanup = []
+            self._cleanup = []
 
         def tearDown(self):
-            for name_or_id in set(self._api_cleanup):
+            for name_or_id in set(self._cleanup):
                 self.client.delete(name_or_id)
             self.assertEqual(self.client.count(), 0)
 
         def test_add(self):
             result = self.client.add(
-                target_url='http://mockbin.com', name=self._cleanup_api('Mockbin'), public_dns='mockbin.com')
+                target_url='http://mockbin.com', name=self._cleanup_afterwards('Mockbin'), public_dns='mockbin.com')
             self.assertEqual(self.client.count(), 1)
             self.assertEqual(result['target_url'], 'http://mockbin.com/')
             self.assertEqual(result['name'], 'Mockbin')
@@ -54,7 +54,7 @@ class KongAdminTesting(object):
 
         def test_add_conflict(self):
             result = self.client.add(
-                target_url='http://mockbin.com', name=self._cleanup_api('Mockbin'), public_dns='mockbin.com')
+                target_url='http://mockbin.com', name=self._cleanup_afterwards('Mockbin'), public_dns='mockbin.com')
             self.assertIsNotNone(result)
             self.assertEqual(self.client.count(), 1)
 
@@ -62,7 +62,7 @@ class KongAdminTesting(object):
             error_thrown = False
             try:
                 result2 = self.client.add(
-                    target_url='http://mockbin.com', name=self._cleanup_api('Mockbin'), public_dns='mockbin.com')
+                    target_url='http://mockbin.com', name=self._cleanup_afterwards('Mockbin'), public_dns='mockbin.com')
             except ConflictError:
                 error_thrown = True
             self.assertTrue(error_thrown)
@@ -72,7 +72,7 @@ class KongAdminTesting(object):
 
         def test_update(self):
             result = self.client.add(
-                target_url='http://mockbin.com', name=self._cleanup_api('Mockbin'), public_dns='mockbin.com')
+                target_url='http://mockbin.com', name=self._cleanup_afterwards('Mockbin'), public_dns='mockbin.com')
 
             # Update by name
             result2 = self.client.update('Mockbin', 'http://mockbin.com', path='/someservice', strip_path=True)
@@ -90,7 +90,7 @@ class KongAdminTesting(object):
 
         def test_retrieve(self):
             result = self.client.add(
-                target_url='http://mockbin.com', name=self._cleanup_api('Mockbin'), public_dns='mockbin.com')
+                target_url='http://mockbin.com', name=self._cleanup_afterwards('Mockbin'), public_dns='mockbin.com')
 
             # Retrieve by name
             result2 = self.client.retrieve('Mockbin')
@@ -107,7 +107,7 @@ class KongAdminTesting(object):
             for i in xrange(amount):
                 self.client.add(
                     target_url='http://mockbin%s.com' % i,
-                    name=self._cleanup_api('Mockbin%s' % i),
+                    name=self._cleanup_afterwards('Mockbin%s' % i),
                     public_dns='mockbin%s.com' % i)
 
             self.assertEqual(self.client.count(), amount)
@@ -136,8 +136,8 @@ class KongAdminTesting(object):
             self.client.delete(result2['name'])
             self.assertEqual(self.client.count(), 0)
 
-        def _cleanup_api(self, name_or_id):
-            self._api_cleanup.append(name_or_id)
+        def _cleanup_afterwards(self, name_or_id):
+            self._cleanup.append(name_or_id)
             return name_or_id
 
     class ConsumerTestCase(ClientFactoryMixin, TestCase):
