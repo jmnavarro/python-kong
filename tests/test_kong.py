@@ -110,6 +110,9 @@ class KongAdminTesting(object):
         def test_retrieve(self):
             result = self.client.add(
                 target_url='http://mockbin.com', name=self._cleanup_afterwards('Mockbin'), public_dns='mockbin.com')
+            self.assertEqual(result['target_url'], 'http://mockbin.com/')
+            self.assertEqual(result['name'], 'Mockbin')
+            self.assertEqual(result['public_dns'], 'mockbin.com')
 
             # Retrieve by name
             result2 = self.client.retrieve('Mockbin')
