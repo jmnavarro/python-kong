@@ -3,6 +3,7 @@ from __future__ import unicode_literals, print_function
 from abc import ABCMeta, abstractmethod
 import os
 import sys
+import urllib
 import unittest
 from unittest import TestCase
 
@@ -15,6 +16,13 @@ from kong.simulator import APIAdminSimulator, ConsumerAdminSimulator
 from kong.client import APIAdminClient, ConsumerAdminClient
 
 API_URL = os.environ.get('PYKONG_TEST_API_URL', 'http://localhost:8001')
+
+
+def kong_testserver_is_up():
+    try:
+        return urllib.urlopen(API_URL).getcode() == 200
+    except IOError:
+        return False
 
 
 class KongAdminTesting(object):
@@ -230,11 +238,13 @@ class SimulatorConsumerTestCase(KongAdminTesting.ConsumerTestCase):
         return ConsumerAdminSimulator()
 
 
+@unittest.skipIf(kong_testserver_is_up() is False, 'Kong testserver is down')
 class ClientAPITestCase(KongAdminTesting.APITestCase):
     def on_create_client(self):
         return APIAdminClient(API_URL)
 
 
+@unittest.skipIf(kong_testserver_is_up() is False, 'Kong testserver is down')
 class ClientConsumerTestCase(KongAdminTesting.ConsumerTestCase):
     def on_create_client(self):
         return ConsumerAdminClient(API_URL)
