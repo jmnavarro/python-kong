@@ -6,6 +6,7 @@ import uuid
 from .contract import KongAdminContract, APIAdminContract, ConsumerAdminContract, PluginConfigurationAdminContract
 from .utils import timestamp, uuid_or_string, add_url_params, filter_api_struct, filter_dict_list, assert_dict_keys_in, \
     ensure_trailing_slash
+from .exceptions import ConflictError
 
 
 class SimulatorDataStore(object):
@@ -19,6 +20,17 @@ class SimulatorDataStore(object):
 
     def create(self, data_struct):
         assert 'id' not in data_struct
+
+        # Prevent conflicts
+        errors = []
+        for key in ('name', 'target_url'):
+            assert key in data_struct
+
+            existing_value = self._get_by_field(key, data_struct[key])
+            if existing_value is not None:
+                errors.append('%s already exists with value \'%s\'' % (key, existing_value[key]))
+        if errors:
+            raise ConflictError(', '.join(errors))
 
         id = str(uuid.uuid4())
         data_struct['id'] = id
@@ -85,6 +97,11 @@ class SimulatorDataStore(object):
 
     def clear(self):
         self._data = OrderedDict()
+
+    def _get_by_field(self, field, value):
+        for data_struct in self._data.values():
+            if data_struct[field] == value:
+                return data_struct
 
 
 class APIAdminSimulator(APIAdminContract):

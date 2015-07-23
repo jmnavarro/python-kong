@@ -4,6 +4,7 @@ from six import with_metaclass
 from abc import ABCMeta, abstractmethod
 import os
 from unittest import TestCase
+from kong.exceptions import ConflictError
 
 from kong.simulator import KongAdminSimulator
 from kong.client import KongAdminClient
@@ -26,7 +27,7 @@ class KongAdminTesting(object):
             self._api_cleanup = []
 
         def tearDown(self):
-            for name_or_id in self._api_cleanup:
+            for name_or_id in set(self._api_cleanup):
                 self.client.apis.delete(name_or_id)
             self.assertEqual(self.client.apis.count(), 0)
 
@@ -40,6 +41,24 @@ class KongAdminTesting(object):
             self.assertIsNotNone(result['id'])
             self.assertIsNotNone(result['created_at'])
             self.assertFalse('path' in result)
+
+        def test_apis_add_conflict(self):
+            result = self.client.apis.add(
+                target_url='http://mockbin.com', name=self._cleanup_api('Mockbin'), public_dns='mockbin.com')
+            self.assertIsNotNone(result)
+            self.assertEqual(self.client.apis.count(), 1)
+
+            result2 = None
+            error_thrown = False
+            try:
+                result2 = self.client.apis.add(
+                    target_url='http://mockbin.com', name=self._cleanup_api('Mockbin'), public_dns='mockbin.com')
+            except ConflictError:
+                error_thrown = True
+            self.assertTrue(error_thrown)
+            self.assertIsNone(result2)
+
+            self.assertEqual(self.client.apis.count(), 1)
 
         def test_apis_update(self):
             result = self.client.apis.add(
