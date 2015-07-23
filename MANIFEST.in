@@ -10,6 +10,9 @@ include .cookiecutterrc
 include .isort.cfg
 include .pylintrc
 
+include circle.yml
+include *.txt
+
 include AUTHORS.rst
 include CHANGELOG.rst
 include CONTRIBUTING.rst
