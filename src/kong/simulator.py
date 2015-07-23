@@ -3,7 +3,8 @@ from __future__ import unicode_literals, print_function
 from collections import OrderedDict
 import uuid
 
-from .contract import KongAdminContract, APIAdminContract, ConsumerAdminContract, PluginAdminContract
+from .contract import KongAdminContract, APIPluginConfigurationAdminContract, APIAdminContract, ConsumerAdminContract, \
+    PluginAdminContract
 from .utils import timestamp, uuid_or_string, add_url_params, filter_api_struct, filter_dict_list, assert_dict_keys_in, \
     ensure_trailing_slash
 from .exceptions import ConflictError
@@ -11,12 +12,12 @@ from .exceptions import ConflictError
 
 class SimulatorDataStore(object):
     def __init__(self, base_url, data_struct_filter=None):
-        self._base_url = base_url
+        self.base_url = base_url
         self._data_struct_filter = data_struct_filter or {}
         self._data = OrderedDict()
 
     def count(self):
-        return len(self._data)
+        return len(self._data.keys())
 
     def create(self, data_struct, check_conflict_keys=None):
         assert 'id' not in data_struct
@@ -76,7 +77,7 @@ class SimulatorDataStore(object):
         next_index = offset_index + size + 1
         if next_index < len(data_list):
             next_offset = data_list[next_index]['id']
-            next_url = add_url_params(self._base_url, {
+            next_url = add_url_params(self.base_url, {
                 'size': size,
                 'offset': next_offset
             })
@@ -111,6 +112,125 @@ class SimulatorDataStore(object):
                 return data_struct
 
 
+class APIPluginConfigurationAdminSimulator(APIPluginConfigurationAdminContract):
+    def __init__(self, api_admin, api_name_or_id, base_url):
+        self.api_admin = api_admin
+        self.api_name_or_id = api_name_or_id
+        self.base_url = base_url
+        self._data = OrderedDict()
+
+    def create(self, plugin_name, enabled=True, consumer_id=None, **fields):
+        plugins = PluginAdminSimulator.PLUGINS
+
+        if plugin_name not in plugins.keys():
+            raise ValueError('Unknown plugin_name: %s' % plugin_name)
+
+        known_fields = plugins[plugin_name].get('fields')
+
+        for key in fields:
+            if key not in known_fields:
+                raise ValueError('Unknown value field: %s' % key)
+
+        for key in known_fields:
+            if known_fields[key].get('required', False) and key not in fields:
+                raise ValueError('Missing required value field: %s' % key)
+
+        id = str(uuid.uuid4())
+        api_data = self.api_admin.retrieve(self.api_name_or_id)
+        api_id = api_data['id']
+
+        self._data[plugin_name] = {
+            'id': id,
+            'enabled': enabled,
+            'api_id': api_id,
+            'name': plugin_name,
+            'value': fields,
+            'created_at': timestamp()
+        }
+
+        if consumer_id is not None:
+            self._data[plugin_name]['consumer_id'] = consumer_id
+
+        return self._data[plugin_name]
+
+    def update(self, plugin_name_or_id, enabled=True, consumer_id=None, **fields):
+        plugin_id = None
+        plugin_name = None
+
+        plugin_name_or_id = uuid_or_string(plugin_name_or_id)
+
+        if plugin_name_or_id in self._data:
+            plugin_id = plugin_name_or_id
+            plugin_name = self._data[plugin_name_or_id]['name']
+        else:
+            for id in self._data:
+                if self._data[id]['name'] == plugin_name_or_id:
+                    plugin_id = id
+                    plugin_name = plugin_name_or_id
+                    break
+
+        if plugin_name is None or plugin_id is None:
+            raise ValueError('Unknown plugin_name_or_id: %s' % plugin_name_or_id)
+
+        if plugin_name not in PluginAdminSimulator.PLUGINS.keys():
+            raise ValueError('Unknown plugin_name: %s' % plugin_name)
+
+        for key in fields:
+            if key not in PluginAdminSimulator.PLUGINS[plugin_name]:
+                raise ValueError('Unknown value field: %s' % key)
+
+        data_struct_update = fields
+
+        if consumer_id is not None:
+            data_struct_update['consumer_id'] = consumer_id
+
+        self._data[plugin_id].update(data_struct_update)
+        return self._data[plugin_id]
+
+    def list(self, size=100, offset=None, **filter_fields):
+        data_list = [data_struct for data_struct in filter_dict_list(self._data.values(), **filter_fields)]
+
+        if offset is not None:
+            offset_index = self._data.keys().index(uuid_or_string(offset))
+        else:
+            offset_index = 0
+
+        sliced_data = data_list[offset_index:size]
+
+        next_url = None
+        next_index = offset_index + size + 1
+        if next_index < len(data_list):
+            next_offset = data_list[next_index]['id']
+            next_url = add_url_params(self.base_url, {
+                'size': size,
+                'offset': next_offset
+            })
+
+        result = {
+            # 'total': len(sliced_data),  # Appearantly, the real API doesn't return this value either...
+            'data': sliced_data,
+        }
+
+        if next_url:
+            result['next'] = next_url
+
+        return result
+
+    def delete(self, plugin_name_or_id):
+        plugin_name_or_id = uuid_or_string(plugin_name_or_id)
+
+        if plugin_name_or_id in self._data:
+            del self._data[plugin_name_or_id]
+
+        for plugin_name in self._data:
+            if self._data[plugin_name]['id'] == plugin_name_or_id:
+                del self._data[plugin_name]
+                break
+
+    def count(self):
+        return len(self._data.keys())
+
+
 class APIAdminSimulator(APIAdminContract):
     def __init__(self, base_url=None):
         self._store = SimulatorDataStore(
@@ -120,6 +240,7 @@ class APIAdminSimulator(APIAdminContract):
                 'path': None,
                 'strip_path': False
             })
+        self._plugin_admins = {}
 
     def count(self):
         return self._store.count()
@@ -160,6 +281,17 @@ class APIAdminSimulator(APIAdminContract):
 
     def clear(self):
         self._store.clear()
+
+    def plugins(self, name_or_id):
+        api_id = self.retrieve(name_or_id).get('id')
+
+        if api_id is None:
+            raise ValueError('Unknown name_or_id: %s' % name_or_id)
+
+        if api_id not in self._plugin_admins:
+            self._plugin_admins[api_id] = APIPluginConfigurationAdminSimulator(self, name_or_id, self._store.base_url)
+
+        return self._plugin_admins[api_id]
 
 
 class ConsumerAdminSimulator(ConsumerAdminContract):

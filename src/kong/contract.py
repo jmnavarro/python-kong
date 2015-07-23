@@ -5,6 +5,119 @@ from abc import ABCMeta, abstractproperty, abstractmethod
 from six import with_metaclass
 
 
+class APIPluginConfigurationAdminContract(with_metaclass(ABCMeta, object)):
+    @abstractmethod
+    def count(self):
+        """
+        :rtype: int
+        :return: Amount of records
+        """
+
+    @abstractmethod
+    def create(self, plugin_name, enabled=True, consumer_id=None, **fields):
+        """
+        :param plugin_name: The name of the Plugin that's going to be added. Currently the Plugin must be installed in
+            every Kong instance separately.
+        :type plugin_name: basestring
+        :param enabled: Whether or not the pluginconfiguration is enabled
+        :type enabled: bool
+        :param consumer_id: The unique identifier of the consumer that overrides the existing settings for this
+            specific consumer on incoming requests.
+        :type consumer_id: basestring | uuid.UUID
+        :param fields: The configuration properties for the Plugin which can be found on the plugins documentation page
+            in the Plugin Gallery.
+        :type fields: dict
+        :rtype: dict
+        :return: Dictionary containing the API plugin configuration. Example:
+                {
+                    "id": "4d924084-1adb-40a5-c042-63b19db421d1",
+                    "api_id": "5fd1z584-1adb-40a5-c042-63b19db49x21",
+                    "consumer_id": "a3dX2dh2-1adb-40a5-c042-63b19dbx83hF4",
+                    "name": "ratelimiting",
+                    "value": {
+                        "limit": 20,
+                        "period": "minute"
+                    },
+                    "created_at": 1422386534
+                }
+        """
+
+    @abstractmethod
+    def list(self, size=100, offset=None, **filter_fields):
+        """
+        :param size: A limit on the number of objects to be returned.
+        :type size: int
+        :param offset: A cursor used for pagination. offset is an object identifier that defines a place in the list.
+        :type offset: uuid.UUID
+        :param filter_fields: Dictionary containing values to filter for
+        :type filter_fields: dict
+        :rtype: dict
+        :return: Dictionary containing dictionaries containing the API description. Example:
+                {
+                    "total": 2,
+                    "data": [
+                      {
+                          "id": "4d924084-1adb-40a5-c042-63b19db421d1",
+                          "api_id": "5fd1z584-1adb-40a5-c042-63b19db49x21",
+                          "name": "ratelimiting",
+                          "value": {
+                              "limit": 20,
+                              "period": "minute"
+                          },
+                          "created_at": 1422386534
+                      },
+                      {
+                          "id": "3f924084-1adb-40a5-c042-63b19db421a2",
+                          "api_id": "5fd1z584-1adb-40a5-c042-63b19db49x21",
+                          "consumer_id": "a3dX2dh2-1adb-40a5-c042-63b19dbx83hF4",
+                          "name": "ratelimiting",
+                          "value": {
+                              "limit": 300,
+                              "period": "hour"
+                          },
+                          "created_at": 1422386585
+                      }
+                    ],
+                    "next": "http://localhost:8001/plugins_configurations/?size=10&offset=4d924084-1adb-40a5-c042-63b19db421d1"
+                }
+        """
+
+    @abstractmethod
+    def update(self, plugin_name_or_id, enabled=True, consumer_id=None, **fields):
+        """
+        :param plugin_name_or_id: The unique identifier or the name of the plugin for which to update the configuration
+            on this API
+        :type plugin_name_or_id: basestring | uuid.UUID
+        :param enabled: Whether or not the pluginconfiguration is enabled
+        :type enabled: bool
+        :param consumer_id: The unique identifier of the consumer that overrides the existing settings for this specific
+            consumer on incoming requests.
+        :type consumer_id: basestring | uuid.UUID
+        :param fields: Optional dictionary which values will be used to overwrite the existing values
+        :type fields: dict
+        :rtype: dict
+        :return: Dictionary containing the API plugin configuration. Example:
+                {
+                    "id": "4d924084-1adb-40a5-c042-63b19db421d1",
+                    "api_id": "5fd1z584-1adb-40a5-c042-63b19db49x21",
+                    "consumer_id": "a3dX2dh2-1adb-40a5-c042-63b19dbx83hF4",
+                    "name": "ratelimiting",
+                    "value": {
+                        "limit": 50,
+                        "period": "second"
+                    },
+                    "created_at": 1422386534
+                }
+        """
+
+    @abstractmethod
+    def delete(self, plugin_name_or_id):
+        """
+        :param plugin_name_or_id: The unique identifier or the name of the plugin for which to delete the configuration
+            on this API
+        :type plugin_name_or_id: basestring | uuid.UUID
+        """
+
 class APIAdminContract(with_metaclass(ABCMeta, object)):
     @abstractmethod
     def count(self):
@@ -113,6 +226,14 @@ class APIAdminContract(with_metaclass(ABCMeta, object)):
         """
         :param name_or_id: The unique identifier or the name of the API to delete
         :type name_or_id: basestring | uuid.UUID
+        """
+
+    @abstractmethod
+    def plugins(self, name_or_id):
+        """
+        :param name_or_id: The unique identifier or the name of the API to get the APIPluginAdminContract for
+        :rtype: APIPluginConfigurationAdminContract
+        :return:
         """
 
 

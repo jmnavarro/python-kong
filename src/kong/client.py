@@ -4,7 +4,8 @@ import requests
 from urlparse import urljoin
 from httplib import OK, CREATED, CONFLICT, NO_CONTENT
 
-from .contract import KongAdminContract, APIAdminContract, ConsumerAdminContract, PluginAdminContract
+from .contract import KongAdminContract, APIAdminContract, ConsumerAdminContract, PluginAdminContract, \
+    APIPluginConfigurationAdminContract
 from .utils import add_url_params, assert_dict_keys_in, ensure_trailing_slash
 from .exceptions import ConflictError
 
@@ -23,6 +24,49 @@ class RestClient(object):
     def get_url(self, *path, **query_params):
         url = ensure_trailing_slash(urljoin(self.api_url, '/'.join(path)))
         return add_url_params(url, query_params)
+
+
+class APIPluginConfigurationAdminClient(APIPluginConfigurationAdminContract, RestClient):
+    def __init__(self, api_admin, api_name_or_id, api_url):
+        super(APIPluginConfigurationAdminClient, self).__init__(api_url)
+
+        self.api_admin = api_admin
+        self.api_name_or_id = api_name_or_id
+
+    def create(self, plugin_name, enabled=True, consumer_id=None, **fields):
+        values = {}
+        for key in fields:
+            values['value.%s' % key] = fields[key]
+
+        response = self.session.post(self.get_url('apis', self.api_name_or_id, 'plugins'), data=dict({
+            'name': plugin_name,
+            'enabled': enabled,
+            'consumer_id': consumer_id,
+        }, **values))
+        result = response.json()
+        if response.status_code == CONFLICT:
+            raise ConflictError(', '.join(result.values()))
+
+        assert response.status_code == CREATED
+
+        return result
+
+    def update(self, plugin_name_or_id, enabled=True, consumer_id=None, **fields):
+        return super(APIPluginConfigurationAdminClient, self).update(plugin_name_or_id, consumer_id, **fields)
+
+    def list(self, size=100, offset=None, **filter_fields):
+        return super(APIPluginConfigurationAdminClient, self).list(size, offset, **filter_fields)
+
+    def delete(self, plugin_name_or_id):
+        response = self.session.delete(self.get_url('apis', self.api_name_or_id, 'plugins', plugin_name_or_id))
+
+        assert response.status_code == NO_CONTENT
+
+    def count(self):
+        response = self.session.get(self.get_url('apis', self.api_name_or_id, 'plugins'))
+        result = response.json()
+        amount = result.get('total', len(result.get('data')))
+        return amount
 
 
 class APIAdminClient(APIAdminContract, RestClient):
@@ -89,6 +133,9 @@ class APIAdminClient(APIAdminContract, RestClient):
         assert response.status_code == OK
 
         return response.json()
+
+    def plugins(self, name_or_id):
+        return APIPluginConfigurationAdminClient(self, name_or_id, self.api_url)
 
 
 class ConsumerAdminClient(ConsumerAdminContract, RestClient):

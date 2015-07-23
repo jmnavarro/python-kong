@@ -158,6 +158,42 @@ class KongAdminTesting(object):
             self.client.delete(result2['name'])
             self.assertEqual(self.client.count(), 0)
 
+        def test_create_plugin_configuration(self):
+            result = self.client.add(
+                target_url='http://mockbin.com', name=self._cleanup_afterwards('Mockbin'), public_dns='mockbin.com')
+            self.assertIsNotNone(result)
+            self.assertEqual(self.client.plugins('Mockbin').count(), 0)
+
+            result2 = self.client.plugins('Mockbin').create('ratelimiting', enabled=False, second=20)
+            self.assertIsNotNone(result2)
+            self.assertIsNotNone(result2['id'])
+            self.assertIsNotNone(result2['api_id'])
+            self.assertFalse(result2['enabled'])
+            self.assertEqual(result2['value']['second'], 20)
+            self.assertEqual(self.client.plugins('Mockbin').count(), 1)
+
+        def test_delete_plugin_configuration(self):
+            result = self.client.add(
+                target_url='http://mockbin.com', name=self._cleanup_afterwards('Mockbin'), public_dns='mockbin.com')
+            self.assertIsNotNone(result)
+            self.assertEqual(self.client.plugins('Mockbin').count(), 0)
+
+            result2 = self.client.plugins('Mockbin').create('ratelimiting', enabled=False, second=20)
+            self.assertIsNotNone(result2)
+            self.assertEqual(self.client.plugins('Mockbin').count(), 1)
+
+            result3 = self.client.plugins('Mockbin').create('requestsizelimiting', allowed_payload_size=512)
+            self.assertIsNotNone(result3)
+            self.assertEqual(self.client.plugins('Mockbin').count(), 2)
+
+            # delete by name
+            self.client.plugins('Mockbin').delete('ratelimiting')
+            self.assertEqual(self.client.plugins('Mockbin').count(), 1)
+
+            # delete by id
+            self.client.plugins('Mockbin').delete(result3['id'])
+            self.assertEqual(self.client.plugins('Mockbin').count(), 0)
+
         def _cleanup_afterwards(self, name_or_id):
             self._cleanup.append(name_or_id)
             return name_or_id
