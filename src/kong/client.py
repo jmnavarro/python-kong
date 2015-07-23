@@ -4,7 +4,7 @@ import requests
 from urlparse import urljoin
 from httplib import OK, CREATED, CONFLICT, NO_CONTENT
 
-from .contract import KongAdminContract, APIAdminContract, ConsumerAdminContract, PluginConfigurationAdminContract
+from .contract import KongAdminContract, APIAdminContract, ConsumerAdminContract, PluginAdminContract
 from .utils import add_url_params, assert_dict_keys_in, ensure_trailing_slash
 from .exceptions import ConflictError
 
@@ -151,22 +151,21 @@ class ConsumerAdminClient(ConsumerAdminContract, RestClient):
 
         return response.json()
 
-class PluginConfigurationAdminClient(PluginConfigurationAdminContract, RestClient):
-    def __init__(self, api_url):
-        super(PluginConfigurationAdminClient, self).__init__(api_url)
 
-    def create(self, api_name_or_id, name, value, consumer_id=None):
-        return super(PluginConfigurationAdminClient, self).create(api_name_or_id, name, value, consumer_id)
+class PluginAdminClient(PluginAdminContract, RestClient):
+    def list(self):
+        response = self.session.get(self.get_url('plugins'))
 
-    def list(self, size=100, offset=None, **filter_fields):
-        return super(PluginConfigurationAdminClient, self).list(size, offset, **filter_fields)
+        assert response.status_code == OK
 
-    def delete(self, api_name_or_id, plugin_configuration_name_or_id):
-        super(PluginConfigurationAdminClient, self).delete(api_name_or_id, plugin_configuration_name_or_id)
+        return response.json()
 
-    def update(self, api_name_or_id, plugin_configuration_name_or_id, name, value, **fields):
-        return super(PluginConfigurationAdminClient, self).update(api_name_or_id, plugin_configuration_name_or_id, name,
-                                                                  value, **fields)
+    def retrieve_schema(self, plugin_name):
+        response = self.session.get(self.get_url('plugins', plugin_name, 'schema'))
+
+        assert response.status_code == OK
+
+        return response.json()
 
 
 class KongAdminClient(KongAdminContract):
@@ -174,4 +173,4 @@ class KongAdminClient(KongAdminContract):
         super(KongAdminClient, self).__init__(
             apis=APIAdminClient(api_url),
             consumers=ConsumerAdminClient(api_url),
-            plugin_configurations=PluginConfigurationAdminClient(api_url))
+            plugins=PluginAdminClient(api_url))

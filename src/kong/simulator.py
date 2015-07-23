@@ -3,7 +3,7 @@ from __future__ import unicode_literals, print_function
 from collections import OrderedDict
 import uuid
 
-from .contract import KongAdminContract, APIAdminContract, ConsumerAdminContract, PluginConfigurationAdminContract
+from .contract import KongAdminContract, APIAdminContract, ConsumerAdminContract, PluginAdminContract
 from .utils import timestamp, uuid_or_string, add_url_params, filter_api_struct, filter_dict_list, assert_dict_keys_in, \
     ensure_trailing_slash
 from .exceptions import ConflictError
@@ -199,19 +199,66 @@ class ConsumerAdminSimulator(ConsumerAdminContract):
         self._store.clear()
 
 
-class PluginConfigurationAdminSimulator(PluginConfigurationAdminContract):
-    def create(self, api_name_or_id, name, value, consumer_id=None):
-        return super(PluginConfigurationAdminSimulator, self).create(api_name_or_id, name, value, consumer_id)
+class PluginAdminSimulator(PluginAdminContract):
+    # Copied from real kong server, v0.4.0
+    PLUGINS = OrderedDict({
+        'ssl': {'fields': {'_cert_der_cache': {'type': 'string', 'immutable': True},
+                           'cert': {'required': True, 'type': 'string', 'func': 'function'},
+                           'key': {'required': True, 'type': 'string', 'func': 'function'},
+                           'only_https': {'default': False, 'required': False, 'type': 'boolean'},
+                           '_key_der_cache': {'type': 'string', 'immutable': True}}, 'no_consumer': True},
+        'keyauth': {'fields': {'key_names': {'default': 'function', 'required': True, 'type': 'array'},
+                               'hide_credentials': {'default': False, 'type': 'boolean'}}},
+        'basicauth': {'fields': {'hide_credentials': {'default': False, 'type': 'boolean'}}},
+        'oauth2': {'fields': {'scopes': {'required': False, 'type': 'array'},
+                              'token_expiration': {'default': 7200, 'required': True, 'type': 'number'},
+                              'enable_implicit_grant': {'default': False, 'required': True, 'type': 'boolean'},
+                              'hide_credentials': {'default': False, 'type': 'boolean'},
+                              'provision_key': {'unique': True, 'type': 'string', 'func': 'function',
+                                                'required': False},
+                              'mandatory_scope': {'default': False, 'required': True, 'type': 'boolean',
+                                                  'func': 'function'}}},
+        'ratelimiting': {
+            'fields': {'hour': {'type': 'number'}, 'month': {'type': 'number'}, 'second': {'type': 'number'},
+                       'year': {'type': 'number'}, 'day': {'type': 'number'}, 'minute': {'type': 'number'}},
+            'self_check': 'function'},
+        'tcplog': {
+            'fields': {'host': {'required': True, 'type': 'string'}, 'port': {'required': True, 'type': 'number'},
+                       'timeout': {'default': 10000, 'type': 'number'},
+                       'keepalive': {'default': 60000, 'type': 'number'}}},
+        'udplog': {
+            'fields': {'host': {'required': True, 'type': 'string'}, 'port': {'required': True, 'type': 'number'},
+                       'timeout': {'default': 10000, 'type': 'number'}}},
+        'filelog': {'fields': {'path': {'required': True, 'type': 'string', 'func': 'function'}}},
+        'httplog': {'fields': {'http_endpoint': {'required': True, 'type': 'url'},
+                               'method': {'default': 'POST', 'enum': ['POST', 'PUT', 'PATCH']},
+                               'timeout': {'default': 10000, 'type': 'number'},
+                               'keepalive': {'default': 60000, 'type': 'number'}}},
+        'cors': {'fields': {'origin': {'type': 'string'}, 'max_age': {'type': 'number'},
+                            'exposed_headers': {'type': 'array'},
+                            'methods': {'enum': ['HEAD', 'GET', 'POST', 'PUT', 'PATCH', 'DELETE'], 'type': 'array'},
+                            'headers': {'type': 'array'}, 'preflight_continue': {'default': False, 'type': 'boolean'},
+                            'credentials': {'default': False, 'type': 'boolean'}}},
+        'request_transformer': {'fields': {'origin': {'type': 'string'}, 'max_age': {'type': 'number'},
+                                           'exposed_headers': {'type': 'array'},
+                                           'methods': {'enum': ['HEAD', 'GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+                                                       'type': 'array'}, 'headers': {'type': 'array'},
+                                           'preflight_continue': {'default': False, 'type': 'boolean'},
+                                           'credentials': {'default': False, 'type': 'boolean'}}},
+        'response_transformer': {'fields': {
+            'add': {'type': 'table', 'schema': {'fields': {'headers': {'type': 'array'}, 'json': {'type': 'array'}}}},
+            'remove': {'type': 'table',
+                       'schema': {'fields': {'headers': {'type': 'array'}, 'json': {'type': 'array'}}}}}},
+        'requestsizelimiting': {'fields': {'allowed_payload_size': {'default': 128, 'type': 'number'}}}
+    })
 
-    def list(self, size=100, offset=None, **filter_fields):
-        return super(PluginConfigurationAdminSimulator, self).list(size, offset, **filter_fields)
+    def list(self):
+        return {
+            'enabled_plugins': self.PLUGINS.keys()
+        }
 
-    def delete(self, api_name_or_id, plugin_configuration_name_or_id):
-        super(PluginConfigurationAdminSimulator, self).delete(api_name_or_id, plugin_configuration_name_or_id)
-
-    def update(self, api_name_or_id, plugin_configuration_name_or_id, name, value, **fields):
-        return super(PluginConfigurationAdminSimulator, self).update(api_name_or_id, plugin_configuration_name_or_id,
-                                                                     name, value, **fields)
+    def retrieve_schema(self, plugin_name):
+        return self.PLUGINS.get(plugin_name)
 
 
 class KongAdminSimulator(KongAdminContract):
@@ -219,4 +266,4 @@ class KongAdminSimulator(KongAdminContract):
         super(KongAdminSimulator, self).__init__(
             apis=APIAdminSimulator(),
             consumers=ConsumerAdminSimulator(),
-            plugin_configurations=PluginConfigurationAdminSimulator())
+            plugins=PluginAdminSimulator())

@@ -12,8 +12,8 @@ if __name__ == '__main__':
     sys.path.append('../src/')
 
 from kong.exceptions import ConflictError
-from kong.simulator import APIAdminSimulator, ConsumerAdminSimulator
-from kong.client import APIAdminClient, ConsumerAdminClient
+from kong.simulator import APIAdminSimulator, ConsumerAdminSimulator, PluginAdminSimulator
+from kong.client import APIAdminClient, ConsumerAdminClient, PluginAdminClient
 
 API_URL = os.environ.get('PYKONG_TEST_API_URL', 'http://localhost:8001')
 
@@ -315,6 +315,30 @@ class KongAdminTesting(object):
             self._cleanup.append(username_or_id)
             return username_or_id
 
+    class PluginTestCase(ClientFactoryMixin, TestCase):
+        __metaclass__ = ABCMeta
+
+        def setUp(self):
+            self.client = self.on_create_client()
+
+        def test_list(self):
+            result = self.client.list()
+            self.assertIsNotNone(result)
+            self.assertTrue('enabled_plugins' in result)
+            self.assertTrue(isinstance(result['enabled_plugins'], list))
+
+        def test_retrieve_schema(self):
+            result = self.client.list()
+            self.assertIsNotNone(result)
+
+            # sanity check
+            self.assertTrue(len(result['enabled_plugins']) >= 1)
+
+            for plugin_name in result['enabled_plugins']:
+                schema = self.client.retrieve_schema(plugin_name)
+                self.assertIsNotNone(schema)
+                self.assertTrue(isinstance(schema, dict))
+
 
 class SimulatorAPITestCase(KongAdminTesting.APITestCase):
     def on_create_client(self):
@@ -324,6 +348,11 @@ class SimulatorAPITestCase(KongAdminTesting.APITestCase):
 class SimulatorConsumerTestCase(KongAdminTesting.ConsumerTestCase):
     def on_create_client(self):
         return ConsumerAdminSimulator()
+
+
+class SimulatorPluginTestCase(KongAdminTesting.PluginTestCase):
+    def on_create_client(self):
+        return PluginAdminSimulator()
 
 
 @unittest.skipIf(kong_testserver_is_up() is False, 'Kong testserver is down')
@@ -336,6 +365,12 @@ class ClientAPITestCase(KongAdminTesting.APITestCase):
 class ClientConsumerTestCase(KongAdminTesting.ConsumerTestCase):
     def on_create_client(self):
         return ConsumerAdminClient(API_URL)
+
+
+@unittest.skipIf(kong_testserver_is_up() is False, 'Kong testserver is down')
+class ClientPluginTestCase(KongAdminTesting.PluginTestCase):
+    def on_create_client(self):
+        return PluginAdminClient(API_URL)
 
 
 if __name__ == '__main__':

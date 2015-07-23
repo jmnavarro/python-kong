@@ -208,123 +208,28 @@ class ConsumerAdminContract(with_metaclass(ABCMeta, object)):
         """
 
 
-class PluginConfigurationAdminContract(with_metaclass(ABCMeta, object)):
+class PluginAdminContract(with_metaclass(ABCMeta, object)):
     @abstractmethod
-    def create(self, api_name_or_id, name, value, consumer_id=None):
+    def list(self):
         """
-        :param api_name_or_id: The unique identifier or the name of the API on which to add a plugin configuration
-        :type api_name_or_id: basestring | uuid.UUID
-        :param name: The name of the Plugin that's going to be added. Currently the Plugin must be installed in every
-            Kong instance separately.
-        :type name: basestring
-        :param value: The configuration properties for the Plugin which can be found on the plugins documentation page
-            in the Plugin Gallery.
-        :type value: dict
-        :param consumer_id: The unique identifier of the consumer that overrides the existing settings for this specific
-            consumer on incoming requests.
-        :type consumer_id: uuid.UUID
         :rtype: dict
-        :return: Dictionary containing the PluginConfiguration description. Example:
-                {
-                    "id": "4d924084-1adb-40a5-c042-63b19db421d1",
-                    "api_id": "5fd1z584-1adb-40a5-c042-63b19db49x21",
-                    "consumer_id": "a3dX2dh2-1adb-40a5-c042-63b19dbx83hF4",
-                    "name": "ratelimiting",
-                    "value": {
-                        "limit": 20,
-                        "period": "minute"
-                    },
-                    "created_at": 1422386534
-                }
+        :return: Returns a list of all installed plugins on the node.
         """
 
     @abstractmethod
-    def list(self, size=100, offset=None, **filter_fields):
+    def retrieve_schema(self, plugin_name):
         """
-        :param size: A limit on the number of objects to be returned.
-        :type size: int
-        :param offset: A cursor used for pagination. offset is an object identifier that defines a place in the list.
-        :type offset: uuid.UUID
-        :param filter_fields: Dictionary containing values to filter for
-        :type filter_fields: dict
+        :param plugin_name:
+        :type plugin_name: basestring
         :rtype: dict
-        :return: Dictionary containing dictionaries containing PluginConfiguration descriptions. Example:
-                {
-                    "total": 2,
-                    "data": [
-                      {
-                          "id": "4d924084-1adb-40a5-c042-63b19db421d1",
-                          "api_id": "5fd1z584-1adb-40a5-c042-63b19db49x21",
-                          "name": "ratelimiting",
-                          "value": {
-                              "limit": 20,
-                              "period": "minute"
-                          },
-                          "created_at": 1422386534
-                      },
-                      {
-                          "id": "3f924084-1adb-40a5-c042-63b19db421a2",
-                          "api_id": "5fd1z584-1adb-40a5-c042-63b19db49x21",
-                          "consumer_id": "a3dX2dh2-1adb-40a5-c042-63b19dbx83hF4",
-                          "name": "ratelimiting",
-                          "value": {
-                              "limit": 300,
-                              "period": "hour"
-                          },
-                          "created_at": 1422386585
-                      }
-                    ],
-                    "next": "http://localhost:8001/plugins_configurations/?size=10&offset=4d924084-1adb-40a5-c042-1s..."
-                }
+        :return: Returns the schema of a plugin's configuration.
         """
-
-    @abstractmethod
-    def update(self, api_name_or_id, plugin_configuration_name_or_id, name, value, **fields):
-        """
-        :param api_name_or_id: The unique identifier or the name of the API for which to update the plugin configuration
-        :type api_name_or_id: basestring | uuid.UUID
-        :param plugin_configuration_name_or_id: The unique identifier or the name of the plugin for which to update the
-            configuration on this API
-        :type plugin_configuration_name_or_id: basestring | uuid.UUID
-        :param name: The name of the Plugin that's going to be added. Currently the Plugin must be installed in every
-            Kong instance separately.
-        :type name: basestring
-        :param value: The configuration properties for the Plugin which can be found on the plugins documentation page
-            in the Plugin Gallery.
-        :type value: dict
-        :param fields: Optional dictionary which values will be used to overwrite the existing values
-        :type fields: dict
-        :rtype: dict
-        :return: Dictionary containing the PluginConfiguration description. Example:
-                {
-                    "id": "4d924084-1adb-40a5-c042-63b19db421d1",
-                    "api_id": "5fd1z584-1adb-40a5-c042-63b19db49x21",
-                    "consumer_id": "a3dX2dh2-1adb-40a5-c042-63b19dbx83hF4",
-                    "name": "ratelimiting",
-                    "value": {
-                        "limit": 50,
-                        "period": "second"
-                    },
-                    "created_at": 1422386534
-                }
-        """
-
-    @abstractmethod
-    def delete(self, api_name_or_id, plugin_configuration_name_or_id):
-        """
-        :param api_name_or_id: The unique identifier or the name of the API for which to delete the plugin configuration
-        :type api_name_or_id: basestring | uuid.UUID
-        :param plugin_configuration_name_or_id: The unique identifier or the name of the plugin for which to delete the
-            configuration on this API
-        :type plugin_configuration_name_or_id: basestring | uuid.UUID
-        """
-
 
 class KongAdminContract(object):
-    def __init__(self, apis, consumers, plugin_configurations):
+    def __init__(self, apis, consumers, plugins):
         self._apis = apis
         self._consumers = consumers
-        self._plugin_configurations = plugin_configurations
+        self._plugins = plugins
 
     @property
     def apis(self):
@@ -345,7 +250,7 @@ class KongAdminContract(object):
     @property
     def plugin_configurations(self):
         """
-        :rtype: PluginConfigurationAdminContract
+        :rtype: PluginAdminContract
         :return:
         """
-        return self._plugin_configurations
+        return self._plugins
