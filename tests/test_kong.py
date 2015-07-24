@@ -6,7 +6,12 @@ import os
 import sys
 import collections
 import unittest
-from unittest import TestCase
+
+try:
+    from unittest import TestCase, skipIf, main as run_unittests
+except ImportError:
+    # For python <= 2.6
+    from unittest2 import TestCase, skipIf, main as run_unittests
 
 # To run the standalone test script
 if __name__ == '__main__':
@@ -443,23 +448,23 @@ class SimulatorPluginTestCase(KongAdminTesting.PluginTestCase):
         return KongAdminSimulator()
 
 
-@unittest.skipIf(kong_testserver_is_up() is False, 'Kong testserver is down')
+@skipIf(kong_testserver_is_up() is False, 'Kong testserver is down')
 class ClientAPITestCase(KongAdminTesting.APITestCase):
     def on_create_client(self):
         return KongAdminClient(API_URL)
 
 
-@unittest.skipIf(kong_testserver_is_up() is False, 'Kong testserver is down')
+@skipIf(kong_testserver_is_up() is False, 'Kong testserver is down')
 class ClientConsumerTestCase(KongAdminTesting.ConsumerTestCase):
     def on_create_client(self):
         return KongAdminClient(API_URL)
 
 
-@unittest.skipIf(kong_testserver_is_up() is False, 'Kong testserver is down')
+@skipIf(kong_testserver_is_up() is False, 'Kong testserver is down')
 class ClientPluginTestCase(KongAdminTesting.PluginTestCase):
     def on_create_client(self):
         return KongAdminClient(API_URL)
 
 
 if __name__ == '__main__':
-    unittest.main()
+    run_unittests()

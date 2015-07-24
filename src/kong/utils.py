@@ -2,6 +2,7 @@
 from __future__ import unicode_literals, print_function
 from future.standard_library import hooks
 
+import six
 import time
 import uuid
 import copy
@@ -27,9 +28,9 @@ def uuid_or_string(data):
     """
     if isinstance(data, uuid.UUID):
         return str(data)
-    elif isinstance(data, str):
+    elif isinstance(data, six.string_types):
         return data
-    raise ValueError('Expected string or UUID')
+    raise ValueError('Expected string or UUID, got %r' % data)
 
 
 def filter_api_struct(api_struct, filter_dict):
@@ -85,10 +86,11 @@ def add_url_params(url, params):
 
     # Bool and Dict values should be converted to json-friendly values
     # you may throw this part away if you don't like it :)
-    parsed_get_args.update(
-        {k: dumps(v) for k, v in parsed_get_args.items()
-         if isinstance(v, (bool, dict))}
-    )
+    json_friendly_data = {}
+    for k, v in parsed_get_args.items():
+        if isinstance(v, (bool, dict)):
+            json_friendly_data[k] = dumps(v)
+    parsed_get_args.update(json_friendly_data)
 
     # Converting URL argument to proper query string
     encoded_get_args = urlencode(parsed_get_args, doseq=True)

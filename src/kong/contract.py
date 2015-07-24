@@ -118,6 +118,7 @@ class APIPluginConfigurationAdminContract(with_metaclass(ABCMeta, object)):
         :type plugin_name_or_id: str | uuid.UUID
         """
 
+
 class APIAdminContract(with_metaclass(ABCMeta, object)):
     @abstractmethod
     def count(self):

@@ -6,8 +6,7 @@ import requests
 with hooks():
     from urllib.parse import urljoin
 
-from http.client import OK, CREATED, CONFLICT, NO_CONTENT
-
+from .constants import OK, CREATED, NO_CONTENT, CONFLICT
 from .contract import KongAdminContract, APIAdminContract, ConsumerAdminContract, PluginAdminContract, \
     APIPluginConfigurationAdminContract
 from .utils import add_url_params, assert_dict_keys_in, ensure_trailing_slash

@@ -35,13 +35,13 @@ python-kong
     :target: https://landscape.io/github/vikingco/python-kong/master
     :alt: Code Quality Status
 
-.. |version| image:: http://img.shields.io/pypi/v/kong.svg?style=flat
+.. |version| image:: http://img.shields.io/pypi/v/python-kong.svg?style=flat
     :alt: PyPI Package latest release
-    :target: https://pypi.python.org/pypi/kong
+    :target: https://pypi.python.org/pypi/python-kong
 
-.. |downloads| image:: http://img.shields.io/pypi/dm/kong.svg?style=flat
+.. |downloads| image:: http://img.shields.io/pypi/dm/python-kong.svg?style=flat
     :alt: PyPI Package monthly downloads
-    :target: https://pypi.python.org/pypi/kong
+    :target: https://pypi.python.org/pypi/python-kong
 
 .. |scrutinizer| image:: https://img.shields.io/scrutinizer/g/vikingco/python-kong/master.svg?style=flat
     :alt: Scrutinizer Status
