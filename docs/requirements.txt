@@ -1,4 +1,6 @@
+six
 docutils
+Jinja2
 sphinx
 sphinxcontrib-napoleon
 -e .
