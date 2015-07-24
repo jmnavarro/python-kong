@@ -4,7 +4,7 @@ sudo: true
 env:
   global:
     - LD_PRELOAD=/lib/x86_64-linux-gnu/libSegFault.so
-    - DOCKER_STORAGE_DRIVER=aufs
+    - DOCKER_STORAGE_DRIVER=devicemapper
     - PYKONG_TEST_API_URL=http://localhost:8001
   matrix:
     - TOXENV=check
