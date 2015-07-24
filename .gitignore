@@ -27,6 +27,7 @@ pip-log.txt
 .coverage
 .tox
 .coverage.*
+.coverage-reports/
 nosetests.xml
 htmlcov
 target/
