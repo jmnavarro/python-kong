@@ -1,0 +1,10 @@
+cassandra:
+  image: mashape/cassandra
+
+kong:
+  image: dirkmoors/kong
+  links:
+    - cassandra
+  ports:
+    - "18001:8001"
+    - "18000:8000"
