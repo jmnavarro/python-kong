@@ -1,3 +1,4 @@
+docutils
 sphinx
 sphinxcontrib-napoleon
 -e .
