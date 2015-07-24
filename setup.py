@@ -28,8 +28,8 @@ requirements = [str(ir.req) for ir in parse_requirements('./requirements.txt', s
 # requirements_test = [str(ir.req) for ir in parse_requirements('./requirements-test.txt', session=False)]
 
 setup(
-    name='kong',
-    version='0.1.0',
+    name='python-kong',
+    version='0.1.1',
     license='BSD',
     description='A Python client for the Kong API (http://getkong.org/)',
     long_description='%s\n%s' % (read('README.rst'), re.sub(':[a-z]+:`~?(.*?)`', r'``\1``', read('CHANGELOG.rst'))),
