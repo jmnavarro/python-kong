@@ -4,9 +4,6 @@ machine:
     python:
         version: 2.7.6
     environment:
-        KONG_API_TESTS_HOST: 127.0.0.1
-        KONG_API_TESTS_PORT: 8000
-        KONG_API_MGMT_TESTS_PORT: 8001
         PYKONG_TEST_API_URL: http://localhost:8001
         PIP_CACHE_DIR: ~/pip-cache
     post:
