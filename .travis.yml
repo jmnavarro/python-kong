@@ -5,6 +5,7 @@ env:
   global:
     - LD_PRELOAD=/lib/x86_64-linux-gnu/libSegFault.so
     - UML_DOCKERCOMPOSE=1
+    - PYKONG_TEST_API_URL=http://localhost:8001
   matrix:
     - TOXENV=check
     - TOXENV=2.6,coveralls
