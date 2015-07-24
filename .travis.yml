@@ -24,8 +24,8 @@ before_install:
   - pip --version
   - uname -a
   - lsb_release -a
-  - curl -sLo - http://j.mp/install-travis-docker | sh -xe
 install:
+  - curl -sLo - http://j.mp/install-travis-docker | sh -xe
   - pip install tox
 script:
   - ./run 'scripts/docker/cassandra.sh; sleep 5'
