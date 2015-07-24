@@ -2,6 +2,7 @@
 from __future__ import unicode_literals, print_function
 from future.standard_library import hooks
 import requests
+import backoff
 
 with hooks():
     from urllib.parse import urljoin
@@ -73,6 +74,7 @@ class APIPluginConfigurationAdminClient(APIPluginConfigurationAdminContract, Res
 
         return response.json()
 
+    @backoff.on_exception(backoff.expo, AssertionError, max_tries=3)
     def delete(self, plugin_name_or_id):
         response = self.session.delete(self.get_url('apis', self.api_name_or_id, 'plugins', plugin_name_or_id))
 
@@ -122,6 +124,7 @@ class APIAdminClient(APIAdminContract, RestClient):
 
         return result
 
+    @backoff.on_exception(backoff.expo, AssertionError, max_tries=3)
     def delete(self, name_or_id):
         response = self.session.delete(self.get_url('apis', name_or_id))
 
@@ -202,6 +205,7 @@ class ConsumerAdminClient(ConsumerAdminContract, RestClient):
 
         return response.json()
 
+    @backoff.on_exception(backoff.expo, AssertionError, max_tries=3)
     def delete(self, username_or_id):
         response = self.session.delete(self.get_url('consumers', username_or_id))
 
