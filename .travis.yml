@@ -3,7 +3,8 @@ python: 2.7
 sudo: false
 env:
   global:
-    LD_PRELOAD=/lib/x86_64-linux-gnu/libSegFault.so
+    - LD_PRELOAD=/lib/x86_64-linux-gnu/libSegFault.so
+    - UML_DOCKERCOMPOSE=1
   matrix:
     - TOXENV=check
     - TOXENV=2.6,coveralls
@@ -22,9 +23,12 @@ before_install:
   - pip --version
   - uname -a
   - lsb_release -a
+  - curl -sLo - http://j.mp/install-travis-docker | sh -xe
 install:
   - pip install tox
 script:
+  - ./run 'scripts/docker/cassandra.sh; sleep 5'
+  - ./run 'scripts/docker/kong.sh; sleep 5'
   - tox -v
 notifications:
   email:
