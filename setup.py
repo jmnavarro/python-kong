@@ -27,13 +27,6 @@ def read(*names, **kwargs):
         encoding=kwargs.get('encoding', 'utf8')
     ).read()
 
-if sys.argv[-1] == 'publish':
-    os.system('python setup.py release')
-    print("You probably want to also tag the version now:")
-    print("  git tag -a %s -m 'version %s'" % (__version__, __version__))
-    print("  git push --tags")
-    sys.exit()
-
 # parse_requirements() returns generator of pip.req.InstallRequirement objects
 requirements = [str(ir.req) for ir in parse_requirements('./requirements.txt', session=False)]
 # requirements_test = [str(ir.req) for ir in parse_requirements('./requirements-test.txt', session=False)]
@@ -54,7 +47,7 @@ setup(
     zip_safe=False,
     classifiers=[
         # complete classifier list: http://pypi.python.org/pypi?%3Aaction=list_classifiers
-        'Development Status :: 5 - Production/Stable',
+        'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
         'Operating System :: Unix',
