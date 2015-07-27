@@ -14,7 +14,7 @@ class APIPluginConfigurationAdminContract(with_metaclass(ABCMeta, object)):
         """
 
     @abstractmethod
-    def create(self, plugin_name, enabled=True, consumer_id=None, **fields):
+    def create(self, plugin_name, enabled=None, consumer_id=None, **fields):
         """
         :param plugin_name: The name of the Plugin that's going to be added. Currently the Plugin must be installed in
             every Kong instance separately.
@@ -83,11 +83,11 @@ class APIPluginConfigurationAdminContract(with_metaclass(ABCMeta, object)):
         """
 
     @abstractmethod
-    def update(self, plugin_name_or_id, enabled=True, consumer_id=None, **fields):
+    def update(self, plugin_name, enabled=None, consumer_id=None, **fields):
         """
-        :param plugin_name_or_id: The unique identifier or the name of the plugin for which to update the configuration
-            on this API
-        :type plugin_name_or_id: str | uuid.UUID
+        :param plugin_name: The name of the Plugin that's going to be updated. Currently the Plugin must be installed in
+            every Kong instance separately.
+        :type plugin_name: str
         :param enabled: Whether or not the pluginconfiguration is enabled
         :type enabled: bool
         :param consumer_id: The unique identifier of the consumer that overrides the existing settings for this specific

@@ -169,12 +169,14 @@ class KongAdminTesting(object):
             self.client.apis.delete(result2['name'])
             self.assertEqual(self.client.apis.count(), 0)
 
-        def test_create_plugin_configuration(self):
+        def test_create_global_plugin_configuration(self):
+            # Create test api
             result = self.client.apis.add(
                 target_url='http://mockbin.com', name=self._cleanup_afterwards('Mockbin'), public_dns='mockbin.com')
             self.assertIsNotNone(result)
             self.assertEqual(self.client.apis.plugins('Mockbin').count(), 0)
 
+            # Create global plugin configuration for the api
             result2 = self.client.apis.plugins('Mockbin').create('ratelimiting', enabled=False, second=20)
             self.assertIsNotNone(result2)
             self.assertIsNotNone(result2['id'])
@@ -183,19 +185,56 @@ class KongAdminTesting(object):
             self.assertEqual(result2['value']['second'], 20)
             self.assertEqual(self.client.apis.plugins('Mockbin').count(), 1)
 
-            # Create a test consumer
+        def test_create_consumer_specific_plugin_configuration(self):
+            # Create test api
+            result = self.client.apis.add(
+                target_url='http://mockbin.com', name=self._cleanup_afterwards('Mockbin'), public_dns='mockbin.com')
+            self.assertIsNotNone(result)
+            self.assertEqual(self.client.apis.plugins('Mockbin').count(), 0)
+
+            # Create test consumer
             consumer = self.client.consumers.create(username='abc1234')
 
             try:
-                result3 = self.client.apis.plugins('Mockbin').create('requestsizelimiting', consumer_id=consumer['id'],
-                                                                allowed_payload_size=512)
-                self.assertIsNotNone(result3)
-                self.assertIsNotNone(result3['consumer_id'])
-                self.assertEqual(result3['consumer_id'], consumer['id'])
-                self.assertEqual(self.client.apis.plugins('Mockbin').count(), 2)
+                # Create consumer specific plugin configuration for the api
+                result2 = self.client.apis.plugins('Mockbin').create(
+                    'requestsizelimiting', consumer_id=consumer['id'], allowed_payload_size=512)
+                self.assertIsNotNone(result2)
+                self.assertIsNotNone(result2['consumer_id'])
+                self.assertEqual(result2['consumer_id'], consumer['id'])
+                self.assertEqual(self.client.apis.plugins('Mockbin').count(), 1)
             finally:
                 # Delete the test consumer
                 self.client.consumers.delete(consumer['id'])
+
+        def test_update_global_plugin_configuration(self):
+            # Create test api
+            result = self.client.apis.add(
+                target_url='http://mockbin.com', name=self._cleanup_afterwards('Mockbin'), public_dns='mockbin.com')
+            self.assertIsNotNone(result)
+            self.assertEqual(self.client.apis.plugins('Mockbin').count(), 0)
+
+            # Create global plugin configuration for the api
+            result2 = self.client.apis.plugins('Mockbin').create('ratelimiting', enabled=False, second=20)
+            self.assertIsNotNone(result2)
+            self.assertEqual(result2['enabled'], False)
+            self.assertEqual(result2['value']['second'], 20)
+
+            # Update by name
+            result3 = self.client.apis.plugins('Mockbin').update(result2['name'], enabled=True, second=27)
+            self.assertIsNotNone(result3)
+            self.assertEqual(result3['enabled'], True)
+            self.assertEqual(result3['value']['second'], 27)
+
+            # Update by id
+            result4 = self.client.apis.plugins('Mockbin').update(result2['name'], second=35)
+            self.assertIsNotNone(result4)
+            self.assertEqual(result4['enabled'], True)
+            self.assertEqual(result4['value']['second'], 35)
+
+            # Make sure we still have only 1 configuration
+            self.assertEqual(self.client.apis.plugins('Mockbin').count(), 1)
+
 
         def test_delete_plugin_configuration(self):
             result = self.client.apis.add(

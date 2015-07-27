@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals, print_function
+import six
 import requests
 import backoff
 
@@ -33,16 +34,20 @@ class APIPluginConfigurationAdminClient(APIPluginConfigurationAdminContract, Res
         self.api_admin = api_admin
         self.api_name_or_id = api_name_or_id
 
-    def create(self, plugin_name, enabled=True, consumer_id=None, **fields):
+    def create(self, plugin_name, enabled=None, consumer_id=None, **fields):
         values = {}
         for key in fields:
             values['value.%s' % key] = fields[key]
 
-        response = self.session.post(self.get_url('apis', self.api_name_or_id, 'plugins'), data=dict({
+        data = dict({
             'name': plugin_name,
-            'enabled': enabled,
             'consumer_id': consumer_id,
-        }, **values))
+        }, **values)
+
+        if enabled is not None and isinstance(enabled, bool):
+            data['enabled'] = enabled
+
+        response = self.session.post(self.get_url('apis', self.api_name_or_id, 'plugins'), data=data)
         result = response.json()
         if response.status_code == CONFLICT:
             raise ConflictError(', '.join(result.values()))
@@ -51,8 +56,29 @@ class APIPluginConfigurationAdminClient(APIPluginConfigurationAdminContract, Res
 
         return result
 
-    def update(self, plugin_name_or_id, enabled=True, consumer_id=None, **fields):
-        return super(APIPluginConfigurationAdminClient, self).update(plugin_name_or_id, consumer_id, **fields)
+    def update(self, plugin_name, enabled=None, consumer_id=None, **fields):
+        values = {}
+        for key in fields:
+            values['value.%s' % key] = fields[key]
+
+        data_struct_update = dict({
+            'name': plugin_name,
+        }, **values)
+
+        if consumer_id is not None:
+            data_struct_update['consumer_id'] = consumer_id
+
+        if enabled is not None and isinstance(enabled, bool):
+            data_struct_update['enabled'] = enabled
+
+        url = self.get_url('apis', self.api_name_or_id, 'plugins', plugin_name)
+
+        response = self.session.patch(url, data=data_struct_update)
+        result = response.json()
+
+        assert response.status_code == OK
+
+        return result
 
     def list(self, size=100, offset=None, **filter_fields):
         assert_dict_keys_in(filter_fields, ['id', 'name', 'api_id', 'consumer_id'])

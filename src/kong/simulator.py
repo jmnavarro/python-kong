@@ -2,6 +2,7 @@
 from __future__ import unicode_literals, print_function
 
 import uuid
+from requests.packages.urllib3.packages import six
 
 from .contract import KongAdminContract, APIPluginConfigurationAdminContract, APIAdminContract, ConsumerAdminContract, \
     PluginAdminContract
@@ -120,7 +121,7 @@ class APIPluginConfigurationAdminSimulator(APIPluginConfigurationAdminContract):
         self.api_url = api_url
         self._data = OrderedDict()
 
-    def create(self, plugin_name, enabled=True, consumer_id=None, **fields):
+    def create(self, plugin_name, enabled=None, consumer_id=None, **fields):
         plugins = PluginAdminSimulator.PLUGINS
 
         if plugin_name not in plugins.keys():
@@ -142,51 +143,54 @@ class APIPluginConfigurationAdminSimulator(APIPluginConfigurationAdminContract):
 
         self._data[plugin_name] = {
             'id': id,
-            'enabled': enabled,
             'api_id': api_id,
             'name': plugin_name,
             'value': fields,
             'created_at': timestamp()
         }
 
+        if enabled is not None and isinstance(enabled, bool):
+            self._data[plugin_name]['enabled'] = enabled
+
         if consumer_id is not None:
             self._data[plugin_name]['consumer_id'] = consumer_id
 
         return self._data[plugin_name]
 
-    def update(self, plugin_name_or_id, enabled=True, consumer_id=None, **fields):
-        plugin_id = None
-        plugin_name = None
+    def update(self, plugin_name, enabled=None, consumer_id=None, **fields):
+        current_plugin_id = None
+        current_plugin_name = None
 
-        plugin_name_or_id = uuid_or_string(plugin_name_or_id)
+        for id in self._data:
+            if self._data[id]['name'] == plugin_name:
+                current_plugin_id = id
+                current_plugin_name = plugin_name
+                break
 
-        if plugin_name_or_id in self._data:
-            plugin_id = plugin_name_or_id
-            plugin_name = self._data[plugin_name_or_id]['name']
-        else:
-            for id in self._data:
-                if self._data[id]['name'] == plugin_name_or_id:
-                    plugin_id = id
-                    plugin_name = plugin_name_or_id
-                    break
-
-        if plugin_name is None or plugin_id is None:
-            raise ValueError('Unknown plugin_name_or_id: %s' % plugin_name_or_id)
-
-        if plugin_name not in PluginAdminSimulator.PLUGINS.keys():
+        if current_plugin_name is None or current_plugin_id is None:
             raise ValueError('Unknown plugin_name: %s' % plugin_name)
 
-        for key in fields:
-            if key not in PluginAdminSimulator.PLUGINS[plugin_name]:
-                raise ValueError('Unknown value field: %s' % key)
+        if current_plugin_name not in PluginAdminSimulator.PLUGINS.keys():
+            raise ValueError('Unknown plugin_name: %s' % current_plugin_name)
 
-        data_struct_update = fields
+        for key in fields:
+            if key not in PluginAdminSimulator.PLUGINS[current_plugin_name]['fields']:
+                raise ValueError('Unknown value field "%s" for plugin: %s' % (key, current_plugin_name))
+
+        data_struct_update = {
+            'name': plugin_name,
+            'value': fields
+        }
 
         if consumer_id is not None:
             data_struct_update['consumer_id'] = consumer_id
 
-        self._data[plugin_id].update(data_struct_update)
-        return self._data[plugin_id]
+        if enabled is not None and isinstance(enabled, bool):
+            data_struct_update['enabled'] = enabled
+
+        self._data[current_plugin_id].update(data_struct_update)
+
+        return self._data[current_plugin_id]
 
     def list(self, size=100, offset=None, **filter_fields):
         data_list = [data_struct for data_struct in filter_dict_list(self._data.values(), **filter_fields)]
