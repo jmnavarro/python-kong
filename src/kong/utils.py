@@ -1,15 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals, print_function
-from future.standard_library import hooks
-
 import six
 import time
 import uuid
 import copy
 from json import dumps
 
-with hooks():
-    from urllib.parse import urlparse, urlencode, unquote, parse_qsl, ParseResult
+from .compat import urlparse, urlencode, unquote, parse_qsl, ParseResult
 
 
 def timestamp():

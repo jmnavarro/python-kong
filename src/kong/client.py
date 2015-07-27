@@ -1,16 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals, print_function
-from future.standard_library import hooks
 import requests
 import backoff
 
-with hooks():
-    from urllib.parse import urljoin
-
-from .constants import OK, CREATED, NO_CONTENT, CONFLICT
 from .contract import KongAdminContract, APIAdminContract, ConsumerAdminContract, PluginAdminContract, \
     APIPluginConfigurationAdminContract
 from .utils import add_url_params, assert_dict_keys_in, ensure_trailing_slash
+from .compat import OK, CREATED, NO_CONTENT, CONFLICT, urljoin
 from .exceptions import ConflictError
 
 

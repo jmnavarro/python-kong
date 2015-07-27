@@ -6,12 +6,6 @@ import sys
 import collections
 import requests
 
-try:
-    from unittest import TestCase, skipIf, main as run_unittests
-except ImportError:
-    # For python <= 2.6
-    from unittest2 import TestCase, skipIf, main as run_unittests
-
 # To run the standalone test script
 if __name__ == '__main__':
     sys.path.append('../src/')
@@ -19,6 +13,7 @@ if __name__ == '__main__':
 from kong.exceptions import ConflictError
 from kong.simulator import KongAdminSimulator
 from kong.client import KongAdminClient
+from kong.compat import TestCase, skipIf, run_unittests
 
 API_URL = os.environ.get('PYKONG_TEST_API_URL', 'http://localhost:8001')
 
