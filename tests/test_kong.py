@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals, print_function
-from future.standard_library import hooks
 from abc import ABCMeta, abstractmethod
 import os
 import sys
 import collections
-import unittest
+import requests
 
 try:
     from unittest import TestCase, skipIf, main as run_unittests
@@ -21,15 +20,18 @@ from kong.exceptions import ConflictError
 from kong.simulator import KongAdminSimulator
 from kong.client import KongAdminClient
 
-with hooks():
-    from urllib.request import urlopen
-
 API_URL = os.environ.get('PYKONG_TEST_API_URL', 'http://localhost:8001')
+
+_SESSION = None
 
 
 def kong_testserver_is_up():
+    global _SESSION
+    if not _SESSION:
+        _SESSION = requests.session()
+
     try:
-        return urlopen(API_URL).getcode() == 200
+        return _SESSION.get(API_URL).status_code == 200
     except IOError:
         return False
 
