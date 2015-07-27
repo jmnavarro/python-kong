@@ -3,6 +3,7 @@
 from __future__ import absolute_import, print_function
 
 import io
+import sys
 import os
 import re
 from glob import glob
@@ -17,11 +18,21 @@ from pip.req import parse_requirements
 from setuptools import find_packages
 from setuptools import setup
 
+__version__ = '0.1.2'
+
+
 def read(*names, **kwargs):
     return io.open(
         join(dirname(__file__), *names),
         encoding=kwargs.get('encoding', 'utf8')
     ).read()
+
+if sys.argv[-1] == 'publish':
+    os.system('python setup.py release')
+    print("You probably want to also tag the version now:")
+    print("  git tag -a %s -m 'version %s'" % (__version__, __version__))
+    print("  git push --tags")
+    sys.exit()
 
 # parse_requirements() returns generator of pip.req.InstallRequirement objects
 requirements = [str(ir.req) for ir in parse_requirements('./requirements.txt', session=False)]
