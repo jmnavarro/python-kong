@@ -33,7 +33,7 @@ requirements = [str(ir.req) for ir in parse_requirements('./requirements.txt', s
 
 setup(
     name='python-kong',
-    version='0.1.3',
+    version=__version__,
     license='BSD',
     description='A Python client for the Kong API (http://getkong.org/)',
     long_description='%s\n%s' % (read('README.rst'), re.sub(':[a-z]+:`~?(.*?)`', r'``\1``', read('CHANGELOG.rst'))),
