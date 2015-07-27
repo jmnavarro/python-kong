@@ -2,6 +2,11 @@
 Changelog
 =========
 
+0.1.2 (2015-07-27)
+------------------
+
+* Implemented 'plugin configuration' update API
+
 0.1.1 (2015-07-24)
 ------------------
 
