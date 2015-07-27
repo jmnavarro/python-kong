@@ -68,10 +68,10 @@ class SimulatorDataStore(object):
         data_list = [filter_api_struct(data_struct, self._data_struct_filter)
                      for data_struct in filter_dict_list(self._data.values(), **filter_fields)]
 
-        if offset is not None:
-            offset_index = self._data.keys().index(uuid_or_string(offset))
-        else:
-            offset_index = 0
+        offset_index = (
+            0 if offset is None else
+            self._data.keys().index(uuid_or_string(offset))
+        )
 
         sliced_data = data_list[offset_index:size]
 
@@ -146,11 +146,9 @@ class APIPluginConfigurationAdminSimulator(APIPluginConfigurationAdminContract):
             'api_id': api_id,
             'name': plugin_name,
             'value': fields,
-            'created_at': timestamp()
+            'created_at': timestamp(),
+            'enabled': True if enabled is None else enabled
         }
-
-        if enabled is not None and isinstance(enabled, bool):
-            self._data[plugin_name]['enabled'] = enabled
 
         if consumer_id is not None:
             self._data[plugin_name]['consumer_id'] = consumer_id
@@ -195,10 +193,10 @@ class APIPluginConfigurationAdminSimulator(APIPluginConfigurationAdminContract):
     def list(self, size=100, offset=None, **filter_fields):
         data_list = [data_struct for data_struct in filter_dict_list(self._data.values(), **filter_fields)]
 
-        if offset is not None:
-            offset_index = self._data.keys().index(uuid_or_string(offset))
-        else:
-            offset_index = 0
+        offset_index = (
+            0 if offset is None else
+            self._data.keys().index(uuid_or_string(offset))
+        )
 
         sliced_data = data_list[offset_index:size]
 
@@ -247,10 +245,6 @@ class APIAdminSimulator(APIAdminContract):
             })
         self._plugin_admins = {}
 
-    @property
-    def api_url(self):
-        return self._store.api_url
-
     def count(self):
         return self._store.count()
 
@@ -297,9 +291,6 @@ class APIAdminSimulator(APIAdminContract):
 
         return self._store.delete(name_or_id, 'name')
 
-    def clear(self):
-        self._store.clear()
-
     def plugins(self, name_or_id):
         api_id = self.retrieve(name_or_id).get('id')
 
@@ -320,10 +311,6 @@ class ConsumerAdminSimulator(ConsumerAdminContract):
                 'custom_id': None,
                 'username': None
             })
-
-    @property
-    def api_url(self):
-        return self._store.api_url
 
     def count(self):
         return self._store.count()
@@ -348,9 +335,6 @@ class ConsumerAdminSimulator(ConsumerAdminContract):
 
     def delete(self, username_or_id):
         return self._store.delete(username_or_id, 'username')
-
-    def clear(self):
-        self._store.clear()
 
 
 class PluginAdminSimulator(PluginAdminContract):

@@ -7,7 +7,7 @@ import backoff
 from .contract import KongAdminContract, APIAdminContract, ConsumerAdminContract, PluginAdminContract, \
     APIPluginConfigurationAdminContract
 from .utils import add_url_params, assert_dict_keys_in, ensure_trailing_slash
-from .compat import OK, CREATED, NO_CONTENT, CONFLICT, urljoin
+from .compat import OK, CREATED, NO_CONTENT, CONFLICT, BAD_REQUEST, urljoin
 from .exceptions import ConflictError
 
 
@@ -51,6 +51,8 @@ class APIPluginConfigurationAdminClient(APIPluginConfigurationAdminContract, Res
         result = response.json()
         if response.status_code == CONFLICT:
             raise ConflictError(', '.join(result.values()))
+        elif response.status_code == BAD_REQUEST:
+            raise ValueError(', '.join(result.values()))
 
         assert response.status_code == CREATED
 
@@ -75,6 +77,9 @@ class APIPluginConfigurationAdminClient(APIPluginConfigurationAdminContract, Res
 
         response = self.session.patch(url, data=data_struct_update)
         result = response.json()
+
+        if response.status_code == BAD_REQUEST:
+            raise ValueError(', '.join(result.values()))
 
         assert response.status_code == OK
 

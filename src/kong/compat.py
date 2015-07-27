@@ -2,15 +2,15 @@
 from __future__ import unicode_literals, print_function
 
 try:
-    from http.client import OK, CREATED, CONFLICT, NO_CONTENT
+    from http.client import OK, CREATED, CONFLICT, NO_CONTENT, BAD_REQUEST
 except ImportError:
-    from httplib import OK, CREATED, CONFLICT, NO_CONTENT
+    from httplib import OK, CREATED, CONFLICT, NO_CONTENT, BAD_REQUEST
 
 try:
-    from urllib.parse import urlparse, urljoin, urlencode, unquote, parse_qsl, ParseResult
+    from urllib.parse import urlparse, urljoin, urlencode, quote, unquote, parse_qsl, ParseResult
 except ImportError:
     from urlparse import urlparse, urljoin, parse_qsl, ParseResult
-    from urllib import urlencode, unquote
+    from urllib import urlencode, quote, unquote
 
 try:
     from collections import OrderedDict

@@ -5,6 +5,8 @@ import os
 import sys
 import collections
 import requests
+import uuid
+import json
 
 # To run the standalone test script
 if __name__ == '__main__':
@@ -13,7 +15,8 @@ if __name__ == '__main__':
 from kong.exceptions import ConflictError
 from kong.simulator import KongAdminSimulator
 from kong.client import KongAdminClient
-from kong.compat import TestCase, skipIf, run_unittests
+from kong.compat import TestCase, skipIf, run_unittests, OrderedDict, urlencode
+from kong.utils import uuid_or_string, add_url_params, sorted_ordered_dict
 
 API_URL = os.environ.get('PYKONG_TEST_API_URL', 'http://localhost:8001')
 
@@ -152,6 +155,10 @@ class KongAdminTesting(object):
 
             self.assertEqual(len(data), 1)
 
+            result = self.client.apis.list(size=3)
+            self.assertIsNotNone(result['next'])
+            self.assertEqual(len(result['data']), 3)
+
         def test_delete(self):
             result1 = self.client.apis.add(
                 target_url='http://mockbin1.com', name='Mockbin1', public_dns='mockbin1.com')
@@ -184,6 +191,38 @@ class KongAdminTesting(object):
             self.assertFalse(result2['enabled'])
             self.assertEqual(result2['value']['second'], 20)
             self.assertEqual(self.client.apis.plugins('Mockbin').count(), 1)
+
+        def test_create_non_existing_plugin_configuration(self):
+            # Create test api
+            result = self.client.apis.add(
+                target_url='http://mockbin.com', name=self._cleanup_afterwards('Mockbin'), public_dns='mockbin.com')
+            self.assertIsNotNone(result)
+            self.assertEqual(self.client.apis.plugins('Mockbin').count(), 0)
+
+            result2 = None
+            error_thrown = False
+            try:
+                result2 = self.client.apis.plugins('Mockbin').create('unknown_plugin', second=20)
+            except ValueError:
+                error_thrown = True
+            self.assertTrue(error_thrown)
+            self.assertIsNone(result2)
+
+        def test_create_incorrect_plugin_configuration(self):
+            # Create test api
+            result = self.client.apis.add(
+                target_url='http://mockbin.com', name=self._cleanup_afterwards('Mockbin'), public_dns='mockbin.com')
+            self.assertIsNotNone(result)
+            self.assertEqual(self.client.apis.plugins('Mockbin').count(), 0)
+
+            result2 = None
+            error_thrown = False
+            try:
+                result2 = self.client.apis.plugins('Mockbin').create('ratelimiting', unknown_parameter=20)
+            except ValueError:
+                error_thrown = True
+            self.assertTrue(error_thrown)
+            self.assertIsNone(result2)
 
         def test_create_consumer_specific_plugin_configuration(self):
             # Create test api
@@ -220,21 +259,48 @@ class KongAdminTesting(object):
             self.assertEqual(result2['enabled'], False)
             self.assertEqual(result2['value']['second'], 20)
 
-            # Update by name
+            # Update
             result3 = self.client.apis.plugins('Mockbin').update(result2['name'], enabled=True, second=27)
             self.assertIsNotNone(result3)
             self.assertEqual(result3['enabled'], True)
             self.assertEqual(result3['value']['second'], 27)
 
-            # Update by id
-            result4 = self.client.apis.plugins('Mockbin').update(result2['name'], second=35)
-            self.assertIsNotNone(result4)
-            self.assertEqual(result4['enabled'], True)
-            self.assertEqual(result4['value']['second'], 35)
-
             # Make sure we still have only 1 configuration
             self.assertEqual(self.client.apis.plugins('Mockbin').count(), 1)
 
+        def test_update_consumer_specific_plugin_configuration(self):
+            # Create test api
+            result = self.client.apis.add(
+                target_url='http://mockbin.com', name=self._cleanup_afterwards('Mockbin'), public_dns='mockbin.com')
+            self.assertIsNotNone(result)
+            self.assertEqual(self.client.apis.plugins('Mockbin').count(), 0)
+
+            # Create test consumer
+            consumer = self.client.consumers.create(username='abc1234')
+
+            try:
+                # Create consumer specific plugin configuration for the api
+                result2 = self.client.apis.plugins('Mockbin').create(
+                    'requestsizelimiting', consumer_id=consumer['id'], allowed_payload_size=512)
+                self.assertIsNotNone(result2)
+                self.assertIsNotNone(result2['consumer_id'])
+                self.assertEqual(result2['consumer_id'], consumer['id'])
+                self.assertEqual(self.client.apis.plugins('Mockbin').count(), 1)
+
+                # Update
+                result3 = self.client.apis.plugins('Mockbin').update(
+                    'requestsizelimiting', consumer_id=consumer['id'], allowed_payload_size=1024)
+                self.assertIsNotNone(result3)
+                self.assertEqual(result3['enabled'], True)
+                self.assertEqual(result3['value']['allowed_payload_size'], 1024)
+                self.assertIsNotNone(result3['consumer_id'])
+                self.assertEqual(result3['consumer_id'], consumer['id'])
+
+                # Make sure we still have only 1 configuration
+                self.assertEqual(self.client.apis.plugins('Mockbin').count(), 1)
+            finally:
+                # Delete the test consumer
+                self.client.consumers.delete(consumer['id'])
 
         def test_delete_plugin_configuration(self):
             result = self.client.apis.add(
@@ -285,6 +351,7 @@ class KongAdminTesting(object):
         def _cleanup_afterwards(self, name_or_id):
             self._cleanup.append(name_or_id)
             return name_or_id
+
 
     class ConsumerTestCase(ClientFactoryMixin, TestCase):
         __metaclass__ = ABCMeta
@@ -423,6 +490,10 @@ class KongAdminTesting(object):
 
             self.assertEqual(len(data), 1)
 
+            result = self.client.consumers.list(size=3)
+            self.assertIsNotNone(result['next'])
+            self.assertEqual(len(result['data']), 3)
+
         def test_delete(self):
             result1 = self.client.consumers.create(
                 username='abc1234', custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
@@ -467,6 +538,39 @@ class KongAdminTesting(object):
                 schema = self.client.plugins.retrieve_schema(plugin_name)
                 self.assertIsNotNone(schema)
                 self.assertTrue(isinstance(schema, dict))
+
+
+class UtilTestCase(TestCase):
+    def test_uuid_or_string_uuid(self):
+        input = uuid.uuid4()
+        result = uuid_or_string(input)
+        self.assertEqual(result, str(input))
+
+    def test_uuid_or_string_incorrect_value(self):
+        result = None
+        error_thrown = False
+        try:
+            result = uuid_or_string(1234)
+        except ValueError:
+            error_thrown = True
+        self.assertTrue(error_thrown)
+        self.assertIsNone(result)
+
+    def test_add_url_params(self):
+        params = OrderedDict({
+            'bla1': 1,
+            'bla2': 'hello',
+            'bla3': True,
+            'bla4': sorted_ordered_dict({'a': 1, 'b': ['a', 2, False]})
+        })
+        result = add_url_params('http://localhost/?x=0', params)
+        expected_result = \
+            'http://localhost/?bla1=1&bla2=hello&bla3=%s&%s&x=0' % (
+                json.dumps(True),
+                urlencode({
+                    'bla4': json.dumps(params['bla4'])
+                }))
+        self.assertEqual(result, expected_result)
 
 
 class SimulatorAPITestCase(KongAdminTesting.APITestCase):

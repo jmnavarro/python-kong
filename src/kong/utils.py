@@ -6,7 +6,7 @@ import uuid
 import copy
 from json import dumps
 
-from .compat import urlparse, urlencode, unquote, parse_qsl, ParseResult
+from .compat import urlparse, urlencode, unquote, parse_qsl, ParseResult, OrderedDict
 
 
 def timestamp():
@@ -15,6 +15,11 @@ def timestamp():
     :return:
     """
     return int(time.time())
+
+
+def sorted_ordered_dict(d, key=None):
+    key = key or (lambda t: t[0])
+    return OrderedDict(sorted(d.items(), key=key))
 
 
 def uuid_or_string(data):
@@ -88,6 +93,8 @@ def add_url_params(url, params):
         if isinstance(v, (bool, dict)):
             json_friendly_data[k] = dumps(v)
     parsed_get_args.update(json_friendly_data)
+
+    parsed_get_args = sorted_ordered_dict(parsed_get_args)
 
     # Converting URL argument to proper query string
     encoded_get_args = urlencode(parsed_get_args, doseq=True)
