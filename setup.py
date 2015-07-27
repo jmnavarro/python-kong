@@ -18,7 +18,7 @@ from pip.req import parse_requirements
 from setuptools import find_packages
 from setuptools import setup
 
-__version__ = '0.1.2'
+__version__ = '0.1.3'
 
 
 def read(*names, **kwargs):
@@ -33,7 +33,7 @@ requirements = [str(ir.req) for ir in parse_requirements('./requirements.txt', s
 
 setup(
     name='python-kong',
-    version='0.1.2',
+    version='0.1.3',
     license='BSD',
     description='A Python client for the Kong API (http://getkong.org/)',
     long_description='%s\n%s' % (read('README.rst'), re.sub(':[a-z]+:`~?(.*?)`', r'``\1``', read('CHANGELOG.rst'))),
