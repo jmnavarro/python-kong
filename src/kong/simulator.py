@@ -105,9 +105,6 @@ class SimulatorDataStore(object):
                 del self._data[id]
                 break
 
-    def clear(self):
-        self._data = OrderedDict()
-
     def _get_by_field(self, field, value):
         for data_struct in self._data.values():
             if data_struct[field] == value:
@@ -126,6 +123,9 @@ class APIPluginConfigurationAdminSimulator(APIPluginConfigurationAdminContract):
 
         if plugin_name not in plugins.keys():
             raise ValueError('Unknown plugin_name: %s' % plugin_name)
+
+        if plugin_name in self._data:
+            raise ConflictError('Plugin configuration already exists')
 
         known_fields = plugins[plugin_name].get('fields')
 

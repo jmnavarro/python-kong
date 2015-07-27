@@ -192,6 +192,27 @@ class KongAdminTesting(object):
             self.assertEqual(result2['value']['second'], 20)
             self.assertEqual(self.client.apis.plugins('Mockbin').count(), 1)
 
+        def test_create_plugin_configuration_conflict(self):
+            # Create test api
+            result = self.client.apis.add(
+                target_url='http://mockbin.com', name=self._cleanup_afterwards('Mockbin'), public_dns='mockbin.com')
+            self.assertIsNotNone(result)
+            self.assertEqual(self.client.apis.plugins('Mockbin').count(), 0)
+
+            # Create global plugin configuration for the api
+            result2 = self.client.apis.plugins('Mockbin').create('ratelimiting', enabled=False, second=20)
+            self.assertIsNotNone(result2)
+            self.assertIsNotNone(result2['id'])
+
+            result3 = None
+            error_thrown = False
+            try:
+                result3 = self.client.apis.plugins('Mockbin').create('ratelimiting', enabled=False, second=35)
+            except ConflictError as e:
+                error_thrown = True
+            self.assertTrue(error_thrown)
+            self.assertIsNone(result3)
+
         def test_create_non_existing_plugin_configuration(self):
             # Create test api
             result = self.client.apis.add(
