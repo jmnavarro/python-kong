@@ -23,7 +23,6 @@ class CollectionMixin(with_metaclass(ABCMeta, object)):
         from .utils import parse_query_parameters
         current_offset = None
         while True:
-            print('iterate: current_offset: %s' % current_offset)
             response = self.list(size=window_size, offset=current_offset, **filter_fields)
             for item in response['data']:
                 yield item
