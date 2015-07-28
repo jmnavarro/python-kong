@@ -56,7 +56,7 @@ Installation
 
 ::
 
-    pip install kong
+    pip install python-kong
 
 Documentation
 =============

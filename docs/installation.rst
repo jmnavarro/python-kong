@@ -4,4 +4,4 @@ Installation
 
 At the command line::
 
-    pip install kong
+    pip install python-kong
