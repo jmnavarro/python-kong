@@ -6,7 +6,7 @@ import uuid
 import copy
 from json import dumps
 
-from .compat import urlparse, urlencode, unquote, parse_qsl, ParseResult, OrderedDict
+from .compat import urlparse, urlencode, unquote, parse_qs, parse_qsl, ParseResult, OrderedDict
 
 
 def timestamp():
@@ -117,3 +117,7 @@ def ensure_trailing_slash(url):
     if not url.endswith('/'):
         url = '%s/' % url
     return url
+
+
+def parse_query_parameters(url):
+    return parse_qs(urlparse(url).query)

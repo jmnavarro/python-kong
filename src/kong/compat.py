@@ -7,9 +7,9 @@ except ImportError:  # pragma: no cover
     from httplib import OK, CREATED, CONFLICT, NO_CONTENT, BAD_REQUEST
 
 try:
-    from urllib.parse import urlparse, urljoin, urlencode, quote, unquote, parse_qsl, ParseResult
+    from urllib.parse import urlparse, urljoin, urlencode, quote, unquote, parse_qs, parse_qsl, ParseResult
 except ImportError:  # pragma: no cover
-    from urlparse import urlparse, urljoin, parse_qsl, ParseResult
+    from urlparse import urlparse, urljoin, parse_qs, parse_qsl, ParseResult
     from urllib import urlencode, quote, unquote
 
 try:
