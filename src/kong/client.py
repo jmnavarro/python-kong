@@ -7,6 +7,7 @@ import backoff
 from .contract import KongAdminContract, APIAdminContract, ConsumerAdminContract, PluginAdminContract, \
     APIPluginConfigurationAdminContract
 from .utils import add_url_params, assert_dict_keys_in, ensure_trailing_slash
+from .mixins import CollectionMixin
 from .compat import OK, CREATED, NO_CONTENT, CONFLICT, BAD_REQUEST, urljoin
 from .exceptions import ConflictError
 
@@ -27,7 +28,7 @@ class RestClient(object):
         return add_url_params(url, query_params)
 
 
-class APIPluginConfigurationAdminClient(APIPluginConfigurationAdminContract, RestClient):
+class APIPluginConfigurationAdminClient(CollectionMixin, APIPluginConfigurationAdminContract, RestClient):
     def __init__(self, api_admin, api_name_or_id, api_url):
         super(APIPluginConfigurationAdminClient, self).__init__(api_url)
 
@@ -114,7 +115,7 @@ class APIPluginConfigurationAdminClient(APIPluginConfigurationAdminContract, Res
         return amount
 
 
-class APIAdminClient(APIAdminContract, RestClient):
+class APIAdminClient(CollectionMixin, APIAdminContract, RestClient):
     def __init__(self, api_url):
         super(APIAdminClient, self).__init__(api_url)
 
@@ -184,7 +185,7 @@ class APIAdminClient(APIAdminContract, RestClient):
         return APIPluginConfigurationAdminClient(self, name_or_id, self.api_url)
 
 
-class ConsumerAdminClient(ConsumerAdminContract, RestClient):
+class ConsumerAdminClient(CollectionMixin, ConsumerAdminContract, RestClient):
     def __init__(self, api_url):
         super(ConsumerAdminClient, self).__init__(api_url)
 

@@ -2,12 +2,12 @@
 from __future__ import unicode_literals, print_function
 
 import uuid
-from requests.packages.urllib3.packages import six
 
 from .contract import KongAdminContract, APIPluginConfigurationAdminContract, APIAdminContract, ConsumerAdminContract, \
     PluginAdminContract
 from .utils import timestamp, uuid_or_string, add_url_params, filter_api_struct, filter_dict_list, assert_dict_keys_in, \
     ensure_trailing_slash
+from .mixins import CollectionMixin
 from .compat import OrderedDict
 from .exceptions import ConflictError
 
@@ -111,7 +111,7 @@ class SimulatorDataStore(object):
                 return data_struct
 
 
-class APIPluginConfigurationAdminSimulator(APIPluginConfigurationAdminContract):
+class APIPluginConfigurationAdminSimulator(CollectionMixin, APIPluginConfigurationAdminContract):
     def __init__(self, api_admin, api_name_or_id, api_url):
         self.api_admin = api_admin
         self.api_name_or_id = api_name_or_id
@@ -234,7 +234,7 @@ class APIPluginConfigurationAdminSimulator(APIPluginConfigurationAdminContract):
         return len(self._data.keys())
 
 
-class APIAdminSimulator(APIAdminContract):
+class APIAdminSimulator(CollectionMixin, APIAdminContract):
     def __init__(self, api_url=None):
         self._store = SimulatorDataStore(
             api_url or 'http://localhost:8001/apis/',
@@ -303,7 +303,7 @@ class APIAdminSimulator(APIAdminContract):
         return self._plugin_admins[api_id]
 
 
-class ConsumerAdminSimulator(ConsumerAdminContract):
+class ConsumerAdminSimulator(CollectionMixin, ConsumerAdminContract):
     def __init__(self, api_url=None):
         self._store = SimulatorDataStore(
             api_url or 'http://localhost:8001/consumers/',

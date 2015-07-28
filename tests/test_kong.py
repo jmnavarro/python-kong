@@ -159,6 +159,22 @@ class KongAdminTesting(object):
             self.assertIsNotNone(result['next'])
             self.assertEqual(len(result['data']), 3)
 
+        def test_iterate(self):
+            amount = 10
+
+            for i in range(amount):
+                self.client.apis.add(
+                    target_url='http://mockbin%s.com' % i,
+                    name=self._cleanup_afterwards('Mockbin%s' % i),
+                    public_dns='mockbin%s.com' % i)
+
+            found = []
+
+            for item in self.client.apis.iterate(window_size=3):
+                found.append(item)
+
+            self.assertEqual(len(found), amount)
+
         def test_delete(self):
             result1 = self.client.apis.add(
                 target_url='http://mockbin1.com', name='Mockbin1', public_dns='mockbin1.com')
@@ -514,6 +530,21 @@ class KongAdminTesting(object):
             result = self.client.consumers.list(size=3)
             self.assertIsNotNone(result['next'])
             self.assertEqual(len(result['data']), 3)
+
+        def test_iterate(self):
+            amount = 10
+
+            for i in range(amount):
+                self.client.consumers.create(
+                    username=self._cleanup_afterwards('abc1234_%s' % i),
+                    custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345_%s' % i)
+
+            found = []
+
+            for item in self.client.consumers.iterate(window_size=3):
+                found.append(item)
+
+            self.assertEqual(len(found), amount)
 
         def test_delete(self):
             result1 = self.client.consumers.create(
