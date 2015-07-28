@@ -24,7 +24,7 @@ project = u'python-kong'
 year = u'2015'
 author = u'Dirk Moors'
 copyright = '{0}, {1}'.format(year, author)
-version = release = u'0.1.3'
+version = release = u'0.1.4'
 # on_rtd is whether we are on readthedocs.org
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
