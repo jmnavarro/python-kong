@@ -262,7 +262,7 @@ class APIAdminSimulator(CollectionMixin, APIAdminContract):
             'target_url': target_url,
             'strip_path': strip_path,
             'created_at': timestamp()
-        }, check_conflict_keys=('name', 'target_url'))
+        }, check_conflict_keys=('name', 'public_dns'))
 
     def update(self, name_or_id, target_url, **fields):
         # ensure trailing slash

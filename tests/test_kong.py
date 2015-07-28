@@ -69,7 +69,7 @@ class KongAdminTesting(object):
             self.assertIsNotNone(result['created_at'])
             self.assertFalse('path' in result)
 
-        def test_add_conflict(self):
+        def test_add_conflict_name(self):
             result = self.client.apis.add(
                 target_url='http://mockbin.com', name=self._cleanup_afterwards('Mockbin'), public_dns='mockbin.com')
             self.assertIsNotNone(result)
@@ -79,7 +79,25 @@ class KongAdminTesting(object):
             error_thrown = False
             try:
                 result2 = self.client.apis.add(
-                    target_url='http://mockbin.com', name=self._cleanup_afterwards('Mockbin'), public_dns='mockbin.com')
+                    target_url='http://mockbin.com2', name=self._cleanup_afterwards('Mockbin'), public_dns='mockbin2.com')
+            except ConflictError:
+                error_thrown = True
+            self.assertTrue(error_thrown)
+            self.assertIsNone(result2)
+
+            self.assertEqual(self.client.apis.count(), 1)
+
+        def test_add_conflict_public_dns(self):
+            result = self.client.apis.add(
+                target_url='http://mockbin.com', name=self._cleanup_afterwards('Mockbin'), public_dns='mockbin.com')
+            self.assertIsNotNone(result)
+            self.assertEqual(self.client.apis.count(), 1)
+
+            result2 = None
+            error_thrown = False
+            try:
+                result2 = self.client.apis.add(
+                    target_url='http://mockbin2.com', name='Mockbin2', public_dns='mockbin.com')
             except ConflictError:
                 error_thrown = True
             self.assertTrue(error_thrown)

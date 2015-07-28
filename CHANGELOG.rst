@@ -2,6 +2,11 @@
 Changelog
 =========
 
+0.1.4 (2015-07-28)
+------------------
+
+* Bugfix related to checking for API conflicts
+
 0.1.3 (2015-07-28)
 ------------------
 
