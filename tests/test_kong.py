@@ -174,6 +174,28 @@ class KongAdminTesting(object):
                 found.append(item)
 
             self.assertEqual(len(found), amount)
+            self.assertEqual(
+                sorted([item['id'] for item in found]),
+                sorted([item['id'] for item in self.client.apis.list().get('data')]))
+
+        def test_iterate_filtered(self):
+            amount = 10
+
+            for i in range(amount):
+                self.client.apis.add(
+                    target_url='http://mockbin%s.com' % i,
+                    name=self._cleanup_afterwards('Mockbin%s' % i),
+                    public_dns='mockbin%s.com' % i)
+
+            found = []
+
+            for item in self.client.apis.iterate(window_size=3, name='Mockbin3'):
+                found.append(item)
+
+            self.assertEqual(len(found), 1)
+            self.assertEqual(
+                sorted([item['id'] for item in found]),
+                sorted([item['id'] for item in self.client.apis.list(name='Mockbin3').get('data')]))
 
         def test_delete(self):
             result1 = self.client.apis.add(
@@ -571,6 +593,9 @@ class KongAdminTesting(object):
                 found.append(item)
 
             self.assertEqual(len(found), amount)
+            self.assertEqual(
+                sorted([item['id'] for item in found]),
+                sorted([item['id'] for item in self.client.consumers.list().get('data')]))
 
         def test_delete(self):
             result1 = self.client.consumers.create(
