@@ -347,6 +347,7 @@ class PluginAdminContract(with_metaclass(ABCMeta, object)):
         :return: Returns the schema of a plugin's configuration.
         """
 
+
 class KongAdminContract(object):
     def __init__(self, apis, consumers, plugins):
         self._apis = apis

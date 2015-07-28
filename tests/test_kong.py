@@ -389,7 +389,6 @@ class KongAdminTesting(object):
             self._cleanup.append(name_or_id)
             return name_or_id
 
-
     class ConsumerTestCase(ClientFactoryMixin, TestCase):
         __metaclass__ = ABCMeta
 

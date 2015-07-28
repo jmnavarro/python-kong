@@ -92,7 +92,7 @@ class APIPluginConfigurationAdminClient(CollectionMixin, APIPluginConfigurationA
         query_params = filter_fields
         query_params['size'] = size
 
-        if offset:
+        if offset is not None:
             query_params['offset'] = offset
 
         url = self.get_url('apis', self.api_name_or_id, 'plugins', **query_params)
