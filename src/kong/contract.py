@@ -4,8 +4,12 @@ from abc import ABCMeta, abstractmethod
 
 from six import with_metaclass
 
+from .mixins import CollectionMixin
 
-class APIPluginConfigurationAdminContract(with_metaclass(ABCMeta, object)):
+
+class APIPluginConfigurationAdminContract(CollectionMixin):
+    __metaclass__ = ABCMeta
+
     @abstractmethod
     def count(self):
         """
@@ -119,7 +123,9 @@ class APIPluginConfigurationAdminContract(with_metaclass(ABCMeta, object)):
         """
 
 
-class APIAdminContract(with_metaclass(ABCMeta, object)):
+class APIAdminContract(CollectionMixin):
+    __metaclass__ = ABCMeta
+
     @abstractmethod
     def count(self):
         """
@@ -201,6 +207,8 @@ class APIAdminContract(with_metaclass(ABCMeta, object)):
                 }
         """
 
+
+
     @abstractmethod
     def update(self, name_or_id, target_url, **fields):
         """
@@ -238,7 +246,9 @@ class APIAdminContract(with_metaclass(ABCMeta, object)):
         """
 
 
-class ConsumerAdminContract(with_metaclass(ABCMeta, object)):
+class ConsumerAdminContract(CollectionMixin):
+    __metaclass__ = ABCMeta
+
     @abstractmethod
     def count(self):
         """

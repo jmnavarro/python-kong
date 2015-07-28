@@ -7,7 +7,6 @@ from .contract import KongAdminContract, APIPluginConfigurationAdminContract, AP
     PluginAdminContract
 from .utils import timestamp, uuid_or_string, add_url_params, filter_api_struct, filter_dict_list, assert_dict_keys_in, \
     ensure_trailing_slash
-from .mixins import CollectionMixin
 from .compat import OrderedDict
 from .exceptions import ConflictError
 
@@ -111,7 +110,7 @@ class SimulatorDataStore(object):
                 return data_struct
 
 
-class APIPluginConfigurationAdminSimulator(CollectionMixin, APIPluginConfigurationAdminContract):
+class APIPluginConfigurationAdminSimulator(APIPluginConfigurationAdminContract):
     def __init__(self, api_admin, api_name_or_id, api_url):
         self.api_admin = api_admin
         self.api_name_or_id = api_name_or_id
@@ -234,7 +233,7 @@ class APIPluginConfigurationAdminSimulator(CollectionMixin, APIPluginConfigurati
         return len(self._data.keys())
 
 
-class APIAdminSimulator(CollectionMixin, APIAdminContract):
+class APIAdminSimulator(APIAdminContract):
     def __init__(self, api_url=None):
         self._store = SimulatorDataStore(
             api_url or 'http://localhost:8001/apis/',
@@ -303,7 +302,7 @@ class APIAdminSimulator(CollectionMixin, APIAdminContract):
         return self._plugin_admins[api_id]
 
 
-class ConsumerAdminSimulator(CollectionMixin, ConsumerAdminContract):
+class ConsumerAdminSimulator(ConsumerAdminContract):
     def __init__(self, api_url=None):
         self._store = SimulatorDataStore(
             api_url or 'http://localhost:8001/consumers/',
