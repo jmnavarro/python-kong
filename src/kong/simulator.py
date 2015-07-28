@@ -68,15 +68,15 @@ class SimulatorDataStore(object):
         data_list = [filter_api_struct(data_struct, self._data_struct_filter)
                      for data_struct in filter_dict_list(self._data.values(), **filter_fields)]
 
-        offset_index = (
-            0 if offset is None else
-            self._data.keys().index(uuid_or_string(offset))
-        )
+        offset_index = 0
+        if offset is not None:
+            keys = list([item['id'] for item in self._data.values()])
+            offset_index = keys.index(uuid_or_string(offset))
 
-        sliced_data = data_list[offset_index:size]
+        sliced_data = data_list[offset_index:offset_index + size]
 
         next_url = None
-        next_index = offset_index + size + 1
+        next_index = offset_index + size
         if next_index < len(data_list):
             next_offset = data_list[next_index]['id']
             next_url = add_url_params(self.api_url, {
