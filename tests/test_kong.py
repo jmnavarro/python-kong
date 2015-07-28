@@ -305,6 +305,33 @@ class KongAdminTesting(object):
             # Make sure we still have only 1 configuration
             self.assertEqual(self.client.apis.plugins('Mockbin').count(), 1)
 
+        def test_update_incorrect_plugin_configuration(self):
+            # Create test api
+            result = self.client.apis.add(
+                target_url='http://mockbin.com', name=self._cleanup_afterwards('Mockbin'), public_dns='mockbin.com')
+            self.assertIsNotNone(result)
+            self.assertEqual(self.client.apis.plugins('Mockbin').count(), 0)
+
+            # Create global plugin configuration for the api
+            result2 = self.client.apis.plugins('Mockbin').create('ratelimiting', enabled=False, second=20)
+            self.assertIsNotNone(result2)
+            self.assertEqual(result2['enabled'], False)
+            self.assertEqual(result2['value']['second'], 20)
+
+            # Update
+            result3 = None
+            error_thrown = False
+            try:
+                result3 = self.client.apis.plugins('Mockbin').update(
+                    result2['name'], enabled=True, unknown_parameter=27)
+            except ValueError:
+                error_thrown = True
+            self.assertTrue(error_thrown)
+            self.assertIsNone(result3)
+
+            # Make sure we still have only 1 configuration
+            self.assertEqual(self.client.apis.plugins('Mockbin').count(), 1)
+
         def test_update_consumer_specific_plugin_configuration(self):
             # Create test api
             result = self.client.apis.add(
