@@ -399,8 +399,8 @@ class PluginAdminSimulator(PluginAdminContract):
 
 
 class KongAdminSimulator(KongAdminContract):
-    def __init__(self):
+    def __init__(self, api_url=None):
         super(KongAdminSimulator, self).__init__(
-            apis=APIAdminSimulator(),
-            consumers=ConsumerAdminSimulator(),
+            apis=APIAdminSimulator(api_url=api_url),
+            consumers=ConsumerAdminSimulator(api_url=api_url),
             plugins=PluginAdminSimulator())

@@ -2,6 +2,11 @@
 Changelog
 =========
 
+0.1.6 (2015-07-28)
+------------------
+
+* Updated KongAdminSimulator constructor to accept api_url
+
 0.1.5 (2015-07-28)
 ------------------
 
