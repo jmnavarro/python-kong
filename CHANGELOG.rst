@@ -2,6 +2,13 @@
 Changelog
 =========
 
+0.1.7 (2015-07-30)
+------------------
+
+* Implemented APIAdminContract.add_or_update API
+* Implemented APIPluginConfigurationAdminContract.create_or_update API
+* Implemented ConsumerAdminContract.create_or_update API
+
 0.1.6 (2015-07-28)
 ------------------
 
