@@ -134,6 +134,24 @@ class KongAdminTesting(object):
             self.assertEqual(result4['public_dns'], 'example.com')
             self.assertTrue(result4['strip_path'])
 
+        def test_add_or_update(self):
+            result = self.client.apis.add(target_url='http://mockbin.com', name='Mockbin', public_dns='mockbin.com')
+            self._cleanup_afterwards(result['id'])
+            self.assertEqual(self.client.apis.count(), 1)
+
+            # Test add_or_update without api_id -> Should ADD
+            result2 = self.client.apis.add_or_update(
+                target_url='http://mockbin2.com', name='Mockbin2', public_dns='mockbin2.com')
+            self._cleanup_afterwards(result2['id'])
+            self.assertEqual(self.client.apis.count(), 2)
+
+            # Test add_or_update with api_id -> Should UPDATE
+            result3 = self.client.apis.add_or_update(
+                target_url='http://mockbin3.com', api_id=result['id'], name='Mockbin3', public_dns='mockbin3.com')
+            self._cleanup_afterwards(result3['id'])
+            self.assertEqual(self.client.apis.count(), 2)
+            self.assertEqual(result3['id'], result['id'])
+
         def test_retrieve(self):
             result = self.client.apis.add(
                 target_url='http://mockbin.com', name=self._cleanup_afterwards('Mockbin'), public_dns='mockbin.com')

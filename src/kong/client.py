@@ -140,6 +140,27 @@ class APIAdminClient(APIAdminContract, RestClient):
 
         return result
 
+    def add_or_update(self, target_url, api_id=None, name=None, public_dns=None, path=None, strip_path=False):
+        data = {
+            'name': name,
+            'public_dns': public_dns,
+            'path': path,
+            'strip_path': strip_path,
+            'target_url': target_url
+        }
+
+        if api_id is not None:
+            data['id'] = api_id
+
+        response = self.session.put(self.get_url('apis'), data=data)
+        result = response.json()
+        if response.status_code == CONFLICT:
+            raise ConflictError(', '.join(result.values()))
+
+        assert response.status_code in (CREATED, OK)
+
+        return result
+
     def update(self, name_or_id, target_url, **fields):
         assert_dict_keys_in(fields, ['name', 'public_dns', 'path', 'strip_path'])
         response = self.session.patch(self.get_url('apis', name_or_id), data=dict({

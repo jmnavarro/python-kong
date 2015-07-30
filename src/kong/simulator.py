@@ -263,6 +263,20 @@ class APIAdminSimulator(APIAdminContract):
             'created_at': timestamp()
         }, check_conflict_keys=('name', 'public_dns'))
 
+    def add_or_update(self, target_url, api_id=None, name=None, public_dns=None, path=None, strip_path=False):
+        data = {
+            'name': name or public_dns,
+            'public_dns': public_dns,
+            'path': path,
+            'target_url': target_url,
+            'strip_path': strip_path
+        }
+
+        if api_id is not None:
+            return self.update(api_id, **data)
+
+        return self.add(**data)
+
     def update(self, name_or_id, target_url, **fields):
         # ensure trailing slash
         target_url = ensure_trailing_slash(target_url)

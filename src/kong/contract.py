@@ -159,6 +159,33 @@ class APIAdminContract(CollectionMixin):
         """
 
     @abstractmethod
+    def add_or_update(self, target_url, api_id=None, name=None, public_dns=None, path=None, strip_path=False):
+        """
+        :param target_url: The base target URL that points to your API server, this URL will be used for proxying
+            requests. For example, https://mockbin.com.
+        :type target_url: str
+        :param api_id: The unique identifier of the API to update
+        :type api_id: str | uuid.UUID
+        :param name:
+        :type name: str
+        :param public_dns:
+        :type public_dns: str
+        :param path:
+        :type path: str
+        :param strip_path:
+        :type strip_path: bool
+        :rtype: dict
+        :return: Dictionary containing the API description. Example:
+                {
+                    "id": "4d924084-1adb-40a5-c042-63b19db421d1",
+                    "name": "Mockbin",
+                    "public_dns": "mockbin.com",
+                    "target_url": "http://mockbin.com",
+                    "created_at": 1422386534
+                }
+        """
+
+    @abstractmethod
     def retrieve(self, name_or_id):
         """
         :param name_or_id: The unique identifier or the name of the API to retrieve
