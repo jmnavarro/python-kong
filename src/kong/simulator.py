@@ -154,14 +154,25 @@ class APIPluginConfigurationAdminSimulator(APIPluginConfigurationAdminContract):
 
         return self._data[plugin_name]
 
+    def create_or_update(self, plugin_name, plugin_configuration_id=None, enabled=None, consumer_id=None, **fields):
+        if plugin_configuration_id is not None:
+            current_plugin_name = None
+            for obj in self._data.values():
+                if obj['id'] == plugin_configuration_id:
+                    current_plugin_name = obj['name']
+                    break
+            assert current_plugin_name is not None
+            return self.update(current_plugin_name, enabled=enabled, consumer_id=consumer_id, **fields)
+        return self.create(plugin_name, enabled=enabled, consumer_id=consumer_id, **fields)
+
     def update(self, plugin_name, enabled=None, consumer_id=None, **fields):
         current_plugin_id = None
         current_plugin_name = None
 
-        for id in self._data:
-            if self._data[id]['name'] == plugin_name:
-                current_plugin_id = id
-                current_plugin_name = plugin_name
+        for obj in self._data.values():
+            if obj['name'] == plugin_name:
+                current_plugin_id = obj['id']
+                current_plugin_name = obj['name']
                 break
 
         if current_plugin_name is None or current_plugin_id is None:
@@ -185,9 +196,9 @@ class APIPluginConfigurationAdminSimulator(APIPluginConfigurationAdminContract):
         if enabled is not None and isinstance(enabled, bool):
             data_struct_update['enabled'] = enabled
 
-        self._data[current_plugin_id].update(data_struct_update)
+        self._data[current_plugin_name].update(data_struct_update)
 
-        return self._data[current_plugin_id]
+        return self._data[current_plugin_name]
 
     def list(self, size=100, offset=None, **filter_fields):
         data_list = [data_struct for data_struct in filter_dict_list(self._data.values(), **filter_fields)]

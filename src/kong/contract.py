@@ -47,6 +47,37 @@ class APIPluginConfigurationAdminContract(CollectionMixin):
         """
 
     @abstractmethod
+    def create_or_update(self, plugin_name, plugin_configuration_id=None, enabled=None, consumer_id=None, **fields):
+        """
+        :param plugin_name: The name of the Plugin that's going to be added. Currently the Plugin must be installed in
+            every Kong instance separately.
+        :type plugin_name: str
+        :param plugin_configuration_id: The unique identifier of the plugin configuration to update
+        :type plugin_configuration_id: str | uuid.UUID
+        :param enabled: Whether or not the pluginconfiguration is enabled
+        :type enabled: bool
+        :param consumer_id: The unique identifier of the consumer that overrides the existing settings for this
+            specific consumer on incoming requests.
+        :type consumer_id: str | uuid.UUID
+        :param fields: The configuration properties for the Plugin which can be found on the plugins documentation page
+            in the Plugin Gallery.
+        :type fields: dict
+        :rtype: dict
+        :return: Dictionary containing the API plugin configuration. Example:
+                {
+                    "id": "4d924084-1adb-40a5-c042-63b19db421d1",
+                    "api_id": "5fd1z584-1adb-40a5-c042-63b19db49x21",
+                    "consumer_id": "a3dX2dh2-1adb-40a5-c042-63b19dbx83hF4",
+                    "name": "ratelimiting",
+                    "value": {
+                        "limit": 20,
+                        "period": "minute"
+                    },
+                    "created_at": 1422386534
+                }
+        """
+
+    @abstractmethod
     def list(self, size=100, offset=None, **filter_fields):
         """
         :param size: A limit on the number of objects to be returned.

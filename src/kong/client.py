@@ -58,6 +58,33 @@ class APIPluginConfigurationAdminClient(APIPluginConfigurationAdminContract, Res
 
         return result
 
+    def create_or_update(self, plugin_name, plugin_configuration_id=None, enabled=None, consumer_id=None, **fields):
+        values = {}
+        for key in fields:
+            values['value.%s' % key] = fields[key]
+
+        data = dict({
+            'name': plugin_name,
+            'consumer_id': consumer_id,
+        }, **values)
+
+        if enabled is not None and isinstance(enabled, bool):
+            data['enabled'] = enabled
+
+        if plugin_configuration_id is not None:
+            data['id'] = plugin_configuration_id
+
+        response = self.session.put(self.get_url('apis', self.api_name_or_id, 'plugins'), data=data)
+        result = response.json()
+        if response.status_code == CONFLICT:
+            raise ConflictError(', '.join(result.values()))
+        elif response.status_code == BAD_REQUEST:
+            raise ValueError(', '.join(result.values()))
+
+        assert response.status_code in (CREATED, OK)
+
+        return result
+
     def update(self, plugin_name, enabled=None, consumer_id=None, **fields):
         values = {}
         for key in fields:
