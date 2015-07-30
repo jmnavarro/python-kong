@@ -518,6 +518,24 @@ class KongAdminTesting(object):
             self.assertEqual(result['username'], 'abc1234')
             self.assertEqual(result['custom_id'], '41245871-1s7q-awdd35aw-d8a6s2d12345')
 
+        def test_create_or_update(self):
+            result = self.client.consumers.create(username='abc1234', custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+            self._cleanup_afterwards(result['id'])
+            self.assertEqual(self.client.consumers.count(), 1)
+
+            # Test add_or_update without consumer_id -> Should CREATE
+            result2 = self.client.consumers.create_or_update(
+                username='abc12345', custom_id='41245871-1s7q-awdd35aw-d8a6s2d12346')
+            self._cleanup_afterwards(result2['id'])
+            self.assertEqual(self.client.consumers.count(), 2)
+
+            # Test add_or_update with consumer_id -> Should UPDATE
+            result3 = self.client.consumers.create_or_update(
+                consumer_id=result['id'], username='abc123456', custom_id='41245871-1s7q-awdd35aw-d8a6s2d12347')
+            self._cleanup_afterwards(result3['id'])
+            self.assertEqual(self.client.consumers.count(), 2)
+            self.assertEqual(result3['id'], result['id'])
+
         def test_create_only_username(self):
             result = self.client.consumers.create(username=self._cleanup_afterwards('abc123'))
             self.assertIsNotNone(result)

@@ -332,6 +332,25 @@ class ConsumerAdminContract(CollectionMixin):
         """
 
     @abstractmethod
+    def create_or_update(self, consumer_id=None, username=None, custom_id=None):
+        """
+        :param consumer_id: The unique identifier of the consumer to update
+        :type consumer_id: str | uuid.UUID
+        :param username: The username of the consumer. You must send either this field or custom_id with the request.
+        :type username: str
+        :param custom_id: Field for storing an existing ID for the consumer, useful for mapping Kong with users in your
+            existing database. You must send either this field or username with the request.
+        :type custom_id: str
+        :rtype: dict
+        :return: Dictionary containing the Consumer description. Example:
+                {
+                    "id": "4d924084-1adb-40a5-c042-63b19db421d1",
+                    "custom_id": "abc123",
+                    "created_at": 1422386534
+                }
+        """
+
+    @abstractmethod
     def retrieve(self, username_or_id):
         """
         :param username_or_id: The unique identifier or the username of the consumer to retrieve

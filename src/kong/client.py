@@ -255,6 +255,24 @@ class ConsumerAdminClient(ConsumerAdminContract, RestClient):
 
         return result
 
+    def create_or_update(self, consumer_id=None, username=None, custom_id=None):
+        data = {
+            'username': username,
+            'custom_id': custom_id,
+        }
+
+        if consumer_id is not None:
+            data['id'] = consumer_id
+
+        response = self.session.put(self.get_url('consumers'), data=data)
+        result = response.json()
+        if response.status_code == CONFLICT:
+            raise ConflictError(', '.join(result.values()))
+
+        assert response.status_code in (CREATED, OK)
+
+        return result
+
     def update(self, username_or_id, **fields):
         assert_dict_keys_in(fields, ['username', 'custom_id'])
         response = self.session.patch(self.get_url('consumers', username_or_id), data=fields)

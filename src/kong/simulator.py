@@ -348,6 +348,17 @@ class ConsumerAdminSimulator(ConsumerAdminContract):
             'created_at': timestamp()
         }, check_conflict_keys=('username', 'custom_id'))
 
+    def create_or_update(self, consumer_id=None, username=None, custom_id=None):
+        data = {
+            'username': username,
+            'custom_id': custom_id
+        }
+
+        if consumer_id is not None:
+            return self.update(consumer_id, **data)
+
+        return self.create(**data)
+
     def update(self, username_or_id, **fields):
         return self._store.update(username_or_id, 'username', fields)
 
