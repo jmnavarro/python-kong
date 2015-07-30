@@ -9,7 +9,7 @@ python-kong
       - |docs|
     * - tests
       - | |travis| |appveyor|
-        | |coveralls| |landscape| |scrutinizer|
+        | |coveralls| |scrutinizer|
     * - package
       - |version| |downloads|
 
@@ -28,12 +28,6 @@ python-kong
 .. |coveralls| image:: http://img.shields.io/coveralls/vikingco/python-kong/master.svg?style=flat&label=Coveralls
     :alt: Coverage Status
     :target: https://coveralls.io/r/vikingco/python-kong
-
-
-
-.. |landscape| image:: https://landscape.io/github/vikingco/python-kong/master/landscape.svg?style=flat
-    :target: https://landscape.io/github/vikingco/python-kong/master
-    :alt: Code Quality Status
 
 .. |version| image:: http://img.shields.io/pypi/v/python-kong.svg?style=flat
     :alt: PyPI Package latest release
