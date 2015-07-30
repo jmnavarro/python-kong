@@ -113,7 +113,8 @@ class APIPluginConfigurationAdminContract(CollectionMixin):
                           "created_at": 1422386585
                       }
                     ],
-                    "next": "http://localhost:8001/plugins_configurations/?size=10&offset=4d924084-1adb-40a5-c042-63b19db421d1"
+                    "next": \
+                     "http://localhost:8001/plugins_configurations/?size=10&offset=4d924084-1adb-40a5-c042-63b19db421d1"
                 }
         """
 
@@ -264,8 +265,6 @@ class APIAdminContract(CollectionMixin):
                     "next": "http://localhost:8001/apis/?size=10&offset=4d924084-1adb-40a5-c042-63b19db421d1"
                 }
         """
-
-
 
     @abstractmethod
     def update(self, name_or_id, target_url, **fields):
