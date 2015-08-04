@@ -213,7 +213,7 @@ class APIAdminClient(APIAdminContract, RestClient):
         return response.json()
 
     def list(self, size=100, offset=None, **filter_fields):
-        assert_dict_keys_in(filter_fields, ['id', 'name', 'public_dns'])  # ], 'target_url']) target_url does not work?
+        assert_dict_keys_in(filter_fields, ['id', 'name', 'public_dns', 'path'])
 
         query_params = filter_fields
         query_params['size'] = size

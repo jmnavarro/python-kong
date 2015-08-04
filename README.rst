@@ -8,7 +8,7 @@ python-kong
     * - docs
       - |docs|
     * - tests
-      - | |travis| |appveyor|
+      - | |circleci| |appveyor|
         | |coveralls| |scrutinizer|
     * - package
       - |version| |downloads|
@@ -17,9 +17,9 @@ python-kong
     :target: https://readthedocs.org/projects/python-kong
     :alt: Documentation Status
 
-.. |travis| image:: http://img.shields.io/travis/vikingco/python-kong/master.svg?style=flat&label=Travis
-    :alt: Travis-CI Build Status
-    :target: https://travis-ci.org/vikingco/python-kong
+.. |circleci| image:: https://img.shields.io/circleci/project/vikingco/python-kong.svg?style=flat&label=CircleCI
+    :alt: CircleCI Build Status
+    :target: https://circleci.com/gh/vikingco/python-kong
 
 .. |appveyor| image:: https://img.shields.io/appveyor/ci/vikingco/python-kong/master.svg?style=flat&label=AppVeyor
     :alt: AppVeyor Build Status
