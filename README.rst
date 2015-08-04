@@ -8,8 +8,7 @@ python-kong
     * - docs
       - |docs|
     * - tests
-      - | |circleci| |appveyor|
-        | |coveralls| |scrutinizer|
+      - | |circleci| |coveralls| |scrutinizer|
     * - package
       - |version| |downloads|
 
@@ -20,10 +19,6 @@ python-kong
 .. |circleci| image:: https://img.shields.io/circleci/project/vikingco/python-kong.svg?style=flat&label=CircleCI
     :alt: CircleCI Build Status
     :target: https://circleci.com/gh/vikingco/python-kong
-
-.. |appveyor| image:: https://img.shields.io/appveyor/ci/vikingco/python-kong/master.svg?style=flat&label=AppVeyor
-    :alt: AppVeyor Build Status
-    :target: https://ci.appveyor.com/project/vikingco/python-kong
 
 .. |coveralls| image:: http://img.shields.io/coveralls/vikingco/python-kong/master.svg?style=flat&label=Coveralls
     :alt: Coverage Status
