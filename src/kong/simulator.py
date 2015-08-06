@@ -260,7 +260,9 @@ class APIAdminSimulator(APIAdminContract):
 
     def add(self, target_url, name=None, public_dns=None, path=None, strip_path=False):
         assert target_url is not None
-        assert public_dns or path
+        if not public_dns and not path:
+            raise ValueError('At least a \'public_dns\' or a \'path\' must be specified, '
+                             'At least a \'public_dns\' or a \'path\' must be specified')  # According to spec
 
         # ensure trailing slash
         target_url = ensure_trailing_slash(target_url)

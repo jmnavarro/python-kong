@@ -20,6 +20,8 @@ from setuptools import setup
 
 __version__ = '0.1.7'
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 
 def read(*names, **kwargs):
     return io.open(
@@ -28,7 +30,7 @@ def read(*names, **kwargs):
     ).read()
 
 # parse_requirements() returns generator of pip.req.InstallRequirement objects
-requirements = [str(ir.req) for ir in parse_requirements('./requirements.txt', session=False)]
+requirements = [str(ir.req) for ir in parse_requirements(os.path.join(BASE_DIR, 'requirements.txt'), session=False)]
 # requirements_test = [str(ir.req) for ir in parse_requirements('./requirements-test.txt', session=False)]
 
 setup(
@@ -63,13 +65,7 @@ setup(
         'Programming Language :: Python :: Implementation :: PyPy',
         'Topic :: Utilities',
     ],
-    keywords=[
-        # eg: 'keyword1', 'keyword2', 'keyword3',
-    ],
+    keywords=[],
     install_requires=requirements,
-    extras_require={
-        # eg:
-        #   'rst': ['docutils>=0.11'],
-        #   ':python_version=="2.6"': ['argparse'],
-    },
+    extras_require={},
 )

@@ -154,14 +154,16 @@ class APIAdminClient(APIAdminContract, RestClient):
     def add(self, target_url, name=None, public_dns=None, path=None, strip_path=False):
         response = self.session.post(self.get_url('apis'), data={
             'name': name,
-            'public_dns': public_dns,
-            'path': path,
+            'public_dns': public_dns or None,  # Empty strings are not allowed
+            'path': path or None,  # Empty strings are not allowed
             'strip_path': strip_path,
             'target_url': target_url
         })
         result = response.json()
         if response.status_code == CONFLICT:
             raise ConflictError(', '.join(result.values()))
+        elif response.status_code == BAD_REQUEST:
+            raise ValueError(', '.join(result.values()))
 
         assert response.status_code == CREATED
 
@@ -170,8 +172,8 @@ class APIAdminClient(APIAdminContract, RestClient):
     def add_or_update(self, target_url, api_id=None, name=None, public_dns=None, path=None, strip_path=False):
         data = {
             'name': name,
-            'public_dns': public_dns,
-            'path': path,
+            'public_dns': public_dns or None,  # Empty strings are not allowed
+            'path': path or None,  # Empty strings are not allowed
             'strip_path': strip_path,
             'target_url': target_url
         }
@@ -183,6 +185,8 @@ class APIAdminClient(APIAdminContract, RestClient):
         result = response.json()
         if response.status_code == CONFLICT:
             raise ConflictError(', '.join(result.values()))
+        elif response.status_code == BAD_REQUEST:
+            raise ValueError(', '.join(result.values()))
 
         assert response.status_code in (CREATED, OK)
 

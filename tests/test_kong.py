@@ -105,6 +105,25 @@ class KongAdminTesting(object):
 
             self.assertEqual(self.client.apis.count(), 1)
 
+        def test_add_missing_public_dns_and_path(self):
+            result = None
+            with self.assertRaises(ValueError):
+                result = self.client.apis.add(target_url='http://mockbin.com')
+            self.assertIsNone(result)
+            self.assertEqual(self.client.apis.count(), 0)
+
+        def test_add_missing_public_dns(self):
+            result = self.client.apis.add(target_url='http://mockbin.com', path='/mockbin')
+            self.assertIsNotNone(result)
+            self._cleanup_afterwards(result['id']),
+            self.assertEqual(self.client.apis.count(), 1)
+
+        def test_add_missing_path(self):
+            result = self.client.apis.add(target_url='http://mockbin.com', public_dns='mockbin.com')
+            self.assertIsNotNone(result)
+            self._cleanup_afterwards(result['id']),
+            self.assertEqual(self.client.apis.count(), 1)
+
         def test_update(self):
             result = self.client.apis.add(
                 target_url='http://mockbin.com', name=self._cleanup_afterwards('Mockbin'), public_dns='mockbin.com')
