@@ -303,6 +303,109 @@ class APIAdminContract(CollectionMixin):
         """
 
 
+class BasicAuthAdminContract(CollectionMixin):
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def count(self):
+        """
+        :rtype: int
+        :return: Amount of records
+        """
+
+    @abstractmethod
+    def create(self, username=None, password=None):
+        """
+        :param username: The username
+        :type username: str
+        :param password: The password
+        :type password: str
+        :rtype: dict
+        :return: Dictionary containing the BasicAuth description. Example:
+                {
+                    password: "test2"
+                    consumer_id: "abf8f0e5-753b-4eaa-ceff-a7c5187df4ff"
+                    id: "fe575378-162c-4c88-cc35-be456ad8d8a5"
+                    username: "dirk2"
+                    created_at: 1438872669000
+                }
+        """
+
+    @abstractmethod
+    def create_or_update(self, basic_auth_id=None, username=None, password=None):
+        """
+        :param basic_auth_id: The unique identifier of the basic_auth info to update
+        :type basic_auth_id: str | uuid.UUID
+        :param username: The username
+        :type username: str
+        :param password: The password
+        :type password: str
+        :rtype: dict
+        :return: Dictionary containing the BasicAuth description. Example:
+                {
+                    password: "test2"
+                    consumer_id: "abf8f0e5-753b-4eaa-ceff-a7c5187df4ff"
+                    id: "fe575378-162c-4c88-cc35-be456ad8d8a5"
+                    username: "dirk2"
+                    created_at: 1438872669000
+                }
+        """
+
+    @abstractmethod
+    def retrieve(self, basic_auth_id):
+        """
+        :param basic_auth_id: The unique identifier of the basic_auth info to retrieve
+        :type basic_auth_id: str | uuid.UUID
+        :rtype: dict
+        :return: Dictionary containing the BasicAuth description. Example:
+                {
+                    password: "test2"
+                    consumer_id: "abf8f0e5-753b-4eaa-ceff-a7c5187df4ff"
+                    id: "fe575378-162c-4c88-cc35-be456ad8d8a5"
+                    username: "dirk2"
+                    created_at: 1438872669000
+                }
+        """
+
+    @abstractmethod
+    def list(self, size=100, offset=None, **filter_fields):
+        """
+        :param size: A limit on the number of objects to be returned.
+        :type size: int
+        :param offset: A cursor used for pagination. offset is an object identifier that defines a place in the list.
+        :type offset: uuid.UUID
+        :param filter_fields: Dictionary containing values to filter for
+        :type filter_fields: dict
+        :rtype: dict
+        :return: Dictionary containing dictionaries containing the BasicAuth description. Example:
+                {
+                   "data":[
+                      {
+                         "password":"test2",
+                         "consumer_id":"abf8f0e5-753b-4eaa-ceff-a7c5187df4ff",
+                         "id":"fe575378-162c-4c88-cc35-be456ad8d8a5",
+                         "username":"dirk2",
+                         "created_at":1438872669000
+                      },
+                      {
+                         "password":"test",
+                         "consumer_id":"abf8f0e5-753b-4eaa-ceff-a7c5187df4ff",
+                         "id":"da982f37-1d15-4850-c89c-8e238adcb010",
+                         "username":"dirk",
+                         "created_at":1438872620000
+                      }
+                   ]
+                }
+        """
+
+    @abstractmethod
+    def delete(self, basic_auth_id):
+        """
+        :param basic_auth_id: The unique identifier of the basic_auth info to delete
+        :type basic_auth_id: str | uuid.UUID
+        """
+
+
 class ConsumerAdminContract(CollectionMixin):
     __metaclass__ = ABCMeta
 
@@ -415,6 +518,15 @@ class ConsumerAdminContract(CollectionMixin):
         :type username_or_id: str | uuid.UUID
         """
 
+    @abstractmethod
+    def basic_auth(self, username_or_id):
+        """
+        Returns a "Basic Auth" manager for a given consumer
+
+        :param username_or_id: The unique identifier or the name of the consumer
+        :rtype BasicAuthAdminContract
+        :return:
+        """
 
 class PluginAdminContract(with_metaclass(ABCMeta, object)):
     @abstractmethod
