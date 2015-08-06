@@ -7,7 +7,7 @@ import backoff
 from .contract import KongAdminContract, APIAdminContract, ConsumerAdminContract, PluginAdminContract, \
     APIPluginConfigurationAdminContract
 from .utils import add_url_params, assert_dict_keys_in, ensure_trailing_slash
-from .compat import OK, CREATED, NO_CONTENT, CONFLICT, BAD_REQUEST, urljoin
+from .compat import OK, CREATED, NO_CONTENT, CONFLICT, urljoin
 from .exceptions import ConflictError
 
 
@@ -51,10 +51,8 @@ class APIPluginConfigurationAdminClient(APIPluginConfigurationAdminContract, Res
         result = response.json()
         if response.status_code == CONFLICT:
             raise ConflictError(', '.join(result.values()))
-        elif response.status_code == BAD_REQUEST:
+        elif response.status_code != CREATED:
             raise ValueError(', '.join(result.values()))
-
-        assert response.status_code == CREATED
 
         return result
 
@@ -78,10 +76,8 @@ class APIPluginConfigurationAdminClient(APIPluginConfigurationAdminContract, Res
         result = response.json()
         if response.status_code == CONFLICT:
             raise ConflictError(', '.join(result.values()))
-        elif response.status_code == BAD_REQUEST:
+        elif response.status_code not in (CREATED, OK):
             raise ValueError(', '.join(result.values()))
-
-        assert response.status_code in (CREATED, OK)
 
         return result
 
@@ -105,10 +101,8 @@ class APIPluginConfigurationAdminClient(APIPluginConfigurationAdminContract, Res
         response = self.session.patch(url, data=data_struct_update)
         result = response.json()
 
-        if response.status_code == BAD_REQUEST:
+        if response.status_code != OK:
             raise ValueError(', '.join(result.values()))
-
-        assert response.status_code == OK
 
         return result
 
@@ -123,16 +117,19 @@ class APIPluginConfigurationAdminClient(APIPluginConfigurationAdminContract, Res
 
         url = self.get_url('apis', self.api_name_or_id, 'plugins', **query_params)
         response = self.session.get(url)
+        result = response.json()
 
-        assert response.status_code == OK
+        if response.status_code != OK:
+            raise ValueError(', '.join(result.values()))
 
-        return response.json()
+        return result
 
     @backoff.on_exception(backoff.expo, AssertionError, max_tries=3)
     def delete(self, plugin_name_or_id):
         response = self.session.delete(self.get_url('apis', self.api_name_or_id, 'plugins', plugin_name_or_id))
 
-        assert response.status_code == NO_CONTENT
+        if response.status_code != NO_CONTENT:
+            raise ValueError('Could not delete Plugin Configuration: %s' % plugin_name_or_id)
 
     def count(self):
         response = self.session.get(self.get_url('apis', self.api_name_or_id, 'plugins'))
@@ -162,10 +159,8 @@ class APIAdminClient(APIAdminContract, RestClient):
         result = response.json()
         if response.status_code == CONFLICT:
             raise ConflictError(', '.join(result.values()))
-        elif response.status_code == BAD_REQUEST:
+        elif response.status_code != CREATED:
             raise ValueError(', '.join(result.values()))
-
-        assert response.status_code == CREATED
 
         return result
 
@@ -185,10 +180,8 @@ class APIAdminClient(APIAdminContract, RestClient):
         result = response.json()
         if response.status_code == CONFLICT:
             raise ConflictError(', '.join(result.values()))
-        elif response.status_code == BAD_REQUEST:
+        elif response.status_code not in (CREATED, OK):
             raise ValueError(', '.join(result.values()))
-
-        assert response.status_code in (CREATED, OK)
 
         return result
 
@@ -199,7 +192,8 @@ class APIAdminClient(APIAdminContract, RestClient):
         }, **fields))
         result = response.json()
 
-        assert response.status_code == OK
+        if response.status_code != OK:
+            raise ValueError(', '.join(result.values()))
 
         return result
 
@@ -207,14 +201,17 @@ class APIAdminClient(APIAdminContract, RestClient):
     def delete(self, name_or_id):
         response = self.session.delete(self.get_url('apis', name_or_id))
 
-        assert response.status_code == NO_CONTENT
+        if response.status_code != NO_CONTENT:
+            raise ValueError('Could not delete API: %s' % name_or_id)
 
     def retrieve(self, name_or_id):
         response = self.session.get(self.get_url('apis', name_or_id))
+        result = response.json()
 
-        assert response.status_code == OK
+        if response.status_code != OK:
+            raise ValueError(', '.join(result.values()))
 
-        return response.json()
+        return result
 
     def list(self, size=100, offset=None, **filter_fields):
         assert_dict_keys_in(filter_fields, ['id', 'name', 'public_dns', 'path'])
@@ -227,10 +224,12 @@ class APIAdminClient(APIAdminContract, RestClient):
 
         url = self.get_url('apis', **query_params)
         response = self.session.get(url)
+        result = response.json()
 
-        assert response.status_code == OK
+        if response.status_code != OK:
+            raise ValueError(', '.join(result.values()))
 
-        return response.json()
+        return result
 
     def plugins(self, name_or_id):
         return APIPluginConfigurationAdminClient(self, name_or_id, self.api_url)
@@ -254,8 +253,8 @@ class ConsumerAdminClient(ConsumerAdminContract, RestClient):
         result = response.json()
         if response.status_code == CONFLICT:
             raise ConflictError(', '.join(result.values()))
-
-        assert response.status_code == CREATED
+        elif response.status_code != CREATED:
+            raise ValueError(', '.join(result.values()))
 
         return result
 
@@ -272,8 +271,8 @@ class ConsumerAdminClient(ConsumerAdminContract, RestClient):
         result = response.json()
         if response.status_code == CONFLICT:
             raise ConflictError(', '.join(result.values()))
-
-        assert response.status_code in (CREATED, OK)
+        elif response.status_code not in (CREATED, OK):
+            raise ValueError(', '.join(result.values()))
 
         return result
 
@@ -282,7 +281,8 @@ class ConsumerAdminClient(ConsumerAdminContract, RestClient):
         response = self.session.patch(self.get_url('consumers', username_or_id), data=fields)
         result = response.json()
 
-        assert response.status_code == OK
+        if response.status_code != OK:
+            raise ValueError(', '.join(result.values()))
 
         return result
 
@@ -297,39 +297,48 @@ class ConsumerAdminClient(ConsumerAdminContract, RestClient):
 
         url = self.get_url('consumers', **query_params)
         response = self.session.get(url)
+        result = response.json()
 
-        assert response.status_code == OK
+        if response.status_code != OK:
+            raise ValueError(', '.join(result.values()))
 
-        return response.json()
+        return result
 
     @backoff.on_exception(backoff.expo, AssertionError, max_tries=3)
     def delete(self, username_or_id):
         response = self.session.delete(self.get_url('consumers', username_or_id))
 
-        assert response.status_code == NO_CONTENT
+        if response.status_code != NO_CONTENT:
+            raise ValueError('Could not delete Consumer: %s' % username_or_id)
 
     def retrieve(self, username_or_id):
         response = self.session.get(self.get_url('consumers', username_or_id))
+        result = response.json()
 
-        assert response.status_code == OK
+        if response.status_code != OK:
+            raise ValueError(', '.join(result.values()))
 
-        return response.json()
+        return result
 
 
 class PluginAdminClient(PluginAdminContract, RestClient):
     def list(self):
         response = self.session.get(self.get_url('plugins'))
+        result = response.json()
 
-        assert response.status_code == OK
+        if response.status_code != OK:
+            raise ValueError(', '.join(result.values()))
 
-        return response.json()
+        return result
 
     def retrieve_schema(self, plugin_name):
         response = self.session.get(self.get_url('plugins', plugin_name, 'schema'))
+        result = response.json()
 
-        assert response.status_code == OK
+        if response.status_code != OK:
+            raise ValueError(', '.join(result.values()))
 
-        return response.json()
+        return result
 
 
 class KongAdminClient(KongAdminContract):
