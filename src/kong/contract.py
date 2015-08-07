@@ -314,7 +314,7 @@ class BasicAuthAdminContract(CollectionMixin):
         """
 
     @abstractmethod
-    def create(self, username=None, password=None):
+    def create(self, username, password):
         """
         :param username: The username
         :type username: str
@@ -340,6 +340,24 @@ class BasicAuthAdminContract(CollectionMixin):
         :type username: str
         :param password: The password
         :type password: str
+        :rtype: dict
+        :return: Dictionary containing the BasicAuth description. Example:
+                {
+                    password: "test2"
+                    consumer_id: "abf8f0e5-753b-4eaa-ceff-a7c5187df4ff"
+                    id: "fe575378-162c-4c88-cc35-be456ad8d8a5"
+                    username: "dirk2"
+                    created_at: 1438872669000
+                }
+        """
+
+    @abstractmethod
+    def update(self, basic_auth_id, **fields):
+        """
+        :param basic_auth_id: The unique identifier of the basic_auth info to update
+        :type basic_auth_id: str | uuid.UUID
+        :param fields: Optional dictionary which values will be used to overwrite the existing values
+        :type fields: dict
         :rtype: dict
         :return: Dictionary containing the BasicAuth description. Example:
                 {
@@ -527,6 +545,7 @@ class ConsumerAdminContract(CollectionMixin):
         :rtype BasicAuthAdminContract
         :return:
         """
+
 
 class PluginAdminContract(with_metaclass(ABCMeta, object)):
     @abstractmethod
