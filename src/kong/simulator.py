@@ -4,7 +4,7 @@ from __future__ import unicode_literals, print_function
 import uuid
 
 from .contract import KongAdminContract, APIPluginConfigurationAdminContract, APIAdminContract, ConsumerAdminContract, \
-    PluginAdminContract
+    PluginAdminContract, BasicAuthAdminContract
 from .utils import timestamp, uuid_or_string, add_url_params, filter_api_struct, filter_dict_list, assert_dict_keys_in, \
     ensure_trailing_slash
 from .compat import OrderedDict
@@ -48,10 +48,11 @@ class SimulatorDataStore(object):
             self._data[value_or_id].update(data_struct_update)
             return filter_api_struct(self._data[value_or_id], self._data_struct_filter)
 
-        for id in self._data:
-            if self._data[id][key] == value_or_id:
-                self._data[id].update(data_struct_update)
-                return filter_api_struct(self._data[id], self._data_struct_filter)
+        if key is not None:
+            for id in self._data:
+                if self._data[id][key] == value_or_id:
+                    self._data[id].update(data_struct_update)
+                    return filter_api_struct(self._data[id], self._data_struct_filter)
 
     def retrieve(self, value_or_id, key):
         value_or_id = uuid_or_string(value_or_id)
@@ -59,9 +60,10 @@ class SimulatorDataStore(object):
         if value_or_id in self._data:
             return filter_api_struct(self._data[value_or_id], self._data_struct_filter)
 
-        for id in self._data:
-            if self._data[id][key] == value_or_id:
-                return filter_api_struct(self._data[id], self._data_struct_filter)
+        if key is not None:
+            for id in self._data:
+                if self._data[id][key] == value_or_id:
+                    return filter_api_struct(self._data[id], self._data_struct_filter)
 
     def list(self, size, offset, **filter_fields):
         data_list = [filter_api_struct(data_struct, self._data_struct_filter)
@@ -99,10 +101,11 @@ class SimulatorDataStore(object):
         if value_or_id in self._data:
             del self._data[value_or_id]
 
-        for id in self._data:
-            if self._data[id][key] == value_or_id:
-                del self._data[id]
-                break
+        if key is not None:
+            for id in self._data:
+                if self._data[id][key] == value_or_id:
+                    del self._data[id]
+                    break
 
     def _get_by_field(self, field, value):
         for data_struct in self._data.values():
@@ -329,6 +332,48 @@ class APIAdminSimulator(APIAdminContract):
         return self._plugin_admins[api_id]
 
 
+class BasicAuthAdminSimulator(BasicAuthAdminContract):
+    def __init__(self, consumer_admin, consumer_id, api_url):
+        self.consumer_admin = consumer_admin
+        self.consumer_id = consumer_id
+        self._store = SimulatorDataStore(api_url or 'http://localhost:8001/consumers/%s/basicauth' % self.consumer_id)
+
+    def create_or_update(self, basic_auth_id=None, username=None, password=None):
+        data = {
+            'username': username,
+            'password': password
+        }
+
+        if basic_auth_id is not None:
+            return self.update(basic_auth_id, **data)
+
+        return self.create(**data)
+
+    def create(self, username, password):
+        assert username and password
+
+        return self._store.create({
+            'username': username,
+            'password': password,
+            'created_at': timestamp()
+        }, check_conflict_keys=('username',))
+
+    def update(self, basic_auth_id, **fields):
+        return self._store.update(basic_auth_id, None, fields)
+
+    def list(self, size=100, offset=None, **filter_fields):
+        return self._store.list(size=size, offset=offset, **filter_fields)
+
+    def delete(self, basic_auth_id):
+        return self._store.delete(basic_auth_id, None)
+
+    def retrieve(self, basic_auth_id):
+        return self._store.retrieve(basic_auth_id, None)
+
+    def count(self):
+        return self._store.count()
+
+
 class ConsumerAdminSimulator(ConsumerAdminContract):
     def __init__(self, api_url=None):
         self._store = SimulatorDataStore(
@@ -337,6 +382,7 @@ class ConsumerAdminSimulator(ConsumerAdminContract):
                 'custom_id': None,
                 'username': None
             })
+        self._basic_auth_admins = {}
 
     def count(self):
         return self._store.count()
@@ -371,7 +417,27 @@ class ConsumerAdminSimulator(ConsumerAdminContract):
         return self._store.list(size, offset, **filter_fields)
 
     def delete(self, username_or_id):
+        consumer_id = self.retrieve(username_or_id).get('id')
+
+        if consumer_id is None:
+            raise ValueError('Unknown username_or_id: %s' % username_or_id)
+
+        if consumer_id in self._basic_auth_admins:
+            self._basic_auth_admins[consumer_id].consumer_admin = None
+            del self._basic_auth_admins[consumer_id]
+
         return self._store.delete(username_or_id, 'username')
+
+    def basic_auth(self, username_or_id):
+        consumer_id = self.retrieve(username_or_id).get('id')
+
+        if consumer_id is None:
+            raise ValueError('Unknown username_or_id: %s' % username_or_id)
+
+        if consumer_id not in self._basic_auth_admins:
+            self._basic_auth_admins[consumer_id] = BasicAuthAdminSimulator(self, consumer_id, self._store.api_url)
+
+        return self._basic_auth_admins[consumer_id]
 
 
 class PluginAdminSimulator(PluginAdminContract):
