@@ -526,8 +526,13 @@ class KongAdminTesting(object):
             self._cleanup = []
 
         def tearDown(self):
-            for name_or_id in set(self._cleanup):
-                self.client.consumers.delete(name_or_id)
+            for consumer_username_or_id in set(self._cleanup):
+                # Cleanup basic_auth
+                for basic_auth_struct in self.client.consumers.basic_auth(consumer_username_or_id).iterate():
+                    self.client.consumers.basic_auth(consumer_username_or_id).delete(basic_auth_struct['id'])
+
+                # Cleanup consumer
+                self.client.consumers.delete(consumer_username_or_id)
             self.assertEqual(self.client.consumers.count(), 0)
 
         def test_create(self):
@@ -710,6 +715,150 @@ class KongAdminTesting(object):
             # Delete by username
             self.client.consumers.delete(result2['username'])
             self.assertEqual(self.client.consumers.count(), 0)
+
+        def test_basic_auth_create(self):
+            result = self.client.consumers.create(
+                username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+            self.assertIsNotNone(result)
+
+            result2 = self.client.consumers.basic_auth(result['id']).create(
+                username=result['username'], password='testpw')
+            self.assertIsNotNone(result2)
+            self.assertTrue('id' in result2)
+            self.assertEqual(result2['username'], result['username'])
+            self.assertEqual(result2['password'], 'testpw')
+
+        def test_basic_auth_update(self):
+            result = self.client.consumers.create(
+                username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+            self.assertIsNotNone(result)
+
+            # Create
+            result2 = self.client.consumers.basic_auth(result['id']).create(
+                username=result['username'], password='testpw')
+            self.assertIsNotNone(result2)
+
+            # Update
+            result3 = self.client.consumers.basic_auth(result['id']).update(
+                result2['id'], username='efg1234', password='testpw2')
+            self.assertIsNotNone(result3)
+            self.assertEqual(result3['username'], 'efg1234')
+            self.assertEqual(result3['password'], 'testpw2')
+
+            # Retrieve and verify
+            result4 = self.client.consumers.basic_auth(result['id']).retrieve(result2['id'])
+            self.assertIsNotNone(result4)
+            self.assertEqual(result4['username'], result3['username'])
+            self.assertEqual(result4['password'], result3['password'])
+
+        def test_basic_auth_create_or_update(self):
+            result = self.client.consumers.create(
+                username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+            self.assertIsNotNone(result)
+
+            result2 = self.client.consumers.basic_auth(result['id']).create(
+                username=result['username'], password='testpw')
+            self.assertIsNotNone(result2)
+
+            # Test create_or_update without basic_auth_id -> Should CREATE
+            result3 = self.client.consumers.basic_auth(result['id']).create_or_update(
+                username='efg12345', password='testpw')
+            self.assertIsNotNone(result3)
+            self.assertNotEqual(result3['id'], result2['id'])
+            self.assertEqual(result3['username'], 'efg12345')
+            self.assertEqual(result3['password'], 'testpw')
+            self.assertEqual(self.client.consumers.basic_auth(result['id']).count(), 2)
+
+            # Test create_or_update with basic_auth_id -> Should UPDATE
+            result4 = self.client.consumers.basic_auth(result['id']).create_or_update(
+                basic_auth_id=result3['id'], username='hij12345', password='testpw2')
+            self.assertIsNotNone(result4)
+            self.assertEqual(result4['id'], result3['id'])
+            self.assertEqual(result4['username'], 'hij12345')
+            self.assertEqual(result4['password'], 'testpw2')
+            self.assertEqual(self.client.consumers.basic_auth(result['id']).count(), 2)
+
+        def test_basic_auth_retrieve(self):
+            result = self.client.consumers.create(
+                username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+            self.assertIsNotNone(result)
+
+            result2 = self.client.consumers.basic_auth(result['id']).create(
+                username=result['username'], password='testpw')
+            self.assertIsNotNone(result2)
+
+            # Retrieve by id
+            result3 = self.client.consumers.basic_auth(result['id']).retrieve(result2['id'])
+            self.assertEqual(result3['id'], result2['id'])
+            self.assertEqual(result3['username'], result2['username'])
+            self.assertEqual(result3['password'], result2['password'])
+
+        def test_basic_auth_list(self):
+            result = self.client.consumers.create(
+                username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+            self.assertIsNotNone(result)
+
+            amount = 10
+
+            for i in range(amount):
+                self.client.consumers.basic_auth(result['id']).create(
+                    username='username %s' % i, password='testpw %s' % i)
+
+            self.assertEqual(self.client.consumers.basic_auth(result['id']).count(), amount)
+
+            result2 = self.client.consumers.basic_auth(result['id']).list()
+            self.assertTrue('data' in result2)
+            data = result2['data']
+
+            self.assertEqual(len(data), amount)
+
+            result3 = self.client.consumers.basic_auth(result['id']).list(username='username 6')
+            self.assertTrue('data' in result3)
+            data = result3['data']
+
+            self.assertEqual(len(data), 1)
+
+            result4 = self.client.consumers.basic_auth(result['id']).list(size=3)
+            self.assertIsNotNone(result4['next'])
+            self.assertEqual(len(result4['data']), 3)
+
+        def test_basic_auth_iterate(self):
+            result = self.client.consumers.create(
+                username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+            self.assertIsNotNone(result)
+
+            amount = 10
+
+            for i in range(amount):
+                self.client.consumers.basic_auth(result['id']).create(
+                    username='username %s' % i, password='testpw %s' % i)
+
+            self.assertEqual(self.client.consumers.basic_auth(result['id']).count(), amount)
+
+            found = []
+
+            for item in self.client.consumers.basic_auth(result['id']).iterate(window_size=3):
+                found.append(item)
+
+            self.assertEqual(len(found), amount)
+            self.assertEqual(
+                sorted([item['id'] for item in found]),
+                sorted([item['id'] for item in self.client.consumers.basic_auth(result['id']).list().get('data')]))
+
+        def test_basic_auth_delete(self):
+            result = self.client.consumers.create(
+                username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+            self.assertIsNotNone(result)
+
+            result2 = self.client.consumers.basic_auth(result['id']).create(
+                username='abc1234', password='testpw1')
+            self.assertIsNotNone(result2)
+            self.assertTrue('id' in result2)
+            self.assertEqual(self.client.consumers.basic_auth(result['id']).count(), 1)
+
+            # Delete by ID
+            self.client.consumers.basic_auth(result['id']).delete(result2['id'])
+            self.assertEqual(self.client.consumers.basic_auth(result['id']).count(), 0)
 
         def _cleanup_afterwards(self, username_or_id):
             self._cleanup.append(username_or_id)
