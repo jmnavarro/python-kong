@@ -1,14 +1,49 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals, print_function
-import six
+import os
+import time
+import logging
 import requests
 import backoff
+
+from requests.adapters import HTTPAdapter
 
 from .contract import KongAdminContract, APIAdminContract, ConsumerAdminContract, PluginAdminContract, \
     APIPluginConfigurationAdminContract, BasicAuthAdminContract
 from .utils import add_url_params, assert_dict_keys_in, ensure_trailing_slash
-from .compat import OK, CREATED, NO_CONTENT, CONFLICT, urljoin
+from .compat import OK, CREATED, NO_CONTENT, NOT_FOUND, CONFLICT, urljoin
 from .exceptions import ConflictError
+
+logger = logging.getLogger(__name__)
+
+KONG_MINIMUM_REQUEST_INTERVAL = float(os.getenv('KONG_MINIMUM_REQUEST_INTERVAL', 0))
+
+if KONG_MINIMUM_REQUEST_INTERVAL > 0:
+    logger.warn('Requests will be throttled: KONG_MINIMUM_REQUEST_INTERVAL = %s' % KONG_MINIMUM_REQUEST_INTERVAL)
+
+
+def raise_response_error(response, exception_class=None, is_json=True):
+    exception_class = exception_class or ValueError
+    assert issubclass(exception_class, BaseException)
+    if is_json:
+        raise exception_class(', '.join(['%s: %s' % (key, value) for (key, value) in response.json().items()]))
+    raise exception_class(str(response))
+
+
+class ThrottlingHTTPAdapter(HTTPAdapter):
+    def __init__(self, *args, **kwargs):
+        super(ThrottlingHTTPAdapter, self).__init__(*args, **kwargs)
+        self._last_request = None
+
+    def send(self, request, stream=False, timeout=None, verify=True, cert=None, proxies=None):
+        if self._last_request is not None and KONG_MINIMUM_REQUEST_INTERVAL > 0:
+            diff = time.time() - self._last_request
+            if 0 < diff < KONG_MINIMUM_REQUEST_INTERVAL:
+                logger.warn('Waiting %s seconds before sending request' % diff)
+                time.sleep(diff)
+        result = super(ThrottlingHTTPAdapter, self).send(request, stream, timeout, verify, cert, proxies)
+        self._last_request = time.time()
+        return result
 
 
 class RestClient(object):
@@ -20,6 +55,7 @@ class RestClient(object):
     def session(self):
         if self._session is None:
             self._session = requests.session()
+            self._session.mount(self.api_url, ThrottlingHTTPAdapter())
         return self._session
 
     def get_url(self, *path, **query_params):
@@ -50,9 +86,9 @@ class APIPluginConfigurationAdminClient(APIPluginConfigurationAdminContract, Res
         response = self.session.post(self.get_url('apis', self.api_name_or_id, 'plugins'), data=data)
         result = response.json()
         if response.status_code == CONFLICT:
-            raise ConflictError(', '.join(result.values()))
+            raise_response_error(response, ConflictError)
         elif response.status_code != CREATED:
-            raise ValueError(', '.join(result.values()))
+            raise_response_error(response, ValueError)
 
         return result
 
@@ -75,9 +111,9 @@ class APIPluginConfigurationAdminClient(APIPluginConfigurationAdminContract, Res
         response = self.session.put(self.get_url('apis', self.api_name_or_id, 'plugins'), data=data)
         result = response.json()
         if response.status_code == CONFLICT:
-            raise ConflictError(', '.join(result.values()))
+            raise_response_error(response, ConflictError)
         elif response.status_code not in (CREATED, OK):
-            raise ValueError(', '.join(result.values()))
+            raise_response_error(response, ValueError)
 
         return result
 
@@ -102,7 +138,7 @@ class APIPluginConfigurationAdminClient(APIPluginConfigurationAdminContract, Res
         result = response.json()
 
         if response.status_code != OK:
-            raise ValueError(', '.join(result.values()))
+            raise_response_error(response, ValueError)
 
         return result
 
@@ -120,7 +156,7 @@ class APIPluginConfigurationAdminClient(APIPluginConfigurationAdminContract, Res
         result = response.json()
 
         if response.status_code != OK:
-            raise ValueError(', '.join(result.values()))
+            raise_response_error(response, ValueError)
 
         return result
 
@@ -128,8 +164,9 @@ class APIPluginConfigurationAdminClient(APIPluginConfigurationAdminContract, Res
     def delete(self, plugin_name_or_id):
         response = self.session.delete(self.get_url('apis', self.api_name_or_id, 'plugins', plugin_name_or_id))
 
-        if response.status_code != NO_CONTENT:
-            raise ValueError('Could not delete Plugin Configuration: %s' % plugin_name_or_id)
+        if response.status_code not in (NO_CONTENT, NOT_FOUND):
+            raise ValueError('Could not delete Plugin Configuration (status: %s): %s' % (
+                response.status_code, plugin_name_or_id))
 
     def count(self):
         response = self.session.get(self.get_url('apis', self.api_name_or_id, 'plugins'))
@@ -158,9 +195,9 @@ class APIAdminClient(APIAdminContract, RestClient):
         })
         result = response.json()
         if response.status_code == CONFLICT:
-            raise ConflictError(', '.join(result.values()))
+            raise_response_error(response, ConflictError)
         elif response.status_code != CREATED:
-            raise ValueError(', '.join(result.values()))
+            raise_response_error(response, ValueError)
 
         return result
 
@@ -179,9 +216,9 @@ class APIAdminClient(APIAdminContract, RestClient):
         response = self.session.put(self.get_url('apis'), data=data)
         result = response.json()
         if response.status_code == CONFLICT:
-            raise ConflictError(', '.join(result.values()))
+            raise_response_error(response, ConflictError)
         elif response.status_code not in (CREATED, OK):
-            raise ValueError(', '.join(result.values()))
+            raise_response_error(response, ValueError)
 
         return result
 
@@ -193,7 +230,7 @@ class APIAdminClient(APIAdminContract, RestClient):
         result = response.json()
 
         if response.status_code != OK:
-            raise ValueError(', '.join(result.values()))
+            raise_response_error(response, ValueError)
 
         return result
 
@@ -201,15 +238,15 @@ class APIAdminClient(APIAdminContract, RestClient):
     def delete(self, name_or_id):
         response = self.session.delete(self.get_url('apis', name_or_id))
 
-        if response.status_code != NO_CONTENT:
-            raise ValueError('Could not delete API: %s' % name_or_id)
+        if response.status_code not in (NO_CONTENT, NOT_FOUND):
+            raise ValueError('Could not delete API (status: %s): %s' % (response.status_code, name_or_id))
 
     def retrieve(self, name_or_id):
         response = self.session.get(self.get_url('apis', name_or_id))
         result = response.json()
 
         if response.status_code != OK:
-            raise ValueError(', '.join(result.values()))
+            raise_response_error(response, ValueError)
 
         return result
 
@@ -227,7 +264,7 @@ class APIAdminClient(APIAdminContract, RestClient):
         result = response.json()
 
         if response.status_code != OK:
-            raise ValueError(', '.join(result.values()))
+            raise_response_error(response, ValueError)
 
         return result
 
@@ -254,9 +291,9 @@ class BasicAuthAdminClient(BasicAuthAdminContract, RestClient):
         response = self.session.put(self.get_url('consumers', self.consumer_id, 'basicauth'), data=data)
         result = response.json()
         if response.status_code == CONFLICT:
-            raise ConflictError(', '.join(result.values()))
+            raise_response_error(response, ConflictError)
         elif response.status_code not in (CREATED, OK):
-            raise ValueError(', '.join(result.values()))
+            raise_response_error(response, ValueError)
 
         return result
 
@@ -267,9 +304,9 @@ class BasicAuthAdminClient(BasicAuthAdminContract, RestClient):
         })
         result = response.json()
         if response.status_code == CONFLICT:
-            raise ConflictError(', '.join(result.values()))
+            raise_response_error(response, ConflictError)
         elif response.status_code != CREATED:
-            raise ValueError(', '.join(result.values()))
+            raise_response_error(response, ValueError)
 
         return result
 
@@ -287,7 +324,7 @@ class BasicAuthAdminClient(BasicAuthAdminContract, RestClient):
         result = response.json()
 
         if response.status_code != OK:
-            raise ValueError(', '.join(result.values()))
+            raise_response_error(response, ValueError)
 
         return result
 
@@ -296,16 +333,16 @@ class BasicAuthAdminClient(BasicAuthAdminContract, RestClient):
         url = self.get_url('consumers', self.consumer_id, 'basicauth', basic_auth_id)
         response = self.session.delete(url)
 
-        if response.status_code != NO_CONTENT:
-            raise ValueError('Could not delete Basic Auth: %s for Consumer: %s' % (
-                basic_auth_id, self.consumer_id))
+        if response.status_code not in (NO_CONTENT, NOT_FOUND):
+            raise ValueError('Could not delete Basic Auth (status: %s): %s for Consumer: %s' % (
+                response.status_code, basic_auth_id, self.consumer_id))
 
     def retrieve(self, basic_auth_id):
         response = self.session.get(self.get_url('consumers', self.consumer_id, 'basicauth', basic_auth_id))
         result = response.json()
 
         if response.status_code != OK:
-            raise ValueError(', '.join(result.values()))
+            raise_response_error(response, ValueError)
 
         return result
 
@@ -322,7 +359,7 @@ class BasicAuthAdminClient(BasicAuthAdminContract, RestClient):
         result = response.json()
 
         if response.status_code != OK:
-            raise ValueError(', '.join(result.values()))
+            raise_response_error(response, ValueError)
 
         return result
 
@@ -344,9 +381,9 @@ class ConsumerAdminClient(ConsumerAdminContract, RestClient):
         })
         result = response.json()
         if response.status_code == CONFLICT:
-            raise ConflictError(', '.join(result.values()))
+            raise_response_error(response, ConflictError)
         elif response.status_code != CREATED:
-            raise ValueError(', '.join(result.values()))
+            raise_response_error(response, ValueError)
 
         return result
 
@@ -362,9 +399,9 @@ class ConsumerAdminClient(ConsumerAdminContract, RestClient):
         response = self.session.put(self.get_url('consumers'), data=data)
         result = response.json()
         if response.status_code == CONFLICT:
-            raise ConflictError(', '.join(result.values()))
+            raise_response_error(response, ConflictError)
         elif response.status_code not in (CREATED, OK):
-            raise ValueError(', '.join(result.values()))
+            raise_response_error(response, ValueError)
 
         return result
 
@@ -374,7 +411,7 @@ class ConsumerAdminClient(ConsumerAdminContract, RestClient):
         result = response.json()
 
         if response.status_code != OK:
-            raise ValueError(', '.join(result.values()))
+            raise_response_error(response, ValueError)
 
         return result
 
@@ -392,7 +429,7 @@ class ConsumerAdminClient(ConsumerAdminContract, RestClient):
         result = response.json()
 
         if response.status_code != OK:
-            raise ValueError(', '.join(result.values()))
+            raise_response_error(response, ValueError)
 
         return result
 
@@ -400,15 +437,15 @@ class ConsumerAdminClient(ConsumerAdminContract, RestClient):
     def delete(self, username_or_id):
         response = self.session.delete(self.get_url('consumers', username_or_id))
 
-        if response.status_code != NO_CONTENT:
-            raise ValueError('Could not delete Consumer: %s' % username_or_id)
+        if response.status_code not in (NO_CONTENT, NOT_FOUND):
+            raise ValueError('Could not delete Consumer (status: %s): %s' % (response.status_code, username_or_id))
 
     def retrieve(self, username_or_id):
         response = self.session.get(self.get_url('consumers', username_or_id))
         result = response.json()
 
         if response.status_code != OK:
-            raise ValueError(', '.join(result.values()))
+            raise_response_error(response, ValueError)
 
         return result
 
@@ -422,7 +459,7 @@ class PluginAdminClient(PluginAdminContract, RestClient):
         result = response.json()
 
         if response.status_code != OK:
-            raise ValueError(', '.join(result.values()))
+            raise_response_error(response, ValueError)
 
         return result
 
@@ -431,7 +468,7 @@ class PluginAdminClient(PluginAdminContract, RestClient):
         result = response.json()
 
         if response.status_code != OK:
-            raise ValueError(', '.join(result.values()))
+            raise_response_error(response, ValueError)
 
         return result
 

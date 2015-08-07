@@ -7,6 +7,7 @@ import collections
 import requests
 import uuid
 import json
+import time
 
 # To run the standalone test script
 if __name__ == '__main__':
@@ -20,16 +21,10 @@ from kong.utils import uuid_or_string, add_url_params, sorted_ordered_dict
 
 API_URL = os.environ.get('PYKONG_TEST_API_URL', 'http://localhost:8001')
 
-_SESSION = None
-
 
 def kong_testserver_is_up():
-    global _SESSION
-    if not _SESSION:
-        _SESSION = requests.session()
-
     try:
-        return _SESSION.get(API_URL).status_code == 200
+        return requests.get(API_URL).status_code == 200
     except IOError:
         return False
 
@@ -196,6 +191,9 @@ class KongAdminTesting(object):
                     name=self._cleanup_afterwards('Mockbin%s' % i),
                     public_dns='mockbin%s.com' % i)
 
+            # Allow kong to settle...
+            time.sleep(1)
+
             self.assertEqual(self.client.apis.count(), amount)
 
             result = self.client.apis.list()
@@ -223,6 +221,9 @@ class KongAdminTesting(object):
                     name=self._cleanup_afterwards('Mockbin%s' % i),
                     public_dns='mockbin%s.com' % i)
 
+            # Allow kong to settle...
+            time.sleep(1)
+
             found = []
 
             for item in self.client.apis.iterate(window_size=3):
@@ -241,6 +242,9 @@ class KongAdminTesting(object):
                     target_url='http://mockbin%s.com' % i,
                     name=self._cleanup_afterwards('Mockbin%s' % i),
                     public_dns='mockbin%s.com' % i)
+
+            # Allow kong to settle...
+            time.sleep(1)
 
             found = []
 
@@ -663,6 +667,9 @@ class KongAdminTesting(object):
                     username=self._cleanup_afterwards('abc1234_%s' % i),
                     custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345_%s' % i)
 
+            # Allow kong to settle...
+            time.sleep(1)
+
             self.assertEqual(self.client.consumers.count(), amount)
 
             result = self.client.consumers.list()
@@ -688,6 +695,9 @@ class KongAdminTesting(object):
                 self.client.consumers.create(
                     username=self._cleanup_afterwards('abc1234_%s' % i),
                     custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345_%s' % i)
+
+            # Allow kong to settle...
+            time.sleep(1)
 
             found = []
 
@@ -804,6 +814,9 @@ class KongAdminTesting(object):
                 self.client.consumers.basic_auth(result['id']).create(
                     username='username %s' % i, password='testpw %s' % i)
 
+            # Allow kong to settle...
+            time.sleep(1)
+
             self.assertEqual(self.client.consumers.basic_auth(result['id']).count(), amount)
 
             result2 = self.client.consumers.basic_auth(result['id']).list()
@@ -827,17 +840,20 @@ class KongAdminTesting(object):
                 username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
             self.assertIsNotNone(result)
 
-            amount = 10
+            amount = 5
 
             for i in range(amount):
                 self.client.consumers.basic_auth(result['id']).create(
                     username='username %s' % i, password='testpw %s' % i)
 
+            # Allow kong to settle...
+            time.sleep(1)
+
             self.assertEqual(self.client.consumers.basic_auth(result['id']).count(), amount)
 
             found = []
 
-            for item in self.client.consumers.basic_auth(result['id']).iterate(window_size=3):
+            for item in self.client.consumers.basic_auth(result['id']).iterate(window_size=2):
                 found.append(item)
 
             self.assertEqual(len(found), amount)
