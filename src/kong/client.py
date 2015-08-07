@@ -5,7 +5,7 @@ import requests
 import backoff
 
 from .contract import KongAdminContract, APIAdminContract, ConsumerAdminContract, PluginAdminContract, \
-    APIPluginConfigurationAdminContract
+    APIPluginConfigurationAdminContract, BasicAuthAdminContract
 from .utils import add_url_params, assert_dict_keys_in, ensure_trailing_slash
 from .compat import OK, CREATED, NO_CONTENT, CONFLICT, urljoin
 from .exceptions import ConflictError
@@ -124,7 +124,7 @@ class APIPluginConfigurationAdminClient(APIPluginConfigurationAdminContract, Res
 
         return result
 
-    @backoff.on_exception(backoff.expo, AssertionError, max_tries=3)
+    @backoff.on_exception(backoff.expo, ValueError, max_tries=3)
     def delete(self, plugin_name_or_id):
         response = self.session.delete(self.get_url('apis', self.api_name_or_id, 'plugins', plugin_name_or_id))
 
@@ -197,7 +197,7 @@ class APIAdminClient(APIAdminContract, RestClient):
 
         return result
 
-    @backoff.on_exception(backoff.expo, AssertionError, max_tries=3)
+    @backoff.on_exception(backoff.expo, ValueError, max_tries=3)
     def delete(self, name_or_id):
         response = self.session.delete(self.get_url('apis', name_or_id))
 
@@ -233,6 +233,98 @@ class APIAdminClient(APIAdminContract, RestClient):
 
     def plugins(self, name_or_id):
         return APIPluginConfigurationAdminClient(self, name_or_id, self.api_url)
+
+
+class BasicAuthAdminClient(BasicAuthAdminContract, RestClient):
+    def __init__(self, consumer_admin, consumer_id, api_url):
+        super(BasicAuthAdminClient, self).__init__(api_url)
+
+        self.consumer_admin = consumer_admin
+        self.consumer_id = consumer_id
+
+    def create_or_update(self, basic_auth_id=None, username=None, password=None):
+        data = {
+            'username': username,
+            'password': password,
+        }
+
+        if basic_auth_id is not None:
+            data['id'] = basic_auth_id
+
+        response = self.session.put(self.get_url('consumers', self.consumer_id, 'basicauth'), data=data)
+        result = response.json()
+        if response.status_code == CONFLICT:
+            raise ConflictError(', '.join(result.values()))
+        elif response.status_code not in (CREATED, OK):
+            raise ValueError(', '.join(result.values()))
+
+        return result
+
+    def create(self, username, password):
+        response = self.session.post(self.get_url('consumers', self.consumer_id, 'basicauth'), data={
+            'username': username,
+            'password': password,
+        })
+        result = response.json()
+        if response.status_code == CONFLICT:
+            raise ConflictError(', '.join(result.values()))
+        elif response.status_code != CREATED:
+            raise ValueError(', '.join(result.values()))
+
+        return result
+
+    def list(self, size=100, offset=None, **filter_fields):
+        assert_dict_keys_in(filter_fields, ['id', 'username'])
+
+        query_params = filter_fields
+        query_params['size'] = size
+
+        if offset:
+            query_params['offset'] = offset
+
+        url = self.get_url('consumers', self.consumer_id, 'basicauth', **query_params)
+        response = self.session.get(url)
+        result = response.json()
+
+        if response.status_code != OK:
+            raise ValueError(', '.join(result.values()))
+
+        return result
+
+    @backoff.on_exception(backoff.expo, ValueError, max_tries=3)
+    def delete(self, basic_auth_id):
+        url = self.get_url('consumers', self.consumer_id, 'basicauth', basic_auth_id)
+        response = self.session.delete(url)
+
+        if response.status_code != NO_CONTENT:
+            raise ValueError('Could not delete Basic Auth: %s for Consumer: %s' % (
+                basic_auth_id, self.consumer_id))
+
+    def retrieve(self, basic_auth_id):
+        response = self.session.get(self.get_url('consumers', self.consumer_id, 'basicauth', basic_auth_id))
+        result = response.json()
+
+        if response.status_code != OK:
+            raise ValueError(', '.join(result.values()))
+
+        return result
+
+    def count(self):
+        response = self.session.get(self.get_url('consumers', self.consumer_id, 'basicauth'))
+        result = response.json()
+        amount = result.get('total', len(result.get('data')))
+        return amount
+
+    def update(self, basic_auth_id, **fields):
+        assert_dict_keys_in(fields, ['username', 'password'])
+        response = self.session.patch(
+            self.get_url('consumers', self.consumer_id, 'basicauth', basic_auth_id), data=fields)
+        result = response.json()
+
+        if response.status_code != OK:
+            raise ValueError(', '.join(result.values()))
+
+        return result
 
 
 class ConsumerAdminClient(ConsumerAdminContract, RestClient):
@@ -304,7 +396,7 @@ class ConsumerAdminClient(ConsumerAdminContract, RestClient):
 
         return result
 
-    @backoff.on_exception(backoff.expo, AssertionError, max_tries=3)
+    @backoff.on_exception(backoff.expo, ValueError, max_tries=3)
     def delete(self, username_or_id):
         response = self.session.delete(self.get_url('consumers', username_or_id))
 
@@ -319,6 +411,9 @@ class ConsumerAdminClient(ConsumerAdminContract, RestClient):
             raise ValueError(', '.join(result.values()))
 
         return result
+
+    def basic_auth(self, username_or_id):
+        return BasicAuthAdminClient(self, username_or_id, self.api_url)
 
 
 class PluginAdminClient(PluginAdminContract, RestClient):
