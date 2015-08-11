@@ -535,6 +535,10 @@ class KongAdminTesting(object):
                 for basic_auth_struct in self.client.consumers.basic_auth(consumer_username_or_id).iterate():
                     self.client.consumers.basic_auth(consumer_username_or_id).delete(basic_auth_struct['id'])
 
+                # Cleanup oauth2
+                for oauth2_struct in self.client.consumers.oauth2(consumer_username_or_id).iterate():
+                    self.client.consumers.oauth2(consumer_username_or_id).delete(oauth2_struct['id'])
+
                 # Cleanup consumer
                 self.client.consumers.delete(consumer_username_or_id)
             self.assertEqual(self.client.consumers.count(), 0)
@@ -875,6 +879,158 @@ class KongAdminTesting(object):
             # Delete by ID
             self.client.consumers.basic_auth(result['id']).delete(result2['id'])
             self.assertEqual(self.client.consumers.basic_auth(result['id']).count(), 0)
+
+        def test_oauth2_create(self):
+            result = self.client.consumers.create(
+                username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+            self.assertIsNotNone(result)
+
+            result2 = self.client.consumers.oauth2(result['id']).create(
+                name='Test Application', redirect_uri='http://some-domain/endpoint/')
+            self.assertIsNotNone(result2)
+            self.assertTrue('id' in result2)
+            self.assertEqual(result2['name'], 'Test Application')
+            self.assertEqual(result2['redirect_uri'], 'http://some-domain/endpoint/')
+
+        @skipIf(True, 'Waiting for fix in Kong: Currently returns empty body!')
+        def test_oauth2_update(self):
+            result = self.client.consumers.create(
+                username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+            self.assertIsNotNone(result)
+
+            # Create
+            result2 = self.client.consumers.oauth2(result['id']).create(
+                name='Test Application', redirect_uri='http://some-domain/endpoint/')
+            self.assertIsNotNone(result2)
+
+            # Update
+            result3 = self.client.consumers.oauth2(result['id']).update(
+                result2['id'], name='Test Application 2', redirect_uri='http://some-domain/endpoint2/')
+            self.assertIsNotNone(result3)
+            self.assertEqual(result3['name'], 'Test Application 2')
+            self.assertEqual(result3['redirect_uri'], 'http://some-domain/endpoint2/')
+
+            # Retrieve and verify
+            result4 = self.client.consumers.oauth2(result['id']).retrieve(result2['id'])
+            self.assertIsNotNone(result4)
+            self.assertEqual(result4['name'], result3['name'])
+            self.assertEqual(result4['redirect_uri'], result3['redirect_uri'])
+
+        def test_oauth2_create_or_update(self):
+            result = self.client.consumers.create(
+                username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+            self.assertIsNotNone(result)
+
+            result2 = self.client.consumers.oauth2(result['id']).create(
+                name='Test Application', redirect_uri='http://some-domain/endpoint/')
+            self.assertIsNotNone(result2)
+
+            # Test create_or_update without oauth2_id -> Should CREATE
+            result3 = self.client.consumers.oauth2(result['id']).create_or_update(
+                name='Test Application 2', redirect_uri='http://some-domain/endpoint2/')
+            self.assertIsNotNone(result3)
+            self.assertNotEqual(result3['id'], result2['id'])
+            self.assertEqual(result3['name'], 'Test Application 2')
+            self.assertEqual(result3['redirect_uri'], 'http://some-domain/endpoint2/')
+            self.assertEqual(self.client.consumers.oauth2(result['id']).count(), 2)
+
+            # Test create_or_update with oauth2_id -> Should UPDATE
+            result4 = self.client.consumers.oauth2(result['id']).create_or_update(
+                oauth2_id=result3['id'], name='Test Application 3', redirect_uri='http://some-domain/endpoint3/')
+            self.assertIsNotNone(result4)
+            self.assertEqual(result4['id'], result3['id'])
+            self.assertEqual(result4['name'], 'Test Application 3')
+            self.assertEqual(result4['redirect_uri'], 'http://some-domain/endpoint3/')
+            self.assertEqual(self.client.consumers.oauth2(result['id']).count(), 2)
+
+        @skipIf(True, 'Waiting for fix in Kong: Currently returns empty body!')
+        def test_oauth2_retrieve(self):
+            result = self.client.consumers.create(
+                username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+            self.assertIsNotNone(result)
+
+            result2 = self.client.consumers.oauth2(result['id']).create(
+                name='Test Application', redirect_uri='http://some-domain/endpoint/')
+            self.assertIsNotNone(result2)
+
+            # Retrieve by id
+            result3 = self.client.consumers.oauth2(result['id']).retrieve(result2['id'])
+            self.assertIsNotNone(result3)
+            self.assertEqual(result3['name'], result2['name'])
+            self.assertEqual(result3['redirect_uri'], result2['redirect_uri'])
+
+        def test_oauth2_list(self):
+            result = self.client.consumers.create(
+                username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+            self.assertIsNotNone(result)
+
+            amount = 10
+
+            for i in range(amount):
+                self.client.consumers.oauth2(result['id']).create(
+                    name='Test Application %d' % i, redirect_uri='http://some-domain/endpoint%d/' % i)
+
+            # Allow kong to settle...
+            time.sleep(1)
+
+            self.assertEqual(self.client.consumers.oauth2(result['id']).count(), amount)
+
+            result2 = self.client.consumers.oauth2(result['id']).list()
+            self.assertTrue('data' in result2)
+            data = result2['data']
+
+            self.assertEqual(len(data), amount)
+
+            result3 = self.client.consumers.oauth2(result['id']).list(name='Test Application 6')
+            self.assertTrue('data' in result3)
+            data = result3['data']
+
+            self.assertEqual(len(data), 1)
+
+            result4 = self.client.consumers.oauth2(result['id']).list(size=3)
+            self.assertIsNotNone(result4['next'])
+            self.assertEqual(len(result4['data']), 3)
+
+        def test_oauth2_iterate(self):
+            result = self.client.consumers.create(
+                username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+            self.assertIsNotNone(result)
+
+            amount = 5
+
+            for i in range(amount):
+                self.client.consumers.oauth2(result['id']).create(
+                    name='Test Application %d' % i, redirect_uri='http://some-domain/endpoint%d/' % i)
+
+            # Allow kong to settle...
+            time.sleep(1)
+
+            self.assertEqual(self.client.consumers.oauth2(result['id']).count(), amount)
+
+            found = []
+
+            for item in self.client.consumers.oauth2(result['id']).iterate(window_size=2):
+                found.append(item)
+
+            self.assertEqual(len(found), amount)
+            self.assertEqual(
+                sorted([item['id'] for item in found]),
+                sorted([item['id'] for item in self.client.consumers.oauth2(result['id']).list().get('data')]))
+
+        def test_oauth2_delete(self):
+            result = self.client.consumers.create(
+                username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+            self.assertIsNotNone(result)
+
+            result2 = self.client.consumers.oauth2(result['id']).create(
+                name='Test Application', redirect_uri='http://some-domain/endpoint/')
+            self.assertIsNotNone(result2)
+            self.assertTrue('id' in result2)
+            self.assertEqual(self.client.consumers.oauth2(result['id']).count(), 1)
+
+            # Delete by ID
+            self.client.consumers.oauth2(result['id']).delete(result2['id'])
+            self.assertEqual(self.client.consumers.oauth2(result['id']).count(), 0)
 
         def _cleanup_afterwards(self, username_or_id):
             self._cleanup.append(username_or_id)
