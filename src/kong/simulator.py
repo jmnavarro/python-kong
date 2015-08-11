@@ -4,7 +4,7 @@ from __future__ import unicode_literals, print_function
 import uuid
 
 from .contract import KongAdminContract, APIPluginConfigurationAdminContract, APIAdminContract, ConsumerAdminContract, \
-    PluginAdminContract, BasicAuthAdminContract
+    PluginAdminContract, BasicAuthAdminContract, OAuth2AdminContract
 from .utils import timestamp, uuid_or_string, add_url_params, filter_api_struct, filter_dict_list, assert_dict_keys_in, \
     ensure_trailing_slash
 from .compat import OrderedDict
@@ -374,6 +374,50 @@ class BasicAuthAdminSimulator(BasicAuthAdminContract):
         return self._store.count()
 
 
+class OAuth2AdminSimulator(OAuth2AdminContract):
+    def __init__(self, consumer_admin, consumer_id, api_url):
+        self.consumer_admin = consumer_admin
+        self.consumer_id = consumer_id
+        self._store = SimulatorDataStore(api_url or 'http://localhost:8001/consumers/%s/oauth2' % self.consumer_id)
+
+    def create_or_update(self, oauth2_id=None, name=None, redirect_uri=None, client_id=None, client_secret=None):
+        data = {
+            'name': name,
+            'redirect_uri': redirect_uri,
+            'client_id': client_id,
+            'client_secret': client_secret
+        }
+
+        if oauth2_id is not None:
+            return self.update(oauth2_id, **data)
+
+        return self.create(**data)
+
+    def create(self, name, redirect_uri, client_id=None, client_secret=None):
+        assert name and redirect_uri
+
+        return self._store.create({
+            'name': name,
+            'redirect_uri': redirect_uri,
+            'created_at': timestamp()
+        }, check_conflict_keys=('name', 'redirect_uri'))
+
+    def update(self, oauth2_id, **fields):
+        return self._store.update(oauth2_id, None, fields)
+
+    def list(self, size=100, offset=None, **filter_fields):
+        return self._store.list(size=size, offset=offset, **filter_fields)
+
+    def delete(self, oauth2_id):
+        return self._store.delete(oauth2_id, None)
+
+    def retrieve(self, oauth2_id):
+        return self._store.retrieve(oauth2_id, None)
+
+    def count(self):
+        return self._store.count()
+
+
 class ConsumerAdminSimulator(ConsumerAdminContract):
     def __init__(self, api_url=None):
         self._store = SimulatorDataStore(
@@ -383,6 +427,7 @@ class ConsumerAdminSimulator(ConsumerAdminContract):
                 'username': None
             })
         self._basic_auth_admins = {}
+        self._oauth2_admins = {}
 
     def count(self):
         return self._store.count()
@@ -426,6 +471,10 @@ class ConsumerAdminSimulator(ConsumerAdminContract):
             self._basic_auth_admins[consumer_id].consumer_admin = None
             del self._basic_auth_admins[consumer_id]
 
+        if consumer_id in self._oauth2_admins:
+            self._oauth2_admins[consumer_id].consumer_admin = None
+            del self._oauth2_admins[consumer_id]
+
         return self._store.delete(username_or_id, 'username')
 
     def basic_auth(self, username_or_id):
@@ -438,6 +487,17 @@ class ConsumerAdminSimulator(ConsumerAdminContract):
             self._basic_auth_admins[consumer_id] = BasicAuthAdminSimulator(self, consumer_id, self._store.api_url)
 
         return self._basic_auth_admins[consumer_id]
+
+    def oauth2(self, username_or_id):
+        consumer_id = self.retrieve(username_or_id).get('id')
+
+        if consumer_id is None:
+            raise ValueError('Unknown username_or_id: %s' % username_or_id)
+
+        if consumer_id not in self._oauth2_admins:
+            self._oauth2_admins[consumer_id] = OAuth2AdminSimulator(self, consumer_id, self._store.api_url)
+
+        return self._oauth2_admins[consumer_id]
 
 
 class PluginAdminSimulator(PluginAdminContract):
