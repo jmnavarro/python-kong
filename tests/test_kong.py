@@ -183,7 +183,7 @@ class KongAdminTesting(object):
             self.assertEqual(result3, result2)
 
         def test_list(self):
-            amount = 10
+            amount = 5
 
             for i in range(amount):
                 self.client.apis.add(
@@ -213,7 +213,7 @@ class KongAdminTesting(object):
             self.assertEqual(len(result['data']), 3)
 
         def test_iterate(self):
-            amount = 10
+            amount = 5
 
             for i in range(amount):
                 self.client.apis.add(
@@ -235,7 +235,7 @@ class KongAdminTesting(object):
                 sorted([item['id'] for item in self.client.apis.list().get('data')]))
 
         def test_iterate_filtered(self):
-            amount = 10
+            amount = 5
 
             for i in range(amount):
                 self.client.apis.add(
@@ -664,7 +664,7 @@ class KongAdminTesting(object):
             self.assertEqual(result3, result2)
 
         def test_list(self):
-            amount = 10
+            amount = 5
 
             for i in range(amount):
                 self.client.consumers.create(
@@ -682,7 +682,7 @@ class KongAdminTesting(object):
 
             self.assertEqual(len(data), amount)
 
-            result = self.client.consumers.list(custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345_6')
+            result = self.client.consumers.list(custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345_4')
             self.assertTrue('data' in result)
             data = result['data']
 
@@ -693,7 +693,7 @@ class KongAdminTesting(object):
             self.assertEqual(len(result['data']), 3)
 
         def test_iterate(self):
-            amount = 10
+            amount = 5
 
             for i in range(amount):
                 self.client.consumers.create(
@@ -812,7 +812,7 @@ class KongAdminTesting(object):
                 username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
             self.assertIsNotNone(result)
 
-            amount = 10
+            amount = 5
 
             for i in range(amount):
                 self.client.consumers.basic_auth(result['id']).create(
@@ -829,7 +829,7 @@ class KongAdminTesting(object):
 
             self.assertEqual(len(data), amount)
 
-            result3 = self.client.consumers.basic_auth(result['id']).list(username='username 6')
+            result3 = self.client.consumers.basic_auth(result['id']).list(username='username 3')
             self.assertTrue('data' in result3)
             data = result3['data']
 
@@ -892,7 +892,6 @@ class KongAdminTesting(object):
             self.assertEqual(result2['name'], 'Test Application')
             self.assertEqual(result2['redirect_uri'], 'http://some-domain/endpoint/')
 
-        @skipIf(True, 'Waiting for fix in Kong: Currently returns empty body!')
         def test_oauth2_update(self):
             result = self.client.consumers.create(
                 username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
@@ -943,7 +942,6 @@ class KongAdminTesting(object):
             self.assertEqual(result4['redirect_uri'], 'http://some-domain/endpoint3/')
             self.assertEqual(self.client.consumers.oauth2(result['id']).count(), 2)
 
-        @skipIf(True, 'Waiting for fix in Kong: Currently returns empty body!')
         def test_oauth2_retrieve(self):
             result = self.client.consumers.create(
                 username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
@@ -964,7 +962,7 @@ class KongAdminTesting(object):
                 username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
             self.assertIsNotNone(result)
 
-            amount = 10
+            amount = 5
 
             for i in range(amount):
                 self.client.consumers.oauth2(result['id']).create(
@@ -981,7 +979,7 @@ class KongAdminTesting(object):
 
             self.assertEqual(len(data), amount)
 
-            result3 = self.client.consumers.oauth2(result['id']).list(name='Test Application 6')
+            result3 = self.client.consumers.oauth2(result['id']).list(name='Test Application 3')
             self.assertTrue('data' in result3)
             data = result3['data']
 
