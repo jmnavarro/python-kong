@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals, print_function
-import os
 import time
+import os
 import logging
+
 import requests
 import backoff
 
@@ -17,9 +18,17 @@ from .exceptions import ConflictError
 logger = logging.getLogger(__name__)
 
 KONG_MINIMUM_REQUEST_INTERVAL = float(os.getenv('KONG_MINIMUM_REQUEST_INTERVAL', 0))
+KONG_REUSE_CONNECTIONS = int(os.getenv('KONG_REUSE_CONNECTIONS', '1')) == 1
 
 if KONG_MINIMUM_REQUEST_INTERVAL > 0:
     logger.warn('Requests will be throttled: KONG_MINIMUM_REQUEST_INTERVAL = %s' % KONG_MINIMUM_REQUEST_INTERVAL)
+
+
+def get_default_kong_headers():
+    headers = {}
+    if not KONG_REUSE_CONNECTIONS:
+        headers.update({'Connection': 'close'})
+    return headers
 
 
 def raise_response_error(response, exception_class=None, is_json=True):
@@ -47,8 +56,9 @@ class ThrottlingHTTPAdapter(HTTPAdapter):
 
 
 class RestClient(object):
-    def __init__(self, api_url):
+    def __init__(self, api_url, headers=None):
         self.api_url = api_url
+        self.headers = headers
         self._session = None
 
     @property
@@ -58,6 +68,12 @@ class RestClient(object):
             self._session.mount(self.api_url, ThrottlingHTTPAdapter())
         return self._session
 
+    def get_headers(self, **headers):
+        result = {}
+        result.update(self.headers)
+        result.update(headers)
+        return result
+
     def get_url(self, *path, **query_params):
         url = ensure_trailing_slash(urljoin(self.api_url, '/'.join(path)))
         return add_url_params(url, query_params)
@@ -65,7 +81,7 @@ class RestClient(object):
 
 class APIPluginConfigurationAdminClient(APIPluginConfigurationAdminContract, RestClient):
     def __init__(self, api_admin, api_name_or_id, api_url):
-        super(APIPluginConfigurationAdminClient, self).__init__(api_url)
+        super(APIPluginConfigurationAdminClient, self).__init__(api_url, headers=get_default_kong_headers())
 
         self.api_admin = api_admin
         self.api_name_or_id = api_name_or_id
@@ -83,7 +99,8 @@ class APIPluginConfigurationAdminClient(APIPluginConfigurationAdminContract, Res
         if enabled is not None and isinstance(enabled, bool):
             data['enabled'] = enabled
 
-        response = self.session.post(self.get_url('apis', self.api_name_or_id, 'plugins'), data=data)
+        response = self.session.post(self.get_url('apis', self.api_name_or_id, 'plugins'), data=data,
+                                     headers=self.get_headers())
         result = response.json()
         if response.status_code == CONFLICT:
             raise_response_error(response, ConflictError)
@@ -108,7 +125,8 @@ class APIPluginConfigurationAdminClient(APIPluginConfigurationAdminContract, Res
         if plugin_configuration_id is not None:
             data['id'] = plugin_configuration_id
 
-        response = self.session.put(self.get_url('apis', self.api_name_or_id, 'plugins'), data=data)
+        response = self.session.put(self.get_url('apis', self.api_name_or_id, 'plugins'), data=data,
+                                    headers=self.get_headers())
         result = response.json()
         if response.status_code == CONFLICT:
             raise_response_error(response, ConflictError)
@@ -134,7 +152,7 @@ class APIPluginConfigurationAdminClient(APIPluginConfigurationAdminContract, Res
 
         url = self.get_url('apis', self.api_name_or_id, 'plugins', plugin_name)
 
-        response = self.session.patch(url, data=data_struct_update)
+        response = self.session.patch(url, data=data_struct_update, headers=self.get_headers())
         result = response.json()
 
         if response.status_code != OK:
@@ -152,7 +170,7 @@ class APIPluginConfigurationAdminClient(APIPluginConfigurationAdminContract, Res
             query_params['offset'] = offset
 
         url = self.get_url('apis', self.api_name_or_id, 'plugins', **query_params)
-        response = self.session.get(url)
+        response = self.session.get(url, headers=self.get_headers())
         result = response.json()
 
         if response.status_code != OK:
@@ -162,14 +180,15 @@ class APIPluginConfigurationAdminClient(APIPluginConfigurationAdminContract, Res
 
     @backoff.on_exception(backoff.expo, ValueError, max_tries=3)
     def delete(self, plugin_name_or_id):
-        response = self.session.delete(self.get_url('apis', self.api_name_or_id, 'plugins', plugin_name_or_id))
+        response = self.session.delete(self.get_url('apis', self.api_name_or_id, 'plugins', plugin_name_or_id),
+                                       headers=self.get_headers())
 
         if response.status_code not in (NO_CONTENT, NOT_FOUND):
             raise ValueError('Could not delete Plugin Configuration (status: %s): %s' % (
                 response.status_code, plugin_name_or_id))
 
     def count(self):
-        response = self.session.get(self.get_url('apis', self.api_name_or_id, 'plugins'))
+        response = self.session.get(self.get_url('apis', self.api_name_or_id, 'plugins'), headers=self.get_headers())
         result = response.json()
         amount = result.get('total', len(result.get('data')))
         return amount
@@ -177,10 +196,10 @@ class APIPluginConfigurationAdminClient(APIPluginConfigurationAdminContract, Res
 
 class APIAdminClient(APIAdminContract, RestClient):
     def __init__(self, api_url):
-        super(APIAdminClient, self).__init__(api_url)
+        super(APIAdminClient, self).__init__(api_url, headers=get_default_kong_headers())
 
     def count(self):
-        response = self.session.get(self.get_url('apis'))
+        response = self.session.get(self.get_url('apis'), headers=self.get_headers())
         result = response.json()
         amount = result.get('total', len(result.get('data')))
         return amount
@@ -192,7 +211,7 @@ class APIAdminClient(APIAdminContract, RestClient):
             'path': path or None,  # Empty strings are not allowed
             'strip_path': strip_path,
             'target_url': target_url
-        })
+        }, headers=self.get_headers())
         result = response.json()
         if response.status_code == CONFLICT:
             raise_response_error(response, ConflictError)
@@ -213,7 +232,7 @@ class APIAdminClient(APIAdminContract, RestClient):
         if api_id is not None:
             data['id'] = api_id
 
-        response = self.session.put(self.get_url('apis'), data=data)
+        response = self.session.put(self.get_url('apis'), data=data, headers=self.get_headers())
         result = response.json()
         if response.status_code == CONFLICT:
             raise_response_error(response, ConflictError)
@@ -226,7 +245,7 @@ class APIAdminClient(APIAdminContract, RestClient):
         assert_dict_keys_in(fields, ['name', 'public_dns', 'path', 'strip_path'])
         response = self.session.patch(self.get_url('apis', name_or_id), data=dict({
             'target_url': target_url
-        }, **fields))
+        }, **fields), headers=self.get_headers())
         result = response.json()
 
         if response.status_code != OK:
@@ -236,13 +255,13 @@ class APIAdminClient(APIAdminContract, RestClient):
 
     @backoff.on_exception(backoff.expo, ValueError, max_tries=3)
     def delete(self, name_or_id):
-        response = self.session.delete(self.get_url('apis', name_or_id))
+        response = self.session.delete(self.get_url('apis', name_or_id), headers=self.get_headers())
 
         if response.status_code not in (NO_CONTENT, NOT_FOUND):
             raise ValueError('Could not delete API (status: %s): %s' % (response.status_code, name_or_id))
 
     def retrieve(self, name_or_id):
-        response = self.session.get(self.get_url('apis', name_or_id))
+        response = self.session.get(self.get_url('apis', name_or_id), headers=self.get_headers())
         result = response.json()
 
         if response.status_code != OK:
@@ -260,7 +279,7 @@ class APIAdminClient(APIAdminContract, RestClient):
             query_params['offset'] = offset
 
         url = self.get_url('apis', **query_params)
-        response = self.session.get(url)
+        response = self.session.get(url, headers=self.get_headers())
         result = response.json()
 
         if response.status_code != OK:
@@ -274,7 +293,7 @@ class APIAdminClient(APIAdminContract, RestClient):
 
 class BasicAuthAdminClient(BasicAuthAdminContract, RestClient):
     def __init__(self, consumer_admin, consumer_id, api_url):
-        super(BasicAuthAdminClient, self).__init__(api_url)
+        super(BasicAuthAdminClient, self).__init__(api_url, headers=get_default_kong_headers())
 
         self.consumer_admin = consumer_admin
         self.consumer_id = consumer_id
@@ -288,7 +307,8 @@ class BasicAuthAdminClient(BasicAuthAdminContract, RestClient):
         if basic_auth_id is not None:
             data['id'] = basic_auth_id
 
-        response = self.session.put(self.get_url('consumers', self.consumer_id, 'basicauth'), data=data)
+        response = self.session.put(self.get_url('consumers', self.consumer_id, 'basicauth'), data=data,
+                                    headers=self.get_headers())
         result = response.json()
         if response.status_code == CONFLICT:
             raise_response_error(response, ConflictError)
@@ -301,7 +321,7 @@ class BasicAuthAdminClient(BasicAuthAdminContract, RestClient):
         response = self.session.post(self.get_url('consumers', self.consumer_id, 'basicauth'), data={
             'username': username,
             'password': password,
-        })
+        }, headers=self.get_headers())
         result = response.json()
         if response.status_code == CONFLICT:
             raise_response_error(response, ConflictError)
@@ -320,7 +340,7 @@ class BasicAuthAdminClient(BasicAuthAdminContract, RestClient):
             query_params['offset'] = offset
 
         url = self.get_url('consumers', self.consumer_id, 'basicauth', **query_params)
-        response = self.session.get(url)
+        response = self.session.get(url, headers=self.get_headers())
         result = response.json()
 
         if response.status_code != OK:
@@ -331,14 +351,15 @@ class BasicAuthAdminClient(BasicAuthAdminContract, RestClient):
     @backoff.on_exception(backoff.expo, ValueError, max_tries=3)
     def delete(self, basic_auth_id):
         url = self.get_url('consumers', self.consumer_id, 'basicauth', basic_auth_id)
-        response = self.session.delete(url)
+        response = self.session.delete(url, headers=self.get_headers())
 
         if response.status_code not in (NO_CONTENT, NOT_FOUND):
             raise ValueError('Could not delete Basic Auth (status: %s): %s for Consumer: %s' % (
                 response.status_code, basic_auth_id, self.consumer_id))
 
     def retrieve(self, basic_auth_id):
-        response = self.session.get(self.get_url('consumers', self.consumer_id, 'basicauth', basic_auth_id))
+        response = self.session.get(self.get_url('consumers', self.consumer_id, 'basicauth', basic_auth_id),
+                                    headers=self.get_headers())
         result = response.json()
 
         if response.status_code != OK:
@@ -347,7 +368,8 @@ class BasicAuthAdminClient(BasicAuthAdminContract, RestClient):
         return result
 
     def count(self):
-        response = self.session.get(self.get_url('consumers', self.consumer_id, 'basicauth'))
+        response = self.session.get(self.get_url('consumers', self.consumer_id, 'basicauth'),
+                                    headers=self.get_headers())
         result = response.json()
         amount = result.get('total', len(result.get('data')))
         return amount
@@ -355,7 +377,8 @@ class BasicAuthAdminClient(BasicAuthAdminContract, RestClient):
     def update(self, basic_auth_id, **fields):
         assert_dict_keys_in(fields, ['username', 'password'])
         response = self.session.patch(
-            self.get_url('consumers', self.consumer_id, 'basicauth', basic_auth_id), data=fields)
+            self.get_url('consumers', self.consumer_id, 'basicauth', basic_auth_id), data=fields,
+            headers=self.get_headers())
         result = response.json()
 
         if response.status_code != OK:
@@ -366,10 +389,10 @@ class BasicAuthAdminClient(BasicAuthAdminContract, RestClient):
 
 class ConsumerAdminClient(ConsumerAdminContract, RestClient):
     def __init__(self, api_url):
-        super(ConsumerAdminClient, self).__init__(api_url)
+        super(ConsumerAdminClient, self).__init__(api_url, headers=get_default_kong_headers())
 
     def count(self):
-        response = self.session.get(self.get_url('consumers'))
+        response = self.session.get(self.get_url('consumers'), headers=self.get_headers())
         result = response.json()
         amount = result.get('total', len(result.get('data')))
         return amount
@@ -378,7 +401,7 @@ class ConsumerAdminClient(ConsumerAdminContract, RestClient):
         response = self.session.post(self.get_url('consumers'), data={
             'username': username,
             'custom_id': custom_id,
-        })
+        }, headers=self.get_headers())
         result = response.json()
         if response.status_code == CONFLICT:
             raise_response_error(response, ConflictError)
@@ -396,7 +419,7 @@ class ConsumerAdminClient(ConsumerAdminContract, RestClient):
         if consumer_id is not None:
             data['id'] = consumer_id
 
-        response = self.session.put(self.get_url('consumers'), data=data)
+        response = self.session.put(self.get_url('consumers'), data=data, headers=self.get_headers())
         result = response.json()
         if response.status_code == CONFLICT:
             raise_response_error(response, ConflictError)
@@ -407,7 +430,8 @@ class ConsumerAdminClient(ConsumerAdminContract, RestClient):
 
     def update(self, username_or_id, **fields):
         assert_dict_keys_in(fields, ['username', 'custom_id'])
-        response = self.session.patch(self.get_url('consumers', username_or_id), data=fields)
+        response = self.session.patch(self.get_url('consumers', username_or_id), data=fields,
+                                      headers=self.get_headers())
         result = response.json()
 
         if response.status_code != OK:
@@ -425,7 +449,7 @@ class ConsumerAdminClient(ConsumerAdminContract, RestClient):
             query_params['offset'] = offset
 
         url = self.get_url('consumers', **query_params)
-        response = self.session.get(url)
+        response = self.session.get(url, headers=self.get_headers())
         result = response.json()
 
         if response.status_code != OK:
@@ -435,13 +459,13 @@ class ConsumerAdminClient(ConsumerAdminContract, RestClient):
 
     @backoff.on_exception(backoff.expo, ValueError, max_tries=3)
     def delete(self, username_or_id):
-        response = self.session.delete(self.get_url('consumers', username_or_id))
+        response = self.session.delete(self.get_url('consumers', username_or_id), headers=self.get_headers())
 
         if response.status_code not in (NO_CONTENT, NOT_FOUND):
             raise ValueError('Could not delete Consumer (status: %s): %s' % (response.status_code, username_or_id))
 
     def retrieve(self, username_or_id):
-        response = self.session.get(self.get_url('consumers', username_or_id))
+        response = self.session.get(self.get_url('consumers', username_or_id), headers=self.get_headers())
         result = response.json()
 
         if response.status_code != OK:
@@ -454,8 +478,11 @@ class ConsumerAdminClient(ConsumerAdminContract, RestClient):
 
 
 class PluginAdminClient(PluginAdminContract, RestClient):
+    def __init__(self, api_url):
+        super(PluginAdminClient, self).__init__(api_url, headers=get_default_kong_headers())
+
     def list(self):
-        response = self.session.get(self.get_url('plugins'))
+        response = self.session.get(self.get_url('plugins'), headers=self.get_headers())
         result = response.json()
 
         if response.status_code != OK:
@@ -464,7 +491,7 @@ class PluginAdminClient(PluginAdminContract, RestClient):
         return result
 
     def retrieve_schema(self, plugin_name):
-        response = self.session.get(self.get_url('plugins', plugin_name, 'schema'))
+        response = self.session.get(self.get_url('plugins', plugin_name, 'schema'), headers=self.get_headers())
         result = response.json()
 
         if response.status_code != OK:
