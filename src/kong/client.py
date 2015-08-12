@@ -64,8 +64,14 @@ class RestClient(object):
     @property
     def session(self):
         if self._session is None:
+            logger.debug('Creating session!')
             self._session = requests.session()
             self._session.mount(self.api_url, ThrottlingHTTPAdapter())
+        elif not KONG_REUSE_CONNECTIONS:
+            logger.debug('Closing session!')
+            self._session.close()
+            self._session = None
+            return self.session
         return self._session
 
     def get_headers(self, **headers):
