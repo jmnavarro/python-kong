@@ -64,6 +64,20 @@ class KongAdminTesting(object):
             self.assertIsNotNone(result['created_at'])
             self.assertFalse('path' in result)
 
+        def test_add_extra(self):
+            result = self.client.apis.add(
+                target_url='http://mockbin.com', name=self._cleanup_afterwards('Mockbin'), public_dns='mockbin.com',
+                strip_path=True, preserve_host=True)
+            self.assertEqual(self.client.apis.count(), 1)
+            self.assertEqual(result['target_url'], 'http://mockbin.com/')
+            self.assertEqual(result['name'], 'Mockbin')
+            self.assertEqual(result['public_dns'], 'mockbin.com')
+            self.assertTrue(result['strip_path'])
+            self.assertTrue(result['preserve_host'])
+            self.assertIsNotNone(result['id'])
+            self.assertIsNotNone(result['created_at'])
+            self.assertFalse('path' in result)
+
         def test_add_conflict_name(self):
             result = self.client.apis.add(
                 target_url='http://mockbin.com', name=self._cleanup_afterwards('Mockbin'), public_dns='mockbin.com')
