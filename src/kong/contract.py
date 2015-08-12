@@ -424,6 +424,118 @@ class BasicAuthAdminContract(CollectionMixin):
         """
 
 
+class KeyAuthAdminContract(CollectionMixin):
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def count(self):
+        """
+        :rtype: int
+        :return: Amount of records
+        """
+
+    @abstractmethod
+    def create(self, key=None):
+        """
+        :param key: You can optionally set your own unique key to authenticate the client. If missing, the plugin will
+            generate one.
+        :type key: str
+        :rtype: dict
+        :return: Dictionary containing the KeyAuth description. Example:
+                {
+                    consumer_id: "abf8f0e5-753b-4eaa-ceff-a7c5187df4ff"
+                    id: "fe575378-162c-4c88-cc35-be456ad8d8a5"
+                    key: "ahaiwdiaodyauodawyuiwoa7dwuaoadwhidwa"
+                    created_at: 1438872669000
+                }
+        """
+
+    @abstractmethod
+    def create_or_update(self, key_auth_id=None, key=None):
+        """
+        :param key_auth_id: The unique identifier of the key_auth info to update
+        :type key_auth_id: str | uuid.UUID
+        :param key: You can optionally set your own unique key to authenticate the client. If missing, the plugin will
+            generate one.
+        :rtype: dict
+        :return: Dictionary containing the KeyAuth description. Example:
+                {
+                    consumer_id: "abf8f0e5-753b-4eaa-ceff-a7c5187df4ff"
+                    id: "fe575378-162c-4c88-cc35-be456ad8d8a5"
+                    key: "ahaiwdiaodyauodawyuiwoa7dwuaoadwhidwa"
+                    created_at: 1438872669000
+                }
+        """
+
+    @abstractmethod
+    def update(self, key_auth_id, **fields):
+        """
+        :param key_auth_id: The unique identifier of the key_auth info to update
+        :type key_auth_id: str | uuid.UUID
+        :param fields: Optional dictionary which values will be used to overwrite the existing values
+        :type fields: dict
+        :rtype: dict
+        :return: Dictionary containing the KeyAuth description. Example:
+                {
+                    consumer_id: "abf8f0e5-753b-4eaa-ceff-a7c5187df4ff"
+                    id: "fe575378-162c-4c88-cc35-be456ad8d8a5"
+                    key: "ahaiwdiaodyauodawyuiwoa7dwuaoadwhidwa"
+                    created_at: 1438872669000
+                }
+        """
+
+    @abstractmethod
+    def retrieve(self, key_auth_id):
+        """
+        :param key_auth_id: The unique identifier of the key_auth info to retrieve
+        :type key_auth_id: str | uuid.UUID
+        :rtype: dict
+        :return: Dictionary containing the KeyAuth description. Example:
+                {
+                    consumer_id: "abf8f0e5-753b-4eaa-ceff-a7c5187df4ff"
+                    id: "fe575378-162c-4c88-cc35-be456ad8d8a5"
+                    key: "ahaiwdiaodyauodawyuiwoa7dwuaoadwhidwa"
+                    created_at: 1438872669000
+                }
+        """
+
+    @abstractmethod
+    def list(self, size=100, offset=None, **filter_fields):
+        """
+        :param size: A limit on the number of objects to be returned.
+        :type size: int
+        :param offset: A cursor used for pagination. offset is an object identifier that defines a place in the list.
+        :type offset: uuid.UUID
+        :param filter_fields: Dictionary containing values to filter for
+        :type filter_fields: dict
+        :rtype: dict
+        :return: Dictionary containing dictionaries containing the KeyAuth description. Example:
+                {
+                   "data":[
+                      {
+                         consumer_id: "abf8f0e5-753b-4eaa-ceff-a7c5187df4ff"
+                         id: "fe575378-162c-4c88-cc35-be456ad8d8a5"
+                         key: "ahaiwdiaodyauodawyuiwoa7dwuaoadwhidwa"
+                         created_at: 1438872669000
+                      },
+                      {
+                         consumer_id: "abf8f0e5-753b-4eaa-ceff-a7c5187df4ff"
+                         id: "fe575378-162c-4c88-cc35-be456ad8d8a5"
+                         key: "ahaiwdiaodyauodawyuiwoa7dwuaoadwhidwa"
+                         created_at: 1438872669000
+                      }
+                   ]
+                }
+        """
+
+    @abstractmethod
+    def delete(self, key_auth_id):
+        """
+        :param key_auth_id: The unique identifier of the key_auth info to delete
+        :type key_auth_id: str | uuid.UUID
+        """
+
+
 class OAuth2AdminContract(CollectionMixin):
     __metaclass__ = ABCMeta
 
@@ -686,6 +798,16 @@ class ConsumerAdminContract(CollectionMixin):
 
         :param username_or_id: The unique identifier or the name of the consumer
         :rtype BasicAuthAdminContract
+        :return:
+        """
+
+    @abstractmethod
+    def key_auth(self, username_or_id):
+        """
+        Returns a "Key Auth" manager for a given consumer
+
+        :param username_or_id: The unique identifier or the name of the consumer
+        :rtype KeyAuthAdminContract
         :return:
         """
 
