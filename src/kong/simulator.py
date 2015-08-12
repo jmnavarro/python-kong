@@ -2,9 +2,10 @@
 from __future__ import unicode_literals, print_function
 
 import uuid
+import hashlib
 
 from .contract import KongAdminContract, APIPluginConfigurationAdminContract, APIAdminContract, ConsumerAdminContract, \
-    PluginAdminContract, BasicAuthAdminContract, OAuth2AdminContract
+    PluginAdminContract, BasicAuthAdminContract, KeyAuthAdminContract, OAuth2AdminContract
 from .utils import timestamp, uuid_or_string, add_url_params, filter_api_struct, filter_dict_list, assert_dict_keys_in, \
     ensure_trailing_slash
 from .compat import OrderedDict
@@ -374,6 +375,51 @@ class BasicAuthAdminSimulator(BasicAuthAdminContract):
         return self._store.count()
 
 
+class KeyAuthAdminSimulator(KeyAuthAdminContract):
+    def __init__(self, consumer_admin, consumer_id, api_url):
+        self.consumer_admin = consumer_admin
+        self.consumer_id = consumer_id
+        self._store = SimulatorDataStore(api_url or 'http://localhost:8001/consumers/%s/keyauth' % self.consumer_id)
+
+    def create_or_update(self, key_auth_id=None, key=None):
+        data = {
+            'key': key or self._generate_key()
+        }
+
+        if key_auth_id is not None:
+            return self.update(key_auth_id, **data)
+
+        return self.create(**data)
+
+    def create(self, key=None):
+        return self._store.create({
+            'key': key or self._generate_key(),
+            'created_at': timestamp()
+        }, check_conflict_keys=('key',))
+
+    def update(self, key_auth_id, **fields):
+        return self._store.update(key_auth_id, None, fields)
+
+    def list(self, size=100, offset=None, **filter_fields):
+        return self._store.list(size=size, offset=offset, **filter_fields)
+
+    def delete(self, key_auth_id):
+        return self._store.delete(key_auth_id, None)
+
+    def retrieve(self, key_auth_id):
+        return self._store.retrieve(key_auth_id, None)
+
+    def count(self):
+        return self._store.count()
+
+    def _generate_key(self):
+        data = str(uuid.uuid4()).encode('utf-8')
+
+        m = hashlib.sha1()
+        m.update(data)
+        return m.hexdigest()
+
+
 class OAuth2AdminSimulator(OAuth2AdminContract):
     def __init__(self, consumer_admin, consumer_id, api_url):
         self.consumer_admin = consumer_admin
@@ -427,6 +473,7 @@ class ConsumerAdminSimulator(ConsumerAdminContract):
                 'username': None
             })
         self._basic_auth_admins = {}
+        self._key_auth_admins = {}
         self._oauth2_admins = {}
 
     def count(self):
@@ -487,6 +534,17 @@ class ConsumerAdminSimulator(ConsumerAdminContract):
             self._basic_auth_admins[consumer_id] = BasicAuthAdminSimulator(self, consumer_id, self._store.api_url)
 
         return self._basic_auth_admins[consumer_id]
+
+    def key_auth(self, username_or_id):
+        consumer_id = self.retrieve(username_or_id).get('id')
+
+        if consumer_id is None:
+            raise ValueError('Unknown username_or_id: %s' % username_or_id)
+
+        if consumer_id not in self._key_auth_admins:
+            self._key_auth_admins[consumer_id] = KeyAuthAdminSimulator(self, consumer_id, self._store.api_url)
+
+        return self._key_auth_admins[consumer_id]
 
     def oauth2(self, username_or_id):
         consumer_id = self.retrieve(username_or_id).get('id')
