@@ -66,7 +66,7 @@ class RestClient(object):
         if self._session is None:
             logger.debug('Creating session!')
             self._session = requests.session()
-            self._session.mount(self.api_url, ThrottlingHTTPAdapter())
+            # self._session.mount(self.api_url, ThrottlingHTTPAdapter())
         elif not KONG_REUSE_CONNECTIONS:
             logger.debug('Closing session!')
             self._session.close()

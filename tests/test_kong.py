@@ -7,7 +7,6 @@ import collections
 import requests
 import uuid
 import json
-import time
 
 # To run the standalone test script
 if __name__ == '__main__':
@@ -191,9 +190,6 @@ class KongAdminTesting(object):
                     name=self._cleanup_afterwards('Mockbin%s' % i),
                     public_dns='mockbin%s.com' % i)
 
-            # Allow kong to settle...
-            time.sleep(1)
-
             self.assertEqual(self.client.apis.count(), amount)
 
             result = self.client.apis.list()
@@ -221,9 +217,6 @@ class KongAdminTesting(object):
                     name=self._cleanup_afterwards('Mockbin%s' % i),
                     public_dns='mockbin%s.com' % i)
 
-            # Allow kong to settle...
-            time.sleep(1)
-
             found = []
 
             for item in self.client.apis.iterate(window_size=3):
@@ -242,9 +235,6 @@ class KongAdminTesting(object):
                     target_url='http://mockbin%s.com' % i,
                     name=self._cleanup_afterwards('Mockbin%s' % i),
                     public_dns='mockbin%s.com' % i)
-
-            # Allow kong to settle...
-            time.sleep(1)
 
             found = []
 
@@ -675,9 +665,6 @@ class KongAdminTesting(object):
                     username=self._cleanup_afterwards('abc1234_%s' % i),
                     custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345_%s' % i)
 
-            # Allow kong to settle...
-            time.sleep(1)
-
             self.assertEqual(self.client.consumers.count(), amount)
 
             result = self.client.consumers.list()
@@ -703,9 +690,6 @@ class KongAdminTesting(object):
                 self.client.consumers.create(
                     username=self._cleanup_afterwards('abc1234_%s' % i),
                     custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345_%s' % i)
-
-            # Allow kong to settle...
-            time.sleep(1)
 
             found = []
 
@@ -822,9 +806,6 @@ class KongAdminTesting(object):
                 self.client.consumers.basic_auth(result['id']).create(
                     username='username %s' % i, password='testpw %s' % i)
 
-            # Allow kong to settle...
-            time.sleep(1)
-
             self.assertEqual(self.client.consumers.basic_auth(result['id']).count(), amount)
 
             result2 = self.client.consumers.basic_auth(result['id']).list()
@@ -853,9 +834,6 @@ class KongAdminTesting(object):
             for i in range(amount):
                 self.client.consumers.basic_auth(result['id']).create(
                     username='username %s' % i, password='testpw %s' % i)
-
-            # Allow kong to settle...
-            time.sleep(1)
 
             self.assertEqual(self.client.consumers.basic_auth(result['id']).count(), amount)
 
@@ -965,9 +943,6 @@ class KongAdminTesting(object):
             for i in range(amount):
                 self.client.consumers.key_auth(result['id']).create(key='key_%s' % i)
 
-            # Allow kong to settle...
-            time.sleep(1)
-
             self.assertEqual(self.client.consumers.key_auth(result['id']).count(), amount)
 
             result2 = self.client.consumers.key_auth(result['id']).list()
@@ -995,9 +970,6 @@ class KongAdminTesting(object):
 
             for i in range(amount):
                 self.client.consumers.key_auth(result['id']).create(key='key_%s' % i)
-
-            # Allow kong to settle...
-            time.sleep(1)
 
             self.assertEqual(self.client.consumers.key_auth(result['id']).count(), amount)
 
@@ -1113,9 +1085,6 @@ class KongAdminTesting(object):
                 self.client.consumers.oauth2(result['id']).create(
                     name='Test Application %d' % i, redirect_uri='http://some-domain/endpoint%d/' % i)
 
-            # Allow kong to settle...
-            time.sleep(1)
-
             self.assertEqual(self.client.consumers.oauth2(result['id']).count(), amount)
 
             result2 = self.client.consumers.oauth2(result['id']).list()
@@ -1144,9 +1113,6 @@ class KongAdminTesting(object):
             for i in range(amount):
                 self.client.consumers.oauth2(result['id']).create(
                     name='Test Application %d' % i, redirect_uri='http://some-domain/endpoint%d/' % i)
-
-            # Allow kong to settle...
-            time.sleep(1)
 
             self.assertEqual(self.client.consumers.oauth2(result['id']).count(), amount)
 
