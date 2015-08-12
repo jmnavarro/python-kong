@@ -10,7 +10,7 @@ import backoff
 from requests.adapters import HTTPAdapter
 
 from .contract import KongAdminContract, APIAdminContract, ConsumerAdminContract, PluginAdminContract, \
-    APIPluginConfigurationAdminContract, BasicAuthAdminContract, OAuth2AdminContract
+    APIPluginConfigurationAdminContract, BasicAuthAdminContract, KeyAuthAdminContract, OAuth2AdminContract
 from .utils import add_url_params, assert_dict_keys_in, ensure_trailing_slash
 from .compat import OK, CREATED, NO_CONTENT, NOT_FOUND, CONFLICT, urljoin
 from .exceptions import ConflictError
@@ -393,6 +393,100 @@ class BasicAuthAdminClient(BasicAuthAdminContract, RestClient):
         return result
 
 
+class KeyAuthAdminClient(KeyAuthAdminContract, RestClient):
+    def __init__(self, consumer_admin, consumer_id, api_url):
+        super(KeyAuthAdminClient, self).__init__(api_url, headers=get_default_kong_headers())
+
+        self.consumer_admin = consumer_admin
+        self.consumer_id = consumer_id
+
+    def create_or_update(self, key_auth_id=None, key=None):
+        data = {
+            'key': key
+        }
+
+        if key_auth_id is not None:
+            data['id'] = key_auth_id
+
+        response = self.session.put(self.get_url('consumers', self.consumer_id, 'keyauth'), data=data,
+                                    headers=self.get_headers())
+        result = response.json()
+        if response.status_code == CONFLICT:
+            raise_response_error(response, ConflictError)
+        elif response.status_code not in (CREATED, OK):
+            raise_response_error(response, ValueError)
+
+        return result
+
+    def create(self, key=None):
+        response = self.session.post(self.get_url('consumers', self.consumer_id, 'keyauth'), data={
+            'key': key,
+        }, headers=self.get_headers())
+        result = response.json()
+        if response.status_code == CONFLICT:
+            raise_response_error(response, ConflictError)
+        elif response.status_code != CREATED:
+            raise_response_error(response, ValueError)
+
+        return result
+
+    def list(self, size=100, offset=None, **filter_fields):
+        assert_dict_keys_in(filter_fields, ['id', 'key'])
+
+        query_params = filter_fields
+        query_params['size'] = size
+
+        if offset:
+            query_params['offset'] = offset
+
+        url = self.get_url('consumers', self.consumer_id, 'keyauth', **query_params)
+        response = self.session.get(url, headers=self.get_headers())
+        result = response.json()
+
+        if response.status_code != OK:
+            raise_response_error(response, ValueError)
+
+        return result
+
+    @backoff.on_exception(backoff.expo, ValueError, max_tries=3)
+    def delete(self, key_auth_id):
+        url = self.get_url('consumers', self.consumer_id, 'keyauth', key_auth_id)
+        response = self.session.delete(url, headers=self.get_headers())
+
+        if response.status_code not in (NO_CONTENT, NOT_FOUND):
+            raise ValueError('Could not delete Key Auth (status: %s): %s for Consumer: %s' % (
+                response.status_code, key_auth_id, self.consumer_id))
+
+    def retrieve(self, key_auth_id):
+        response = self.session.get(self.get_url('consumers', self.consumer_id, 'keyauth', key_auth_id),
+                                    headers=self.get_headers())
+        result = response.json()
+
+        if response.status_code != OK:
+            raise_response_error(response, ValueError)
+
+        return result
+
+    def count(self):
+        response = self.session.get(self.get_url('consumers', self.consumer_id, 'keyauth'),
+                                    headers=self.get_headers())
+        result = response.json()
+        amount = result.get('total', len(result.get('data')))
+        return amount
+
+    def update(self, key_auth_id, **fields):
+        assert_dict_keys_in(fields, ['key'])
+        response = self.session.patch(
+            self.get_url('consumers', self.consumer_id, 'keyauth', key_auth_id), data=fields,
+            headers=self.get_headers())
+        result = response.json()
+
+        if response.status_code != OK:
+            raise_response_error(response, ValueError)
+
+        return result
+
+
 class OAuth2AdminClient(OAuth2AdminContract, RestClient):
     def __init__(self, consumer_admin, consumer_id, api_url):
         super(OAuth2AdminClient, self).__init__(api_url, headers=get_default_kong_headers())
@@ -581,6 +675,9 @@ class ConsumerAdminClient(ConsumerAdminContract, RestClient):
 
     def basic_auth(self, username_or_id):
         return BasicAuthAdminClient(self, username_or_id, self.api_url)
+
+    def key_auth(self, username_or_id):
+        return KeyAuthAdminClient(self, username_or_id, self.api_url)
 
     def oauth2(self, username_or_id):
         return OAuth2AdminClient(self, username_or_id, self.api_url)
