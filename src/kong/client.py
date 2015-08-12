@@ -10,7 +10,7 @@ import backoff
 from requests.adapters import HTTPAdapter
 
 from .contract import KongAdminContract, APIAdminContract, ConsumerAdminContract, PluginAdminContract, \
-    APIPluginConfigurationAdminContract, BasicAuthAdminContract
+    APIPluginConfigurationAdminContract, BasicAuthAdminContract, OAuth2AdminContract
 from .utils import add_url_params, assert_dict_keys_in, ensure_trailing_slash
 from .compat import OK, CREATED, NO_CONTENT, NOT_FOUND, CONFLICT, urljoin
 from .exceptions import ConflictError
@@ -64,8 +64,14 @@ class RestClient(object):
     @property
     def session(self):
         if self._session is None:
+            logger.debug('Creating session!')
             self._session = requests.session()
             self._session.mount(self.api_url, ThrottlingHTTPAdapter())
+        elif not KONG_REUSE_CONNECTIONS:
+            logger.debug('Closing session!')
+            self._session.close()
+            self._session = None
+            return self.session
         return self._session
 
     def get_headers(self, **headers):
@@ -387,6 +393,106 @@ class BasicAuthAdminClient(BasicAuthAdminContract, RestClient):
         return result
 
 
+class OAuth2AdminClient(OAuth2AdminContract, RestClient):
+    def __init__(self, consumer_admin, consumer_id, api_url):
+        super(OAuth2AdminClient, self).__init__(api_url, headers=get_default_kong_headers())
+
+        self.consumer_admin = consumer_admin
+        self.consumer_id = consumer_id
+
+    def create_or_update(self, oauth2_id=None, name=None, redirect_uri=None, client_id=None, client_secret=None):
+        data = {
+            'name': name,
+            'redirect_uri': redirect_uri,
+            'client_id': client_id,
+            'client_secret': client_secret
+        }
+
+        if oauth2_id is not None:
+            data['id'] = oauth2_id
+
+        response = self.session.put(self.get_url('consumers', self.consumer_id, 'oauth2'), data=data,
+                                    headers=self.get_headers())
+        result = response.json()
+        if response.status_code == CONFLICT:
+            raise_response_error(response, ConflictError)
+        elif response.status_code not in (CREATED, OK):
+            raise_response_error(response, ValueError)
+
+        return result
+
+    def create(self, name, redirect_uri, client_id=None, client_secret=None):
+        response = self.session.post(self.get_url('consumers', self.consumer_id, 'oauth2'), data={
+            'name': name,
+            'redirect_uri': redirect_uri,
+            'client_id': client_id,
+            'client_secret': client_secret
+        }, headers=self.get_headers())
+        result = response.json()
+        if response.status_code == CONFLICT:
+            raise_response_error(response, ConflictError)
+        elif response.status_code != CREATED:
+            raise_response_error(response, ValueError)
+
+        return result
+
+    def list(self, size=100, offset=None, **filter_fields):
+        assert_dict_keys_in(filter_fields, ['id', 'name', 'redirect_url', 'client_id'])
+
+        query_params = filter_fields
+        query_params['size'] = size
+
+        if offset:
+            query_params['offset'] = offset
+
+        url = self.get_url('consumers', self.consumer_id, 'oauth2', **query_params)
+        response = self.session.get(url, headers=self.get_headers())
+        result = response.json()
+
+        if response.status_code != OK:
+            raise_response_error(response, ValueError)
+
+        return result
+
+    @backoff.on_exception(backoff.expo, ValueError, max_tries=3)
+    def delete(self, oauth2_id):
+        url = self.get_url('consumers', self.consumer_id, 'oauth2', oauth2_id)
+        response = self.session.delete(url, headers=self.get_headers())
+
+        if response.status_code not in (NO_CONTENT, NOT_FOUND):
+            raise ValueError('Could not delete OAuth2 (status: %s): %s for Consumer: %s' % (
+                response.status_code, oauth2_id, self.consumer_id))
+
+    def retrieve(self, oauth2_id):
+        response = self.session.get(self.get_url('consumers', self.consumer_id, 'oauth2', oauth2_id),
+                                    headers=self.get_headers())
+        result = response.json()
+
+        if response.status_code != OK:
+            raise_response_error(response, ValueError)
+
+        return result
+
+    def count(self):
+        response = self.session.get(self.get_url('consumers', self.consumer_id, 'oauth2'),
+                                    headers=self.get_headers())
+        result = response.json()
+        amount = result.get('total', len(result.get('data')))
+        return amount
+
+    def update(self, oauth2_id, **fields):
+        assert_dict_keys_in(fields, ['name', 'redirect_uri', 'client_id', 'client_secret'])
+        response = self.session.patch(
+            self.get_url('consumers', self.consumer_id, 'oauth2', oauth2_id), data=fields,
+            headers=self.get_headers())
+        result = response.json()
+
+        if response.status_code != OK:
+            raise_response_error(response, ValueError)
+
+        return result
+
+
 class ConsumerAdminClient(ConsumerAdminContract, RestClient):
     def __init__(self, api_url):
         super(ConsumerAdminClient, self).__init__(api_url, headers=get_default_kong_headers())
@@ -475,6 +581,9 @@ class ConsumerAdminClient(ConsumerAdminContract, RestClient):
 
     def basic_auth(self, username_or_id):
         return BasicAuthAdminClient(self, username_or_id, self.api_url)
+
+    def oauth2(self, username_or_id):
+        return OAuth2AdminClient(self, username_or_id, self.api_url)
 
 
 class PluginAdminClient(PluginAdminContract, RestClient):

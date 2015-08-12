@@ -424,6 +424,149 @@ class BasicAuthAdminContract(CollectionMixin):
         """
 
 
+class OAuth2AdminContract(CollectionMixin):
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def count(self):
+        """
+        :rtype: int
+        :return: Amount of records
+        """
+
+    @abstractmethod
+    def create(self, name, redirect_uri, client_id=None, client_secret=None):
+        """
+        :param name: The name to associate to the credential. In OAuth 2.0 this would be the application name.
+        :type name: str
+        :param redirect_uri: The URL in your app where users will be sent after authorization (RFC 6742 Section 3.1.2)
+        :type redirect_uri: str
+        :param client_id: You can optionally set your own unique client_id. If missing, the plugin will generate one.
+        :type client_id: str
+        :param client_secret: You can optionally set your own unique client_secret. If missing, the plugin will
+            generate one.
+        :type client_secret: str
+        :rtype: dict
+        :return: Dictionary containing the OAuthAuth description. Example:
+                {
+                    consumer_id: "abf8f0e5-753b-4eaa-ceff-a7c5187df4ff"
+                    id: "fe575378-162c-4c88-cc35-be456ad8d8a5"
+                    name: "Test%20Application",
+                    redirect_uri: "http://some-domain/endpoint/",
+                    client_id: "SOME_CLIENT_ID",
+                    client_secret: "SOME_CLIENT_SECRET",
+                    created_at: 1438872669000
+                }
+        """
+
+    @abstractmethod
+    def create_or_update(self, oauth2_id=None, name=None, redirect_uri=None, client_id=None, client_secret=None):
+        """
+        :param oauth2_id: The unique identifier of the oauth2 info to update
+        :type oauth2_id: str | uuid.UUID
+        :param name: The name to associate to the credential. In OAuth 2.0 this would be the application name.
+        :type name: str
+        :param redirect_uri: The URL in your app where users will be sent after authorization (RFC 6742 Section 3.1.2)
+        :type redirect_uri: str
+        :param client_id: You can optionally set your own unique client_id. If missing, the plugin will generate one.
+        :type client_id: str
+        :param client_secret: You can optionally set your own unique client_secret. If missing, the plugin will
+            generate one.
+        :type client_secret: str
+        :rtype: dict
+        :return: Dictionary containing the OAuthAuth description. Example:
+                {
+                    consumer_id: "abf8f0e5-753b-4eaa-ceff-a7c5187df4ff"
+                    id: "fe575378-162c-4c88-cc35-be456ad8d8a5"
+                    name: "Test%20Application",
+                    redirect_uri: "http://some-domain/endpoint/",
+                    client_id: "SOME_CLIENT_ID",
+                    client_secret: "SOME_CLIENT_SECRET",
+                    created_at: 1438872669000
+                }
+        """
+
+    @abstractmethod
+    def update(self, oauth2_id, **fields):
+        """
+        :param oauth2_id: The unique identifier of the oauth2 info to update
+        :type oauth2_id: str | uuid.UUID
+        :param fields: Optional dictionary which values will be used to overwrite the existing values
+        :type fields: dict
+        :rtype: dict
+        :return: Dictionary containing the OAuthAuth description. Example:
+                {
+                    consumer_id: "abf8f0e5-753b-4eaa-ceff-a7c5187df4ff"
+                    id: "fe575378-162c-4c88-cc35-be456ad8d8a5"
+                    name: "Test%20Application",
+                    redirect_uri: "http://some-domain/endpoint/",
+                    client_id: "SOME_CLIENT_ID",
+                    client_secret: "SOME_CLIENT_SECRET",
+                    created_at: 1438872669000
+                }
+        """
+
+    @abstractmethod
+    def retrieve(self, oauth2_id):
+        """
+        :param oauth2_id: The unique identifier of the oauth2 info to retrieve
+        :type oauth2_id: str | uuid.UUID
+        :rtype: dict
+        :return: Dictionary containing the OAuthAuth description. Example:
+                {
+                    consumer_id: "abf8f0e5-753b-4eaa-ceff-a7c5187df4ff"
+                    id: "fe575378-162c-4c88-cc35-be456ad8d8a5"
+                    name: "Test%20Application",
+                    redirect_uri: "http://some-domain/endpoint/",
+                    client_id: "SOME_CLIENT_ID",
+                    client_secret: "SOME_CLIENT_SECRET",
+                    created_at: 1438872669000
+                }
+        """
+
+    @abstractmethod
+    def list(self, size=100, offset=None, **filter_fields):
+        """
+        :param size: A limit on the number of objects to be returned.
+        :type size: int
+        :param offset: A cursor used for pagination. offset is an object identifier that defines a place in the list.
+        :type offset: uuid.UUID
+        :param filter_fields: Dictionary containing values to filter for
+        :type filter_fields: dict
+        :rtype: dict
+        :return: Dictionary containing dictionaries containing the BasicAuth description. Example:
+                {
+                   "data":[
+                      {
+                          consumer_id: "abf8f0e5-753b-4eaa-ceff-a7c5187df4ff"
+                          id: "fe575378-162c-4c88-cc35-be456ad8d8a5"
+                          name: "Test%20Application",
+                          redirect_uri: "http://some-domain/endpoint/",
+                          client_id: "SOME_CLIENT_ID",
+                          client_secret: "SOME_CLIENT_SECRET",
+                          created_at: 1438872669000
+                      },
+                      {
+                          consumer_id: "abf8f0e5-753b-4eaa-ceff-a7c5187df4ff"
+                          id: "fe575378-162c-4c88-cc35-be456ad8d8a5"
+                          name: "Test%20Application",
+                          redirect_uri: "http://some-domain/endpoint/",
+                          client_id: "SOME_CLIENT_ID",
+                          client_secret: "SOME_CLIENT_SECRET",
+                          created_at: 1438872669000
+                      }
+                   ]
+                }
+        """
+
+    @abstractmethod
+    def delete(self, oauth2_id):
+        """
+        :param oauth2_id: The unique identifier of the oauth2 info to delete
+        :type oauth2_id: str | uuid.UUID
+        """
+
+
 class ConsumerAdminContract(CollectionMixin):
     __metaclass__ = ABCMeta
 
@@ -543,6 +686,16 @@ class ConsumerAdminContract(CollectionMixin):
 
         :param username_or_id: The unique identifier or the name of the consumer
         :rtype BasicAuthAdminContract
+        :return:
+        """
+
+    @abstractmethod
+    def oauth2(self, username_or_id):
+        """
+        Returns a "OAuth2" manager for a given consumer
+
+        :param username_or_id: The unique identifier or the name of the consumer
+        :rtype OAuth2AdminContract
         :return:
         """
 
