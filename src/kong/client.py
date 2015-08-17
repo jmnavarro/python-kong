@@ -2,7 +2,6 @@
 from __future__ import unicode_literals, print_function
 import time
 import os
-import logging
 
 import requests
 import backoff
@@ -15,14 +14,8 @@ from .utils import add_url_params, assert_dict_keys_in, ensure_trailing_slash
 from .compat import OK, CREATED, NO_CONTENT, NOT_FOUND, CONFLICT, urljoin
 from .exceptions import ConflictError
 
-logger = logging.getLogger(__name__)
-
 KONG_MINIMUM_REQUEST_INTERVAL = float(os.getenv('KONG_MINIMUM_REQUEST_INTERVAL', 0))
 KONG_REUSE_CONNECTIONS = int(os.getenv('KONG_REUSE_CONNECTIONS', '1')) == 1
-
-if KONG_MINIMUM_REQUEST_INTERVAL > 0:
-    logger.warn('Requests will be throttled: KONG_MINIMUM_REQUEST_INTERVAL = %s' % KONG_MINIMUM_REQUEST_INTERVAL)
-
 
 def get_default_kong_headers():
     headers = {}
@@ -48,7 +41,6 @@ class ThrottlingHTTPAdapter(HTTPAdapter):
         if self._last_request is not None and KONG_MINIMUM_REQUEST_INTERVAL > 0:
             diff = time.time() - self._last_request
             if 0 < diff < KONG_MINIMUM_REQUEST_INTERVAL:
-                logger.warn('Waiting %s seconds before sending request' % diff)
                 time.sleep(diff)
         result = super(ThrottlingHTTPAdapter, self).send(request, stream, timeout, verify, cert, proxies)
         self._last_request = time.time()
@@ -64,11 +56,10 @@ class RestClient(object):
     @property
     def session(self):
         if self._session is None:
-            logger.debug('Creating session!')
             self._session = requests.session()
-            self._session.mount(self.api_url, ThrottlingHTTPAdapter())
+            if KONG_MINIMUM_REQUEST_INTERVAL > 0:
+                self._session.mount(self.api_url, ThrottlingHTTPAdapter())
         elif not KONG_REUSE_CONNECTIONS:
-            logger.debug('Closing session!')
             self._session.close()
             self._session = None
             return self.session

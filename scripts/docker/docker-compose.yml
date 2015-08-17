@@ -2,7 +2,7 @@ cassandra:
   image: mashape/cassandra
 
 kong:
-  image: dirkmoors/kong
+  image: dirkmoors/kong:latest
   links:
     - cassandra
   ports:
