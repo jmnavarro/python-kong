@@ -2,6 +2,13 @@
 Changelog
 =========
 
+0.1.10 (2015-08-18)
+-------------------
+
+* Implemented Basic Auth credentials API's
+* Implemented Key authentication API's
+* Implemented OAuth2 API's
+
 0.1.9 (2015-08-06)
 ------------------
 
