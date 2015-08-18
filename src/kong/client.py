@@ -17,6 +17,7 @@ from .exceptions import ConflictError
 KONG_MINIMUM_REQUEST_INTERVAL = float(os.getenv('KONG_MINIMUM_REQUEST_INTERVAL', 0))
 KONG_REUSE_CONNECTIONS = int(os.getenv('KONG_REUSE_CONNECTIONS', '1')) == 1
 
+
 def get_default_kong_headers():
     headers = {}
     if not KONG_REUSE_CONNECTIONS:
@@ -39,12 +40,13 @@ class ThrottlingHTTPAdapter(HTTPAdapter):
 
     def send(self, request, stream=False, timeout=None, verify=True, cert=None, proxies=None):
         if self._last_request is not None and KONG_MINIMUM_REQUEST_INTERVAL > 0:
-            diff = time.time() - self._last_request
-            if 0 < diff < KONG_MINIMUM_REQUEST_INTERVAL:
+            diff = (self._last_request + KONG_MINIMUM_REQUEST_INTERVAL) - time.time()
+            if diff > 0:
                 time.sleep(diff)
         result = super(ThrottlingHTTPAdapter, self).send(request, stream, timeout, verify, cert, proxies)
         self._last_request = time.time()
         return result
+throttlingHTTPAdapterSingleton = ThrottlingHTTPAdapter()
 
 
 class RestClient(object):
@@ -58,7 +60,7 @@ class RestClient(object):
         if self._session is None:
             self._session = requests.session()
             if KONG_MINIMUM_REQUEST_INTERVAL > 0:
-                self._session.mount(self.api_url, ThrottlingHTTPAdapter())
+                self._session.mount(self.api_url, throttlingHTTPAdapterSingleton)
         elif not KONG_REUSE_CONNECTIONS:
             self._session.close()
             self._session = None
