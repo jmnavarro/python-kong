@@ -470,7 +470,6 @@ class OAuth2AdminSimulator(OAuth2AdminContract):
         self._store.destroy()
         self._store = None
 
-
     def create_or_update(self, oauth2_id=None, name=None, redirect_uri=None, client_id=None, client_secret=None):
         data = {
             'name': name,
