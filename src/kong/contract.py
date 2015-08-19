@@ -11,6 +11,12 @@ class APIPluginConfigurationAdminContract(CollectionMixin):
     __metaclass__ = ABCMeta
 
     @abstractmethod
+    def destroy(self):
+        """
+        Releases all references, closes open connections, ...
+        """
+
+    @abstractmethod
     def count(self):
         """
         :rtype: int
@@ -157,6 +163,12 @@ class APIPluginConfigurationAdminContract(CollectionMixin):
 
 class APIAdminContract(CollectionMixin):
     __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def destroy(self):
+        """
+        Releases all references, closes open connections, ...
+        """
 
     @abstractmethod
     def count(self):
@@ -312,6 +324,12 @@ class BasicAuthAdminContract(CollectionMixin):
     __metaclass__ = ABCMeta
 
     @abstractmethod
+    def destroy(self):
+        """
+        Releases all references, closes open connections, ...
+        """
+
+    @abstractmethod
     def count(self):
         """
         :rtype: int
@@ -433,6 +451,12 @@ class KeyAuthAdminContract(CollectionMixin):
     __metaclass__ = ABCMeta
 
     @abstractmethod
+    def destroy(self):
+        """
+        Releases all references, closes open connections, ...
+        """
+
+    @abstractmethod
     def count(self):
         """
         :rtype: int
@@ -543,6 +567,12 @@ class KeyAuthAdminContract(CollectionMixin):
 
 class OAuth2AdminContract(CollectionMixin):
     __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def destroy(self):
+        """
+        Releases all references, closes open connections, ...
+        """
 
     @abstractmethod
     def count(self):
@@ -688,6 +718,12 @@ class ConsumerAdminContract(CollectionMixin):
     __metaclass__ = ABCMeta
 
     @abstractmethod
+    def destroy(self):
+        """
+        Releases all references, closes open connections, ...
+        """
+
+    @abstractmethod
     def count(self):
         """
         :rtype: int
@@ -829,6 +865,12 @@ class ConsumerAdminContract(CollectionMixin):
 
 class PluginAdminContract(with_metaclass(ABCMeta, object)):
     @abstractmethod
+    def destroy(self):
+        """
+        Releases all references, closes open connections, ...
+        """
+
+    @abstractmethod
     def list(self):
         """
         :rtype: dict
@@ -845,7 +887,7 @@ class PluginAdminContract(with_metaclass(ABCMeta, object)):
         """
 
 
-class KongAdminContract(object):
+class KongAdminContract(with_metaclass(ABCMeta, object)):
     def __init__(self, apis, consumers, plugins):
         self._apis = apis
         self._consumers = consumers
@@ -874,3 +916,10 @@ class KongAdminContract(object):
         :return:
         """
         return self._plugins
+
+    @abstractmethod
+    def close(self):
+        """
+        Close all connections if applicable
+        :return:
+        """

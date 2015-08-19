@@ -18,6 +18,11 @@ class SimulatorDataStore(object):
         self._data_struct_filter = data_struct_filter or {}
         self._data = OrderedDict()
 
+    def destroy(self):
+        self.api_url = None
+        self._data_struct_filter = None
+        self._data = None
+
     def count(self):
         return len(self._data.keys())
 
@@ -120,6 +125,12 @@ class APIPluginConfigurationAdminSimulator(APIPluginConfigurationAdminContract):
         self.api_name_or_id = api_name_or_id
         self.api_url = api_url
         self._data = OrderedDict()
+
+    def destroy(self):
+        self.api_admin = None
+        self.api_name_or_id = None
+        self.api_url = None
+        self._data = None
 
     def create(self, plugin_name, enabled=None, consumer_id=None, **fields):
         plugins = PluginAdminSimulator.PLUGINS
@@ -259,6 +270,15 @@ class APIAdminSimulator(APIAdminContract):
             })
         self._plugin_admins = {}
 
+    def destroy(self):
+        self._store.destroy()
+        self._store = None
+
+        for key in self._plugin_admins:
+            self._plugin_admins[key].destroy()
+            del self._plugin_admins[key]
+        self._plugin_admins = None
+
     def count(self):
         return self._store.count()
 
@@ -342,6 +362,13 @@ class BasicAuthAdminSimulator(BasicAuthAdminContract):
         self.consumer_id = consumer_id
         self._store = SimulatorDataStore(api_url or 'http://localhost:8001/consumers/%s/basicauth' % self.consumer_id)
 
+    def destroy(self):
+        self.consumer_admin = None
+        self.consumer_id = None
+
+        self._store.destroy()
+        self._store = None
+
     def create_or_update(self, basic_auth_id=None, username=None, password=None):
         data = {
             'username': username,
@@ -383,6 +410,13 @@ class KeyAuthAdminSimulator(KeyAuthAdminContract):
         self.consumer_admin = consumer_admin
         self.consumer_id = consumer_id
         self._store = SimulatorDataStore(api_url or 'http://localhost:8001/consumers/%s/keyauth' % self.consumer_id)
+
+    def destroy(self):
+        self.consumer_admin = None
+        self.consumer_id = None
+
+        self._store.destroy()
+        self._store = None
 
     def create_or_update(self, key_auth_id=None, key=None):
         data = {
@@ -428,6 +462,14 @@ class OAuth2AdminSimulator(OAuth2AdminContract):
         self.consumer_admin = consumer_admin
         self.consumer_id = consumer_id
         self._store = SimulatorDataStore(api_url or 'http://localhost:8001/consumers/%s/oauth2' % self.consumer_id)
+
+    def destroy(self):
+        self.consumer_admin = None
+        self.consumer_id = None
+
+        self._store.destroy()
+        self._store = None
+
 
     def create_or_update(self, oauth2_id=None, name=None, redirect_uri=None, client_id=None, client_secret=None):
         data = {
@@ -478,6 +520,19 @@ class ConsumerAdminSimulator(ConsumerAdminContract):
         self._basic_auth_admins = {}
         self._key_auth_admins = {}
         self._oauth2_admins = {}
+
+    def destroy(self):
+        self._store.destroy()
+        self._store = None
+
+        for related_admin in (self._basic_auth_admins, self._key_auth_admins, self._oauth2_admins):
+            for key in related_admin:
+                related_admin[key].destroy()
+                del related_admin[key]
+
+        self._basic_auth_admins = None
+        self._key_auth_admins = None
+        self._oauth2_admins = None
 
     def count(self):
         return self._store.count()
@@ -614,6 +669,9 @@ class PluginAdminSimulator(PluginAdminContract):
         'requestsizelimiting': {'fields': {'allowed_payload_size': {'default': 128, 'type': 'number'}}}
     })
 
+    def destroy(self):
+        pass
+
     def list(self):
         return {
             'enabled_plugins': self.PLUGINS.keys()
@@ -629,3 +687,8 @@ class KongAdminSimulator(KongAdminContract):
             apis=APIAdminSimulator(api_url=api_url),
             consumers=ConsumerAdminSimulator(api_url=api_url),
             plugins=PluginAdminSimulator())
+
+    def close(self):
+        self.apis.destroy()
+        self.consumers.destroy()
+        self.plugins.destroy()

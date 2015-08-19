@@ -55,6 +55,14 @@ class RestClient(object):
         self.headers = headers
         self._session = None
 
+    def destroy(self):
+        self.api_url = None
+        self.headers = None
+
+        if self._session is not None:
+            self._session.close()
+        self._session = None
+
     @property
     def session(self):
         if self._session is None:
@@ -84,6 +92,11 @@ class APIPluginConfigurationAdminClient(APIPluginConfigurationAdminContract, Res
 
         self.api_admin = api_admin
         self.api_name_or_id = api_name_or_id
+
+    def destroy(self):
+        super(APIPluginConfigurationAdminClient, self).destroy()
+        self.api_admin = None
+        self.api_name_or_id = None
 
     def create(self, plugin_name, enabled=None, consumer_id=None, **fields):
         values = {}
@@ -211,6 +224,9 @@ class APIAdminClient(APIAdminContract, RestClient):
     def __init__(self, api_url):
         super(APIAdminClient, self).__init__(api_url, headers=get_default_kong_headers())
 
+    def destroy(self):
+        super(APIAdminClient, self).destroy()
+
     @backoff.on_exception(backoff.expo, ServerError, max_tries=3)
     def count(self):
         response = self.session.get(self.get_url('apis'), headers=self.get_headers())
@@ -331,6 +347,11 @@ class BasicAuthAdminClient(BasicAuthAdminContract, RestClient):
         self.consumer_admin = consumer_admin
         self.consumer_id = consumer_id
 
+    def destroy(self):
+        super(BasicAuthAdminClient, self).destroy()
+        self.consumer_admin = None
+        self.consumer_id = None
+
     def create_or_update(self, basic_auth_id=None, username=None, password=None):
         data = {
             'username': username,
@@ -444,6 +465,11 @@ class KeyAuthAdminClient(KeyAuthAdminContract, RestClient):
         self.consumer_admin = consumer_admin
         self.consumer_id = consumer_id
 
+    def destroy(self):
+        super(KeyAuthAdminClient, self).destroy()
+        self.consumer_admin = None
+        self.consumer_id = None
+
     def create_or_update(self, key_auth_id=None, key=None):
         data = {
             'key': key
@@ -554,6 +580,11 @@ class OAuth2AdminClient(OAuth2AdminContract, RestClient):
 
         self.consumer_admin = consumer_admin
         self.consumer_id = consumer_id
+
+    def destroy(self):
+        super(OAuth2AdminClient, self).destroy()
+        self.consumer_admin = None
+        self.consumer_id = None
 
     def create_or_update(self, oauth2_id=None, name=None, redirect_uri=None, client_id=None, client_secret=None):
         data = {
@@ -669,6 +700,9 @@ class ConsumerAdminClient(ConsumerAdminContract, RestClient):
     def __init__(self, api_url):
         super(ConsumerAdminClient, self).__init__(api_url, headers=get_default_kong_headers())
 
+    def destroy(self):
+        super(ConsumerAdminClient, self).destroy()
+
     @backoff.on_exception(backoff.expo, ServerError, max_tries=3)
     def count(self):
         response = self.session.get(self.get_url('consumers'), headers=self.get_headers())
@@ -782,6 +816,9 @@ class PluginAdminClient(PluginAdminContract, RestClient):
     def __init__(self, api_url):
         super(PluginAdminClient, self).__init__(api_url, headers=get_default_kong_headers())
 
+    def destroy(self):
+        super(PluginAdminClient, self).destroy()
+
     @backoff.on_exception(backoff.expo, ServerError, max_tries=3)
     def list(self):
         response = self.session.get(self.get_url('plugins'), headers=self.get_headers())
@@ -813,3 +850,8 @@ class KongAdminClient(KongAdminContract):
             apis=APIAdminClient(api_url),
             consumers=ConsumerAdminClient(api_url),
             plugins=PluginAdminClient(api_url))
+
+    def close(self):
+        self.apis.destroy()
+        self.consumers.destroy()
+        self.plugins.destroy()
