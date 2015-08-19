@@ -8,4 +8,4 @@ try:  # pragma: no cover
 except ImportError:
     pass
 
-__version__ = '0.1.10'
+__version__ = '0.1.11'
