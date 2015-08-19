@@ -2,6 +2,11 @@
 Changelog
 =========
 
+0.1.11 (2015-08-19)
+-------------------
+
+* Implemented close method for KongAdminContract
+
 0.1.10 (2015-08-18)
 -------------------
 
