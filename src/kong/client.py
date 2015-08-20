@@ -209,6 +209,19 @@ class APIPluginConfigurationAdminClient(APIPluginConfigurationAdminContract, Res
                 response.status_code, plugin_name_or_id))
 
     @backoff.on_exception(backoff.expo, ServerError, max_tries=3)
+    def retrieve(self, plugin_name_or_id):
+        response = self.session.get(self.get_url('apis', self.api_name_or_id, 'plugins', plugin_name_or_id),
+                                    headers=self.get_headers())
+        result = response.json()
+
+        if response.status_code == INTERNAL_SERVER_ERROR:
+            raise_response_error(response, ServerError)
+        elif response.status_code != OK:
+            raise_response_error(response, ValueError)
+
+        return result
+
+    @backoff.on_exception(backoff.expo, ServerError, max_tries=3)
     def count(self):
         response = self.session.get(self.get_url('apis', self.api_name_or_id, 'plugins'), headers=self.get_headers())
 

@@ -153,6 +153,14 @@ class APIPluginConfigurationAdminContract(CollectionMixin):
         """
 
     @abstractmethod
+    def retrieve(self, plugin_name_or_id):
+        """
+        :param plugin_name_or_id: The unique identifier or the name of the plugin for which to retrieve the
+            configuration on this API
+        :type plugin_name_or_id: str | uuid.UUID
+        """
+
+    @abstractmethod
     def delete(self, plugin_name_or_id):
         """
         :param plugin_name_or_id: The unique identifier or the name of the plugin for which to delete the configuration

@@ -2,6 +2,11 @@
 Changelog
 =========
 
+0.1.12 (2015-08-20)
+-------------------
+
+* Implemented retrieve api for APIPluginConfigurationAdminContract
+
 0.1.11 (2015-08-19)
 -------------------
 

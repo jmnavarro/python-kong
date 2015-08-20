@@ -255,6 +255,16 @@ class APIPluginConfigurationAdminSimulator(APIPluginConfigurationAdminContract):
                 del self._data[plugin_name]
                 break
 
+    def retrieve(self, plugin_name_or_id):
+        plugin_name_or_id = uuid_or_string(plugin_name_or_id)
+
+        if plugin_name_or_id in self._data:
+            return self._data[plugin_name_or_id]
+
+        for plugin_name in self._data:
+            if self._data[plugin_name]['id'] == plugin_name_or_id:
+                return self._data[plugin_name]
+
     def count(self):
         return len(self._data.keys())
 

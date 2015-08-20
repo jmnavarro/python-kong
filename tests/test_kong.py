@@ -568,6 +568,35 @@ class KongAdminTesting(object):
 
             self.assertEqual(len(data), 1)
 
+        def test_retrieve_plugin_configuration(self):
+            result = self.client.apis.add(target_url=fake.url(), name=fake.api_name(), public_dns=fake.domain_name())
+            self._cleanup_afterwards(result['id'])
+
+            api_id = result['id']
+
+            self.assertIsNotNone(result)
+            self.assertEqual(self.client.apis.plugins(api_id).count(), 0)
+
+            result2 = self.client.apis.plugins(api_id).create('ratelimiting', enabled=False, second=20)
+            self.assertIsNotNone(result2)
+            self.assertEqual(self.client.apis.plugins(api_id).count(), 1)
+
+            # Retrieve by name
+            result3 = self.client.apis.plugins(api_id).retrieve(result2['name'])
+            self.assertIsNotNone(result3)
+            self.assertEqual(result3['api_id'], api_id)
+            self.assertEqual(result3['name'], 'ratelimiting')
+            self.assertFalse(result3['enabled'])
+            self.assertEqual(result3['value']['second'], 20)
+
+            # Retrieve by id
+            result4 = self.client.apis.plugins(api_id).retrieve(result2['id'])
+            self.assertIsNotNone(result4)
+            self.assertEqual(result4['api_id'], api_id)
+            self.assertEqual(result4['name'], 'ratelimiting')
+            self.assertFalse(result4['enabled'])
+            self.assertEqual(result4['value']['second'], 20)
+
         def _cleanup_afterwards(self, name_or_id):
             self._cleanup.append(name_or_id)
             return name_or_id
