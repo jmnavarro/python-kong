@@ -4,7 +4,6 @@ from abc import ABCMeta, abstractmethod
 import os
 import sys
 import collections
-from faker.providers import BaseProvider
 import requests
 import uuid
 import json
@@ -20,6 +19,7 @@ from kong.compat import TestCase, skipIf, run_unittests, OrderedDict, urlencode
 from kong.utils import uuid_or_string, add_url_params, sorted_ordered_dict
 
 from faker import Factory
+from faker.providers import BaseProvider
 
 API_URL = os.environ.get('PYKONG_TEST_API_URL', 'http://localhost:8001')
 
