@@ -4,6 +4,7 @@ from abc import ABCMeta, abstractmethod
 import os
 import sys
 import collections
+from faker.providers import BaseProvider
 import requests
 import uuid
 import json
@@ -18,6 +19,8 @@ from kong.client import KongAdminClient
 from kong.compat import TestCase, skipIf, run_unittests, OrderedDict, urlencode
 from kong.utils import uuid_or_string, add_url_params, sorted_ordered_dict
 
+from faker import Factory
+
 API_URL = os.environ.get('PYKONG_TEST_API_URL', 'http://localhost:8001')
 
 
@@ -26,6 +29,22 @@ def kong_testserver_is_up():
         return requests.get(API_URL).status_code == 200
     except IOError:
         return False
+
+# Initialize fake
+fake = Factory.create()
+
+
+# Create a provider for API Names
+class APIInfoProvider(BaseProvider):
+    def api_name(self):
+        return fake.name().replace(' ', '')
+
+    def api_path(self):
+        path = fake.uri_path()
+        if not path.startswith('/'):
+            path = '/%s' % path
+        return path
+fake.add_provider(APIInfoProvider)
 
 
 class KongAdminTesting(object):
@@ -53,24 +72,34 @@ class KongAdminTesting(object):
             self.assertEqual(self.client.apis.count(), 0)
 
         def test_add(self):
-            result = self.client.apis.add(
-                target_url='http://mockbin.com', name=self._cleanup_afterwards('Mockbin'), public_dns='mockbin.com')
+            url = fake.url()
+            name = fake.api_name()
+            dns = fake.domain_name()
+
+            result = self.client.apis.add(target_url=url, name=name, public_dns=dns)
+            self._cleanup_afterwards(result['id'])
+
             self.assertEqual(self.client.apis.count(), 1)
-            self.assertEqual(result['target_url'], 'http://mockbin.com/')
-            self.assertEqual(result['name'], 'Mockbin')
-            self.assertEqual(result['public_dns'], 'mockbin.com')
+            self.assertEqual(result['target_url'], url)
+            self.assertEqual(result['name'], name)
+            self.assertEqual(result['public_dns'], dns)
             self.assertIsNotNone(result['id'])
             self.assertIsNotNone(result['created_at'])
             self.assertFalse('path' in result)
 
         def test_add_extra(self):
+            url = fake.url()
+            name = fake.api_name()
+            dns = fake.domain_name()
+
             result = self.client.apis.add(
-                target_url='http://mockbin.com', name=self._cleanup_afterwards('Mockbin'), public_dns='mockbin.com',
-                strip_path=True, preserve_host=True)
+                target_url=url, name=name, public_dns=dns, strip_path=True, preserve_host=True)
+            self._cleanup_afterwards(result['id'])
+
             self.assertEqual(self.client.apis.count(), 1)
-            self.assertEqual(result['target_url'], 'http://mockbin.com/')
-            self.assertEqual(result['name'], 'Mockbin')
-            self.assertEqual(result['public_dns'], 'mockbin.com')
+            self.assertEqual(result['target_url'], url)
+            self.assertEqual(result['name'], name)
+            self.assertEqual(result['public_dns'], dns)
             self.assertTrue(result['strip_path'])
             self.assertTrue(result['preserve_host'])
             self.assertIsNotNone(result['id'])
@@ -78,16 +107,19 @@ class KongAdminTesting(object):
             self.assertFalse('path' in result)
 
         def test_add_conflict_name(self):
-            result = self.client.apis.add(
-                target_url='http://mockbin.com', name=self._cleanup_afterwards('Mockbin'), public_dns='mockbin.com')
-            self.assertIsNotNone(result)
+            url = fake.url()
+            name = fake.api_name()
+            dns = fake.domain_name()
+
+            result = self.client.apis.add(target_url=url, name=name, public_dns=dns)
+            self._cleanup_afterwards(result['id'])
+
             self.assertEqual(self.client.apis.count(), 1)
 
             result2 = None
             error_thrown = False
             try:
-                result2 = self.client.apis.add(
-                    target_url='http://mockbin.com2', name=self._cleanup_afterwards('Mockbin'), public_dns='mockbin2.com')
+                result2 = self.client.apis.add(target_url=fake.url(), name=name, public_dns=fake.domain_name())
             except ConflictError:
                 error_thrown = True
             self.assertTrue(error_thrown)
@@ -96,16 +128,19 @@ class KongAdminTesting(object):
             self.assertEqual(self.client.apis.count(), 1)
 
         def test_add_conflict_public_dns(self):
-            result = self.client.apis.add(
-                target_url='http://mockbin.com', name=self._cleanup_afterwards('Mockbin'), public_dns='mockbin.com')
-            self.assertIsNotNone(result)
+            url = fake.url()
+            name = fake.api_name()
+            dns = fake.domain_name()
+
+            result = self.client.apis.add(target_url=url, name=name, public_dns=dns)
+            self._cleanup_afterwards(result['id'])
+
             self.assertEqual(self.client.apis.count(), 1)
 
             result2 = None
             error_thrown = False
             try:
-                result2 = self.client.apis.add(
-                    target_url='http://mockbin2.com', name='Mockbin2', public_dns='mockbin.com')
+                result2 = self.client.apis.add(target_url=fake.url(), name=fake.api_name(), public_dns=dns)
             except ConflictError:
                 error_thrown = True
             self.assertTrue(error_thrown)
@@ -116,78 +151,90 @@ class KongAdminTesting(object):
         def test_add_missing_public_dns_and_path(self):
             result = None
             with self.assertRaises(ValueError):
-                result = self.client.apis.add(target_url='http://mockbin.com')
+                result = self.client.apis.add(target_url=fake.url())
             self.assertIsNone(result)
             self.assertEqual(self.client.apis.count(), 0)
 
         def test_add_missing_public_dns(self):
-            result = self.client.apis.add(target_url='http://mockbin.com', path='/mockbin')
+            result = self.client.apis.add(target_url=fake.url(), path=fake.api_path())
             self.assertIsNotNone(result)
             self._cleanup_afterwards(result['id']),
             self.assertEqual(self.client.apis.count(), 1)
 
         def test_add_missing_path(self):
-            result = self.client.apis.add(target_url='http://mockbin.com', public_dns='mockbin.com')
+            result = self.client.apis.add(target_url=fake.url(), public_dns=fake.domain_name())
             self.assertIsNotNone(result)
             self._cleanup_afterwards(result['id']),
             self.assertEqual(self.client.apis.count(), 1)
 
         def test_update(self):
-            result = self.client.apis.add(
-                target_url='http://mockbin.com', name=self._cleanup_afterwards('Mockbin'), public_dns='mockbin.com')
+            url = fake.url()
+            name = fake.api_name()
+            dns = fake.domain_name()
+
+            result = self.client.apis.add(target_url=url, name=name, public_dns=dns)
+            self._cleanup_afterwards(result['id']),
 
             # Update by name
-            result2 = self.client.apis.update('Mockbin', 'http://mockbin.com', path='/someservice', strip_path=True)
+            new_path = fake.api_path()
+            result2 = self.client.apis.update(name, url, path=new_path, strip_path=True)
             self.assertEqual(result2['id'], result['id'])
-            self.assertEqual(result2['path'], '/someservice')
-            self.assertEqual(result2['public_dns'], 'mockbin.com')
+            self.assertEqual(result2['path'], new_path)
+            self.assertEqual(result2['public_dns'], dns)
             self.assertTrue(result2['strip_path'])
 
             # Update by id
-            result3 = self.client.apis.update(
-                result['id'], 'http://mockbin2.com', path='/someotherservice', public_dns='example.com')
+            new_path = fake.api_path()
+            new_url = fake.url()
+            new_dns = fake.domain_name()
+            result3 = self.client.apis.update(result['id'], new_url, path=new_path, public_dns=new_dns)
             self.assertEqual(result3['id'], result['id'])
-            self.assertEqual(result3['target_url'], 'http://mockbin2.com/')
-            self.assertEqual(result3['path'], '/someotherservice')
-            self.assertEqual(result3['public_dns'], 'example.com')
+            self.assertEqual(result3['target_url'], new_url)
+            self.assertEqual(result3['path'], new_path)
+            self.assertEqual(result3['public_dns'], new_dns)
             self.assertTrue(result3['strip_path'])
 
             # retrieve to check
             result4 = self.client.apis.retrieve(result['id'])
             self.assertIsNotNone(result4)
             self.assertEqual(result4['id'], result['id'])
-            self.assertEqual(result4['target_url'], 'http://mockbin2.com/')
-            self.assertEqual(result4['path'], '/someotherservice')
-            self.assertEqual(result4['public_dns'], 'example.com')
+            self.assertEqual(result4['target_url'], new_url)
+            self.assertEqual(result4['path'], new_path)
+            self.assertEqual(result4['public_dns'], new_dns)
             self.assertTrue(result4['strip_path'])
 
         def test_add_or_update(self):
-            result = self.client.apis.add(target_url='http://mockbin.com', name='Mockbin', public_dns='mockbin.com')
+            result = self.client.apis.add(target_url=fake.url(), name=fake.api_name(), public_dns=fake.domain_name())
             self._cleanup_afterwards(result['id'])
             self.assertEqual(self.client.apis.count(), 1)
 
             # Test add_or_update without api_id -> Should ADD
             result2 = self.client.apis.add_or_update(
-                target_url='http://mockbin2.com', name='Mockbin2', public_dns='mockbin2.com')
+                target_url=fake.url(), name=fake.api_name(), public_dns=fake.domain_name())
             self._cleanup_afterwards(result2['id'])
             self.assertEqual(self.client.apis.count(), 2)
 
             # Test add_or_update with api_id -> Should UPDATE
             result3 = self.client.apis.add_or_update(
-                target_url='http://mockbin3.com', api_id=result['id'], name='Mockbin3', public_dns='mockbin3.com')
+                target_url=fake.url(), api_id=result['id'], name=fake.api_name(), public_dns=fake.domain_name())
             self._cleanup_afterwards(result3['id'])
             self.assertEqual(self.client.apis.count(), 2)
             self.assertEqual(result3['id'], result['id'])
 
         def test_retrieve(self):
-            result = self.client.apis.add(
-                target_url='http://mockbin.com', name=self._cleanup_afterwards('Mockbin'), public_dns='mockbin.com')
-            self.assertEqual(result['target_url'], 'http://mockbin.com/')
-            self.assertEqual(result['name'], 'Mockbin')
-            self.assertEqual(result['public_dns'], 'mockbin.com')
+            url = fake.url()
+            name = fake.api_name()
+            dns = fake.domain_name()
+
+            result = self.client.apis.add(target_url=url, name=name, public_dns=dns)
+            self._cleanup_afterwards(result['id'])
+
+            self.assertEqual(result['target_url'], url)
+            self.assertEqual(result['name'], name)
+            self.assertEqual(result['public_dns'], dns)
 
             # Retrieve by name
-            result2 = self.client.apis.retrieve('Mockbin')
+            result2 = self.client.apis.retrieve(name)
             self.assertEqual(result2, result)
 
             # Retrieve by id
@@ -198,11 +245,10 @@ class KongAdminTesting(object):
         def test_list(self):
             amount = 5
 
+            dns_list = [fake.domain_name() for i in range(amount)]
             for i in range(amount):
-                self.client.apis.add(
-                    target_url='http://mockbin%s.com' % i,
-                    name=self._cleanup_afterwards('Mockbin%s' % i),
-                    public_dns='mockbin%s.com' % i)
+                result = self.client.apis.add(target_url=fake.url(), name=fake.api_name(), public_dns=dns_list[i])
+                self._cleanup_afterwards(result['id'])
 
             self.assertEqual(self.client.apis.count(), amount)
 
@@ -212,7 +258,7 @@ class KongAdminTesting(object):
 
             self.assertEqual(len(data), amount)
 
-            result = self.client.apis.list(public_dns='mockbin3.com')
+            result = self.client.apis.list(public_dns=dns_list[4])
             self.assertTrue('data' in result)
             data = result['data']
 
@@ -226,10 +272,9 @@ class KongAdminTesting(object):
             amount = 5
 
             for i in range(amount):
-                self.client.apis.add(
-                    target_url='http://mockbin%s.com' % i,
-                    name=self._cleanup_afterwards('Mockbin%s' % i),
-                    public_dns='mockbin%s.com' % i)
+                result = self.client.apis.add(
+                    target_url=fake.url(), name=fake.api_name(), public_dns=fake.domain_name())
+                self._cleanup_afterwards(result['id'])
 
             found = []
 
@@ -244,30 +289,32 @@ class KongAdminTesting(object):
         def test_iterate_filtered(self):
             amount = 5
 
+            api_names = [fake.api_name() for i in range(amount)]
             for i in range(amount):
-                self.client.apis.add(
-                    target_url='http://mockbin%s.com' % i,
-                    name=self._cleanup_afterwards('Mockbin%s' % i),
-                    public_dns='mockbin%s.com' % i)
+                result = self.client.apis.add(target_url=fake.url(), name=api_names[i], public_dns=fake.domain_name())
+                self._cleanup_afterwards(result['id'])
 
             found = []
 
-            for item in self.client.apis.iterate(window_size=3, name='Mockbin3'):
+            for item in self.client.apis.iterate(window_size=3, name=api_names[4]):
                 found.append(item)
 
             self.assertEqual(len(found), 1)
             self.assertEqual(
                 sorted([item['id'] for item in found]),
-                sorted([item['id'] for item in self.client.apis.list(name='Mockbin3').get('data')]))
+                sorted([item['id'] for item in self.client.apis.list(name=api_names[4]).get('data')]))
 
         def test_delete(self):
-            result1 = self.client.apis.add(
-                target_url='http://mockbin1.com', name='Mockbin1', public_dns='mockbin1.com')
-            result2 = self.client.apis.add(
-                target_url='http://mockbin2.com', name='Mockbin2', public_dns='mockbin2.com')
+            url1 = fake.url()
+            url2 = fake.url()
+
+            result1 = self.client.apis.add(target_url=url1, name=fake.api_name(), public_dns=fake.domain_name())
+            self.assertEqual(result1['target_url'], url1)
+
+            result2 = self.client.apis.add(target_url=url2, name=fake.api_name(), public_dns=fake.domain_name())
+            self.assertEqual(result2['target_url'], url2)
+
             self.assertEqual(self.client.apis.count(), 2)
-            self.assertEqual(result1['target_url'], 'http://mockbin1.com/')
-            self.assertEqual(result2['target_url'], 'http://mockbin2.com/')
 
             # Delete by id
             self.client.apis.delete(result1['id'])
