@@ -82,6 +82,7 @@ class RestClient(object):
         return result
 
     def get_url(self, *path, **query_params):
+        path = [str(p) for p in path]
         url = ensure_trailing_slash(urljoin(self.api_url, '/'.join(path)))
         return add_url_params(url, query_params)
 
