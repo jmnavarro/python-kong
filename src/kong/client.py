@@ -452,6 +452,8 @@ class BasicAuthAdminClient(BasicAuthAdminContract, RestClient):
 
         if response.status_code == INTERNAL_SERVER_ERROR:
             raise_response_error(response, ServerError)
+        elif response.status_code != OK:
+            raise_response_error(response, ValueError)
 
         result = response.json()
         amount = result.get('total', len(result.get('data')))
@@ -568,6 +570,8 @@ class KeyAuthAdminClient(KeyAuthAdminContract, RestClient):
 
         if response.status_code == INTERNAL_SERVER_ERROR:
             raise_response_error(response, ServerError)
+        elif response.status_code != OK:
+            raise_response_error(response, ValueError)
 
         result = response.json()
         amount = result.get('total', len(result.get('data')))
@@ -690,6 +694,8 @@ class OAuth2AdminClient(OAuth2AdminContract, RestClient):
 
         if response.status_code == INTERNAL_SERVER_ERROR:
             raise_response_error(response, ServerError)
+        elif response.status_code != OK:
+            raise_response_error(response, ValueError)
 
         result = response.json()
         amount = result.get('total', len(result.get('data')))
