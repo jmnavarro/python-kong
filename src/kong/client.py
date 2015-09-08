@@ -2,6 +2,7 @@
 from __future__ import unicode_literals, print_function
 import time
 import os
+import copy
 
 import requests
 import backoff
@@ -102,7 +103,7 @@ class APIPluginConfigurationAdminClient(APIPluginConfigurationAdminContract, Res
     def create(self, plugin_name, enabled=None, consumer_id=None, **fields):
         values = {}
         for key in fields:
-            values['value.%s' % key] = fields[key]
+            values['config.%s' % key] = fields[key]
 
         data = dict({
             'name': plugin_name,
@@ -127,7 +128,7 @@ class APIPluginConfigurationAdminClient(APIPluginConfigurationAdminContract, Res
     def create_or_update(self, plugin_name, plugin_configuration_id=None, enabled=None, consumer_id=None, **fields):
         values = {}
         for key in fields:
-            values['value.%s' % key] = fields[key]
+            values['config.%s' % key] = fields[key]
 
         data = dict({
             'name': plugin_name,
@@ -152,14 +153,12 @@ class APIPluginConfigurationAdminClient(APIPluginConfigurationAdminContract, Res
 
         return result
 
-    def update(self, plugin_name, enabled=None, consumer_id=None, **fields):
+    def update(self, plugin_id, enabled=None, consumer_id=None, **fields):
         values = {}
         for key in fields:
-            values['value.%s' % key] = fields[key]
+            values['config.%s' % key] = fields[key]
 
-        data_struct_update = dict({
-            'name': plugin_name,
-        }, **values)
+        data_struct_update = copy.copy(values)
 
         if consumer_id is not None:
             data_struct_update['consumer_id'] = consumer_id
@@ -167,7 +166,7 @@ class APIPluginConfigurationAdminClient(APIPluginConfigurationAdminContract, Res
         if enabled is not None and isinstance(enabled, bool):
             data_struct_update['enabled'] = enabled
 
-        url = self.get_url('apis', self.api_name_or_id, 'plugins', plugin_name)
+        url = self.get_url('apis', self.api_name_or_id, 'plugins', plugin_id)
 
         response = self.session.patch(url, data=data_struct_update, headers=self.get_headers())
         result = response.json()
@@ -201,17 +200,17 @@ class APIPluginConfigurationAdminClient(APIPluginConfigurationAdminContract, Res
         return result
 
     @backoff.on_exception(backoff.expo, ValueError, max_tries=3)
-    def delete(self, plugin_name_or_id):
-        response = self.session.delete(self.get_url('apis', self.api_name_or_id, 'plugins', plugin_name_or_id),
+    def delete(self, plugin_id):
+        response = self.session.delete(self.get_url('apis', self.api_name_or_id, 'plugins', plugin_id),
                                        headers=self.get_headers())
 
         if response.status_code not in (NO_CONTENT, NOT_FOUND):
             raise ValueError('Could not delete Plugin Configuration (status: %s): %s' % (
-                response.status_code, plugin_name_or_id))
+                response.status_code, plugin_id))
 
     @backoff.on_exception(backoff.expo, ServerError, max_tries=3)
-    def retrieve(self, plugin_name_or_id):
-        response = self.session.get(self.get_url('apis', self.api_name_or_id, 'plugins', plugin_name_or_id),
+    def retrieve(self, plugin_id):
+        response = self.session.get(self.get_url('apis', self.api_name_or_id, 'plugins', plugin_id),
                                     headers=self.get_headers())
         result = response.json()
 
