@@ -7,6 +7,7 @@ import collections
 import requests
 import uuid
 import json
+import random
 
 # To run the standalone test script
 if __name__ == '__main__':
@@ -65,6 +66,7 @@ class KongAdminTesting(object):
             self.client = self.on_create_client()
             self.assertTrue(self.client.apis.count() == 0)
             self._cleanup = []
+            fake.seed(random.randint(1000, 10000000))
 
         def tearDown(self):
             for name_or_id in set(self._cleanup):
@@ -591,6 +593,7 @@ class KongAdminTesting(object):
             self.client = self.on_create_client()
             self.assertTrue(self.client.consumers.count() == 0)
             self._cleanup = []
+            fake.seed(random.randint(1000, 10000000))
 
         def tearDown(self):
             for consumer_username_or_id in set(self._cleanup):
@@ -1223,6 +1226,7 @@ class KongAdminTesting(object):
 
         def setUp(self):
             self.client = self.on_create_client()
+            fake.seed(random.randint(1000, 10000000))
 
         def test_list(self):
             result = self.client.plugins.list()
