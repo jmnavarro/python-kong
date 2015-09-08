@@ -186,11 +186,11 @@ class APIAdminContract(CollectionMixin):
         """
 
     @abstractmethod
-    def add(self, target_url, name=None, public_dns=None, path=None, strip_path=False):
+    def add(self, upstream_url, name=None, public_dns=None, path=None, strip_path=False):
         """
-        :param target_url: The base target URL that points to your API server, this URL will be used for proxying
+        :param upstream_url: The base target URL that points to your API server, this URL will be used for proxying
             requests. For example, https://mockbin.com.
-        :type target_url: str
+        :type upstream_url: str
         :param name:
         :type name: str
         :param public_dns:
@@ -205,17 +205,17 @@ class APIAdminContract(CollectionMixin):
                     "id": "4d924084-1adb-40a5-c042-63b19db421d1",
                     "name": "Mockbin",
                     "public_dns": "mockbin.com",
-                    "target_url": "http://mockbin.com",
+                    "upstream_url": "http://mockbin.com",
                     "created_at": 1422386534
                 }
         """
 
     @abstractmethod
-    def add_or_update(self, target_url, api_id=None, name=None, public_dns=None, path=None, strip_path=False):
+    def add_or_update(self, upstream_url, api_id=None, name=None, public_dns=None, path=None, strip_path=False):
         """
-        :param target_url: The base target URL that points to your API server, this URL will be used for proxying
+        :param upstream_url: The base target URL that points to your API server, this URL will be used for proxying
             requests. For example, https://mockbin.com.
-        :type target_url: str
+        :type upstream_url: str
         :param api_id: The unique identifier of the API to update
         :type api_id: str | uuid.UUID
         :param name:
@@ -232,7 +232,7 @@ class APIAdminContract(CollectionMixin):
                     "id": "4d924084-1adb-40a5-c042-63b19db421d1",
                     "name": "Mockbin",
                     "public_dns": "mockbin.com",
-                    "target_url": "http://mockbin.com",
+                    "upstream_url": "http://mockbin.com",
                     "created_at": 1422386534
                 }
         """
@@ -248,7 +248,7 @@ class APIAdminContract(CollectionMixin):
                     "id": "4d924084-1adb-40a5-c042-63b19db421d1",
                     "name": "Mockbin",
                     "public_dns": "mockbin.com",
-                    "target_url": "https://mockbin.com",
+                    "upstream_url": "https://mockbin.com",
                     "created_at": 1422386534
                 }
         """
@@ -271,14 +271,14 @@ class APIAdminContract(CollectionMixin):
                             "id": "4d924084-1adb-40a5-c042-63b19db421d1",
                             "name": "Mockbin",
                             "public_dns": "mockbin.com",
-                            "target_url": "https://mockbin.com",
+                            "upstream_url": "https://mockbin.com",
                             "created_at": 1422386534
                         },
                         {
                             "id": "3f924084-1adb-40a5-c042-63b19db421a2",
                             "name": "PrivateAPI",
                             "public_dns": "internal.api.com",
-                            "target_url": "http://private.api.com",
+                            "upstream_url": "http://private.api.com",
                             "created_at": 1422386585
                         }
                     ],
@@ -287,13 +287,13 @@ class APIAdminContract(CollectionMixin):
         """
 
     @abstractmethod
-    def update(self, name_or_id, target_url, **fields):
+    def update(self, name_or_id, upstream_url, **fields):
         """
         :param name_or_id: The unique identifier or the name of the API to update
         :type name_or_id: str | uuid.UUID
-        :param target_url: The base target URL that points to your API server, this URL will be used for proxying
+        :param upstream_url: The base target URL that points to your API server, this URL will be used for proxying
             requests. For example, https://mockbin.com.
-        :type target_url: str
+        :type upstream_url: str
         :param fields: Optional dictionary which values will be used to overwrite the existing values
         :type fields: dict
         :rtype: dict
@@ -302,7 +302,7 @@ class APIAdminContract(CollectionMixin):
                     "id": "4d924084-1adb-40a5-c042-63b19db421d1",
                     "name": "Mockbin",
                     "public_dns": "mockbin.com",
-                    "target_url": "http://mockbin.com",
+                    "upstream_url": "http://mockbin.com",
                     "created_at": 1422386534
                 }
         """

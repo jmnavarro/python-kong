@@ -292,31 +292,31 @@ class APIAdminSimulator(APIAdminContract):
     def count(self):
         return self._store.count()
 
-    def add(self, target_url, name=None, public_dns=None, path=None, strip_path=False):
-        assert target_url is not None
+    def add(self, upstream_url, name=None, public_dns=None, path=None, strip_path=False):
+        assert upstream_url is not None
         if not public_dns and not path:
             raise ValueError('At least a \'public_dns\' or a \'path\' must be specified, '
                              'At least a \'public_dns\' or a \'path\' must be specified')  # According to spec
 
         # ensure trailing slash
-        target_url = ensure_trailing_slash(target_url)
+        upstream_url = ensure_trailing_slash(upstream_url)
 
         return self._store.create({
             'name': name or public_dns,
             'public_dns': public_dns,
             'path': path,
-            'target_url': target_url,
+            'upstream_url': upstream_url,
             'strip_path': strip_path,
             'created_at': timestamp()
         }, check_conflict_keys=('name', 'public_dns'))
 
-    def add_or_update(self, target_url, api_id=None, name=None, public_dns=None, path=None, strip_path=False,
+    def add_or_update(self, upstream_url, api_id=None, name=None, public_dns=None, path=None, strip_path=False,
                       preserve_host=False):
         data = {
             'name': name or public_dns,
             'public_dns': public_dns,
             'path': path,
-            'target_url': target_url,
+            'upstream_url': upstream_url,
             'strip_path': strip_path
         }
 
@@ -325,19 +325,19 @@ class APIAdminSimulator(APIAdminContract):
 
         return self.add(**data)
 
-    def update(self, name_or_id, target_url, **fields):
+    def update(self, name_or_id, upstream_url, **fields):
         # ensure trailing slash
-        target_url = ensure_trailing_slash(target_url)
+        upstream_url = ensure_trailing_slash(upstream_url)
 
         return self._store.update(name_or_id, 'name', dict({
-            'target_url': target_url
+            'upstream_url': upstream_url
         }, **fields))
 
     def retrieve(self, name_or_id):
         return self._store.retrieve(name_or_id, 'name')
 
     def list(self, size=100, offset=None, **filter_fields):
-        assert_dict_keys_in(filter_fields, ['id', 'name', 'public_dns', 'target_url'])
+        assert_dict_keys_in(filter_fields, ['id', 'name', 'public_dns', 'upstream_url'])
         return self._store.list(size, offset, **filter_fields)
 
     def delete(self, name_or_id):

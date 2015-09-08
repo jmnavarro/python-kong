@@ -252,13 +252,13 @@ class APIAdminClient(APIAdminContract, RestClient):
         amount = result.get('total', len(result.get('data')))
         return amount
 
-    def add(self, target_url, name=None, public_dns=None, path=None, strip_path=False):
+    def add(self, upstream_url, name=None, public_dns=None, path=None, strip_path=False):
         response = self.session.post(self.get_url('apis'), data={
             'name': name,
             'public_dns': public_dns or None,  # Empty strings are not allowed
             'path': path or None,  # Empty strings are not allowed
             'strip_path': strip_path,
-            'target_url': target_url
+            'upstream_url': upstream_url
         }, headers=self.get_headers())
         result = response.json()
         if response.status_code == CONFLICT:
@@ -270,13 +270,13 @@ class APIAdminClient(APIAdminContract, RestClient):
 
         return result
 
-    def add_or_update(self, target_url, api_id=None, name=None, public_dns=None, path=None, strip_path=False):
+    def add_or_update(self, upstream_url, api_id=None, name=None, public_dns=None, path=None, strip_path=False):
         data = {
             'name': name,
             'public_dns': public_dns or None,  # Empty strings are not allowed
             'path': path or None,  # Empty strings are not allowed
             'strip_path': strip_path,
-            'target_url': target_url
+            'upstream_url': upstream_url
         }
 
         if api_id is not None:
@@ -293,10 +293,10 @@ class APIAdminClient(APIAdminContract, RestClient):
 
         return result
 
-    def update(self, name_or_id, target_url, **fields):
+    def update(self, name_or_id, upstream_url, **fields):
         assert_dict_keys_in(fields, ['name', 'public_dns', 'path', 'strip_path', 'preserve_host'])
         response = self.session.patch(self.get_url('apis', name_or_id), data=dict({
-            'target_url': target_url
+            'upstream_url': upstream_url
         }, **fields), headers=self.get_headers())
         result = response.json()
 
