@@ -186,7 +186,7 @@ class APIAdminContract(CollectionMixin):
         """
 
     @abstractmethod
-    def add(self, target_url, name=None, public_dns=None, path=None, strip_path=False, preserve_host=False):
+    def add(self, target_url, name=None, public_dns=None, path=None, strip_path=False):
         """
         :param target_url: The base target URL that points to your API server, this URL will be used for proxying
             requests. For example, https://mockbin.com.
@@ -199,8 +199,6 @@ class APIAdminContract(CollectionMixin):
         :type path: str
         :param strip_path:
         :type strip_path: bool
-        :param preserve_host:
-        :type preserve_host: bool
         :rtype: dict
         :return: Dictionary containing the API description. Example:
                 {
@@ -213,8 +211,7 @@ class APIAdminContract(CollectionMixin):
         """
 
     @abstractmethod
-    def add_or_update(self, target_url, api_id=None, name=None, public_dns=None, path=None, strip_path=False,
-                      preserve_host=False):
+    def add_or_update(self, target_url, api_id=None, name=None, public_dns=None, path=None, strip_path=False):
         """
         :param target_url: The base target URL that points to your API server, this URL will be used for proxying
             requests. For example, https://mockbin.com.
@@ -229,8 +226,6 @@ class APIAdminContract(CollectionMixin):
         :type path: str
         :param strip_path:
         :type strip_path: bool
-        :param preserve_host:
-        :type preserve_host: bool
         :rtype: dict
         :return: Dictionary containing the API description. Example:
                 {

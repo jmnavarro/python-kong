@@ -93,7 +93,7 @@ class KongAdminTesting(object):
             dns = fake.domain_name()
 
             result = self.client.apis.add(
-                target_url=url, name=name, public_dns=dns, strip_path=True, preserve_host=True)
+                target_url=url, name=name, public_dns=dns, strip_path=True)
             self._cleanup_afterwards(result['id'])
 
             self.assertEqual(self.client.apis.count(), 1)
@@ -101,7 +101,6 @@ class KongAdminTesting(object):
             self.assertEqual(result['name'], name)
             self.assertEqual(result['public_dns'], dns)
             self.assertTrue(result['strip_path'])
-            self.assertTrue(result['preserve_host'])
             self.assertIsNotNone(result['id'])
             self.assertIsNotNone(result['created_at'])
             self.assertFalse('path' in result)

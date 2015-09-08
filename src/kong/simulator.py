@@ -292,7 +292,7 @@ class APIAdminSimulator(APIAdminContract):
     def count(self):
         return self._store.count()
 
-    def add(self, target_url, name=None, public_dns=None, path=None, strip_path=False, preserve_host=False):
+    def add(self, target_url, name=None, public_dns=None, path=None, strip_path=False):
         assert target_url is not None
         if not public_dns and not path:
             raise ValueError('At least a \'public_dns\' or a \'path\' must be specified, '
@@ -307,7 +307,6 @@ class APIAdminSimulator(APIAdminContract):
             'path': path,
             'target_url': target_url,
             'strip_path': strip_path,
-            'preserve_host': preserve_host,
             'created_at': timestamp()
         }, check_conflict_keys=('name', 'public_dns'))
 
@@ -318,8 +317,7 @@ class APIAdminSimulator(APIAdminContract):
             'public_dns': public_dns,
             'path': path,
             'target_url': target_url,
-            'strip_path': strip_path,
-            'preserve_host': preserve_host
+            'strip_path': strip_path
         }
 
         if api_id is not None:
