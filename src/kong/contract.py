@@ -186,15 +186,15 @@ class APIAdminContract(CollectionMixin):
         """
 
     @abstractmethod
-    def add(self, upstream_url, name=None, public_dns=None, path=None, strip_path=False):
+    def add(self, upstream_url, name=None, inbound_dns=None, path=None, strip_path=False):
         """
         :param upstream_url: The base target URL that points to your API server, this URL will be used for proxying
             requests. For example, https://mockbin.com.
         :type upstream_url: str
         :param name:
         :type name: str
-        :param public_dns:
-        :type public_dns: str
+        :param inbound_dns:
+        :type inbound_dns: str
         :param path:
         :type path: str
         :param strip_path:
@@ -204,14 +204,14 @@ class APIAdminContract(CollectionMixin):
                 {
                     "id": "4d924084-1adb-40a5-c042-63b19db421d1",
                     "name": "Mockbin",
-                    "public_dns": "mockbin.com",
+                    "inbound_dns": "mockbin.com",
                     "upstream_url": "http://mockbin.com",
                     "created_at": 1422386534
                 }
         """
 
     @abstractmethod
-    def add_or_update(self, upstream_url, api_id=None, name=None, public_dns=None, path=None, strip_path=False):
+    def add_or_update(self, upstream_url, api_id=None, name=None, inbound_dns=None, path=None, strip_path=False):
         """
         :param upstream_url: The base target URL that points to your API server, this URL will be used for proxying
             requests. For example, https://mockbin.com.
@@ -220,8 +220,8 @@ class APIAdminContract(CollectionMixin):
         :type api_id: str | uuid.UUID
         :param name:
         :type name: str
-        :param public_dns:
-        :type public_dns: str
+        :param inbound_dns:
+        :type inbound_dns: str
         :param path:
         :type path: str
         :param strip_path:
@@ -231,7 +231,7 @@ class APIAdminContract(CollectionMixin):
                 {
                     "id": "4d924084-1adb-40a5-c042-63b19db421d1",
                     "name": "Mockbin",
-                    "public_dns": "mockbin.com",
+                    "inbound_dns": "mockbin.com",
                     "upstream_url": "http://mockbin.com",
                     "created_at": 1422386534
                 }
@@ -247,7 +247,7 @@ class APIAdminContract(CollectionMixin):
                 {
                     "id": "4d924084-1adb-40a5-c042-63b19db421d1",
                     "name": "Mockbin",
-                    "public_dns": "mockbin.com",
+                    "inbound_dns": "mockbin.com",
                     "upstream_url": "https://mockbin.com",
                     "created_at": 1422386534
                 }
@@ -270,14 +270,14 @@ class APIAdminContract(CollectionMixin):
                         {
                             "id": "4d924084-1adb-40a5-c042-63b19db421d1",
                             "name": "Mockbin",
-                            "public_dns": "mockbin.com",
+                            "inbound_dns": "mockbin.com",
                             "upstream_url": "https://mockbin.com",
                             "created_at": 1422386534
                         },
                         {
                             "id": "3f924084-1adb-40a5-c042-63b19db421a2",
                             "name": "PrivateAPI",
-                            "public_dns": "internal.api.com",
+                            "inbound_dns": "internal.api.com",
                             "upstream_url": "http://private.api.com",
                             "created_at": 1422386585
                         }
@@ -301,7 +301,7 @@ class APIAdminContract(CollectionMixin):
                 {
                     "id": "4d924084-1adb-40a5-c042-63b19db421d1",
                     "name": "Mockbin",
-                    "public_dns": "mockbin.com",
+                    "inbound_dns": "mockbin.com",
                     "upstream_url": "http://mockbin.com",
                     "created_at": 1422386534
                 }

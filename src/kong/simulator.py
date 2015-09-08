@@ -274,7 +274,7 @@ class APIAdminSimulator(APIAdminContract):
         self._store = SimulatorDataStore(
             api_url or 'http://localhost:8001/apis/',
             data_struct_filter={
-                'public_dns': None,
+                'inbound_dns': None,
                 'path': None,
                 'strip_path': False
             })
@@ -292,29 +292,29 @@ class APIAdminSimulator(APIAdminContract):
     def count(self):
         return self._store.count()
 
-    def add(self, upstream_url, name=None, public_dns=None, path=None, strip_path=False):
+    def add(self, upstream_url, name=None, inbound_dns=None, path=None, strip_path=False):
         assert upstream_url is not None
-        if not public_dns and not path:
-            raise ValueError('At least a \'public_dns\' or a \'path\' must be specified, '
-                             'At least a \'public_dns\' or a \'path\' must be specified')  # According to spec
+        if not inbound_dns and not path:
+            raise ValueError('At least a \'inbound_dns\' or a \'path\' must be specified, '
+                             'At least a \'inbound_dns\' or a \'path\' must be specified')  # According to spec
 
         # ensure trailing slash
         upstream_url = ensure_trailing_slash(upstream_url)
 
         return self._store.create({
-            'name': name or public_dns,
-            'public_dns': public_dns,
+            'name': name or inbound_dns,
+            'inbound_dns': inbound_dns,
             'path': path,
             'upstream_url': upstream_url,
             'strip_path': strip_path,
             'created_at': timestamp()
-        }, check_conflict_keys=('name', 'public_dns'))
+        }, check_conflict_keys=('name', 'inbound_dns'))
 
-    def add_or_update(self, upstream_url, api_id=None, name=None, public_dns=None, path=None, strip_path=False,
+    def add_or_update(self, upstream_url, api_id=None, name=None, inbound_dns=None, path=None, strip_path=False,
                       preserve_host=False):
         data = {
-            'name': name or public_dns,
-            'public_dns': public_dns,
+            'name': name or inbound_dns,
+            'inbound_dns': inbound_dns,
             'path': path,
             'upstream_url': upstream_url,
             'strip_path': strip_path
@@ -337,7 +337,7 @@ class APIAdminSimulator(APIAdminContract):
         return self._store.retrieve(name_or_id, 'name')
 
     def list(self, size=100, offset=None, **filter_fields):
-        assert_dict_keys_in(filter_fields, ['id', 'name', 'public_dns', 'upstream_url'])
+        assert_dict_keys_in(filter_fields, ['id', 'name', 'inbound_dns', 'upstream_url'])
         return self._store.list(size, offset, **filter_fields)
 
     def delete(self, name_or_id):
