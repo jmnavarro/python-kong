@@ -2,6 +2,7 @@
 from __future__ import unicode_literals, print_function
 import time
 import os
+import copy
 
 import requests
 import backoff
@@ -102,7 +103,7 @@ class APIPluginConfigurationAdminClient(APIPluginConfigurationAdminContract, Res
     def create(self, plugin_name, enabled=None, consumer_id=None, **fields):
         values = {}
         for key in fields:
-            values['value.%s' % key] = fields[key]
+            values['config.%s' % key] = fields[key]
 
         data = dict({
             'name': plugin_name,
@@ -127,7 +128,7 @@ class APIPluginConfigurationAdminClient(APIPluginConfigurationAdminContract, Res
     def create_or_update(self, plugin_name, plugin_configuration_id=None, enabled=None, consumer_id=None, **fields):
         values = {}
         for key in fields:
-            values['value.%s' % key] = fields[key]
+            values['config.%s' % key] = fields[key]
 
         data = dict({
             'name': plugin_name,
@@ -152,14 +153,12 @@ class APIPluginConfigurationAdminClient(APIPluginConfigurationAdminContract, Res
 
         return result
 
-    def update(self, plugin_name, enabled=None, consumer_id=None, **fields):
+    def update(self, plugin_id, enabled=None, consumer_id=None, **fields):
         values = {}
         for key in fields:
-            values['value.%s' % key] = fields[key]
+            values['config.%s' % key] = fields[key]
 
-        data_struct_update = dict({
-            'name': plugin_name,
-        }, **values)
+        data_struct_update = copy.copy(values)
 
         if consumer_id is not None:
             data_struct_update['consumer_id'] = consumer_id
@@ -167,7 +166,7 @@ class APIPluginConfigurationAdminClient(APIPluginConfigurationAdminContract, Res
         if enabled is not None and isinstance(enabled, bool):
             data_struct_update['enabled'] = enabled
 
-        url = self.get_url('apis', self.api_name_or_id, 'plugins', plugin_name)
+        url = self.get_url('apis', self.api_name_or_id, 'plugins', plugin_id)
 
         response = self.session.patch(url, data=data_struct_update, headers=self.get_headers())
         result = response.json()
@@ -201,17 +200,17 @@ class APIPluginConfigurationAdminClient(APIPluginConfigurationAdminContract, Res
         return result
 
     @backoff.on_exception(backoff.expo, ValueError, max_tries=3)
-    def delete(self, plugin_name_or_id):
-        response = self.session.delete(self.get_url('apis', self.api_name_or_id, 'plugins', plugin_name_or_id),
+    def delete(self, plugin_id):
+        response = self.session.delete(self.get_url('apis', self.api_name_or_id, 'plugins', plugin_id),
                                        headers=self.get_headers())
 
         if response.status_code not in (NO_CONTENT, NOT_FOUND):
             raise ValueError('Could not delete Plugin Configuration (status: %s): %s' % (
-                response.status_code, plugin_name_or_id))
+                response.status_code, plugin_id))
 
     @backoff.on_exception(backoff.expo, ServerError, max_tries=3)
-    def retrieve(self, plugin_name_or_id):
-        response = self.session.get(self.get_url('apis', self.api_name_or_id, 'plugins', plugin_name_or_id),
+    def retrieve(self, plugin_id):
+        response = self.session.get(self.get_url('apis', self.api_name_or_id, 'plugins', plugin_id),
                                     headers=self.get_headers())
         result = response.json()
 
@@ -252,14 +251,13 @@ class APIAdminClient(APIAdminContract, RestClient):
         amount = result.get('total', len(result.get('data')))
         return amount
 
-    def add(self, target_url, name=None, public_dns=None, path=None, strip_path=False, preserve_host=False):
+    def add(self, upstream_url, name=None, inbound_dns=None, path=None, strip_path=False):
         response = self.session.post(self.get_url('apis'), data={
             'name': name,
-            'public_dns': public_dns or None,  # Empty strings are not allowed
+            'inbound_dns': inbound_dns or None,  # Empty strings are not allowed
             'path': path or None,  # Empty strings are not allowed
             'strip_path': strip_path,
-            'preserve_host': preserve_host,
-            'target_url': target_url
+            'upstream_url': upstream_url
         }, headers=self.get_headers())
         result = response.json()
         if response.status_code == CONFLICT:
@@ -271,15 +269,13 @@ class APIAdminClient(APIAdminContract, RestClient):
 
         return result
 
-    def add_or_update(self, target_url, api_id=None, name=None, public_dns=None, path=None, strip_path=False,
-                      preserve_host=False):
+    def add_or_update(self, upstream_url, api_id=None, name=None, inbound_dns=None, path=None, strip_path=False):
         data = {
             'name': name,
-            'public_dns': public_dns or None,  # Empty strings are not allowed
+            'inbound_dns': inbound_dns or None,  # Empty strings are not allowed
             'path': path or None,  # Empty strings are not allowed
             'strip_path': strip_path,
-            'preserve_host': preserve_host,
-            'target_url': target_url
+            'upstream_url': upstream_url
         }
 
         if api_id is not None:
@@ -296,10 +292,10 @@ class APIAdminClient(APIAdminContract, RestClient):
 
         return result
 
-    def update(self, name_or_id, target_url, **fields):
-        assert_dict_keys_in(fields, ['name', 'public_dns', 'path', 'strip_path', 'preserve_host'])
+    def update(self, name_or_id, upstream_url, **fields):
+        assert_dict_keys_in(fields, ['name', 'inbound_dns', 'path', 'strip_path', 'preserve_host'])
         response = self.session.patch(self.get_url('apis', name_or_id), data=dict({
-            'target_url': target_url
+            'upstream_url': upstream_url
         }, **fields), headers=self.get_headers())
         result = response.json()
 
@@ -331,7 +327,7 @@ class APIAdminClient(APIAdminContract, RestClient):
 
     @backoff.on_exception(backoff.expo, ServerError, max_tries=3)
     def list(self, size=100, offset=None, **filter_fields):
-        assert_dict_keys_in(filter_fields, ['id', 'name', 'public_dns', 'path'])
+        assert_dict_keys_in(filter_fields, ['id', 'name', 'inbound_dns', 'path'])
 
         query_params = filter_fields
         query_params['size'] = size

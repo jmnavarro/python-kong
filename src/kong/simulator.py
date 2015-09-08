@@ -159,7 +159,7 @@ class APIPluginConfigurationAdminSimulator(APIPluginConfigurationAdminContract):
             'id': id,
             'api_id': api_id,
             'name': plugin_name,
-            'value': fields,
+            'config': fields,
             'created_at': timestamp(),
             'enabled': True if enabled is None else enabled
         }
@@ -171,27 +171,21 @@ class APIPluginConfigurationAdminSimulator(APIPluginConfigurationAdminContract):
 
     def create_or_update(self, plugin_name, plugin_configuration_id=None, enabled=None, consumer_id=None, **fields):
         if plugin_configuration_id is not None:
-            current_plugin_name = None
-            for obj in self._data.values():
-                if obj['id'] == plugin_configuration_id:
-                    current_plugin_name = obj['name']
-                    break
-            assert current_plugin_name is not None
-            return self.update(current_plugin_name, enabled=enabled, consumer_id=consumer_id, **fields)
+            return self.update(plugin_configuration_id, enabled=enabled, consumer_id=consumer_id, **fields)
         return self.create(plugin_name, enabled=enabled, consumer_id=consumer_id, **fields)
 
-    def update(self, plugin_name, enabled=None, consumer_id=None, **fields):
+    def update(self, plugin_id, enabled=None, consumer_id=None, **fields):
         current_plugin_id = None
         current_plugin_name = None
 
         for obj in self._data.values():
-            if obj['name'] == plugin_name:
+            if obj['id'] == plugin_id:
                 current_plugin_id = obj['id']
                 current_plugin_name = obj['name']
                 break
 
         if current_plugin_name is None or current_plugin_id is None:
-            raise ValueError('Unknown plugin_name: %s' % plugin_name)
+            raise ValueError('Unknown plugin_id: %s' % plugin_id)
 
         if current_plugin_name not in PluginAdminSimulator.PLUGINS.keys():
             raise ValueError('Unknown plugin_name: %s' % current_plugin_name)
@@ -201,8 +195,7 @@ class APIPluginConfigurationAdminSimulator(APIPluginConfigurationAdminContract):
                 raise ValueError('Unknown value field "%s" for plugin: %s' % (key, current_plugin_name))
 
         data_struct_update = {
-            'name': plugin_name,
-            'value': fields
+            'config': fields
         }
 
         if consumer_id is not None:
@@ -244,25 +237,25 @@ class APIPluginConfigurationAdminSimulator(APIPluginConfigurationAdminContract):
 
         return result
 
-    def delete(self, plugin_name_or_id):
-        plugin_name_or_id = uuid_or_string(plugin_name_or_id)
+    def delete(self, plugin_id):
+        plugin_id = uuid_or_string(plugin_id)
 
-        if plugin_name_or_id in self._data:
-            del self._data[plugin_name_or_id]
+        if plugin_id in self._data:
+            del self._data[plugin_id]
 
         for plugin_name in self._data:
-            if self._data[plugin_name]['id'] == plugin_name_or_id:
+            if self._data[plugin_name]['id'] == plugin_id:
                 del self._data[plugin_name]
                 break
 
-    def retrieve(self, plugin_name_or_id):
-        plugin_name_or_id = uuid_or_string(plugin_name_or_id)
+    def retrieve(self, plugin_id):
+        plugin_id = uuid_or_string(plugin_id)
 
-        if plugin_name_or_id in self._data:
-            return self._data[plugin_name_or_id]
+        if plugin_id in self._data:
+            return self._data[plugin_id]
 
         for plugin_name in self._data:
-            if self._data[plugin_name]['id'] == plugin_name_or_id:
+            if self._data[plugin_name]['id'] == plugin_id:
                 return self._data[plugin_name]
 
     def count(self):
@@ -274,7 +267,7 @@ class APIAdminSimulator(APIAdminContract):
         self._store = SimulatorDataStore(
             api_url or 'http://localhost:8001/apis/',
             data_struct_filter={
-                'public_dns': None,
+                'inbound_dns': None,
                 'path': None,
                 'strip_path': False
             })
@@ -292,34 +285,32 @@ class APIAdminSimulator(APIAdminContract):
     def count(self):
         return self._store.count()
 
-    def add(self, target_url, name=None, public_dns=None, path=None, strip_path=False, preserve_host=False):
-        assert target_url is not None
-        if not public_dns and not path:
-            raise ValueError('At least a \'public_dns\' or a \'path\' must be specified, '
-                             'At least a \'public_dns\' or a \'path\' must be specified')  # According to spec
+    def add(self, upstream_url, name=None, inbound_dns=None, path=None, strip_path=False):
+        assert upstream_url is not None
+        if not inbound_dns and not path:
+            raise ValueError('At least a \'inbound_dns\' or a \'path\' must be specified, '
+                             'At least a \'inbound_dns\' or a \'path\' must be specified')  # According to spec
 
         # ensure trailing slash
-        target_url = ensure_trailing_slash(target_url)
+        upstream_url = ensure_trailing_slash(upstream_url)
 
         return self._store.create({
-            'name': name or public_dns,
-            'public_dns': public_dns,
+            'name': name or inbound_dns,
+            'inbound_dns': inbound_dns,
             'path': path,
-            'target_url': target_url,
+            'upstream_url': upstream_url,
             'strip_path': strip_path,
-            'preserve_host': preserve_host,
             'created_at': timestamp()
-        }, check_conflict_keys=('name', 'public_dns'))
+        }, check_conflict_keys=('name', 'inbound_dns'))
 
-    def add_or_update(self, target_url, api_id=None, name=None, public_dns=None, path=None, strip_path=False,
+    def add_or_update(self, upstream_url, api_id=None, name=None, inbound_dns=None, path=None, strip_path=False,
                       preserve_host=False):
         data = {
-            'name': name or public_dns,
-            'public_dns': public_dns,
+            'name': name or inbound_dns,
+            'inbound_dns': inbound_dns,
             'path': path,
-            'target_url': target_url,
-            'strip_path': strip_path,
-            'preserve_host': preserve_host
+            'upstream_url': upstream_url,
+            'strip_path': strip_path
         }
 
         if api_id is not None:
@@ -327,19 +318,19 @@ class APIAdminSimulator(APIAdminContract):
 
         return self.add(**data)
 
-    def update(self, name_or_id, target_url, **fields):
+    def update(self, name_or_id, upstream_url, **fields):
         # ensure trailing slash
-        target_url = ensure_trailing_slash(target_url)
+        upstream_url = ensure_trailing_slash(upstream_url)
 
         return self._store.update(name_or_id, 'name', dict({
-            'target_url': target_url
+            'upstream_url': upstream_url
         }, **fields))
 
     def retrieve(self, name_or_id):
         return self._store.retrieve(name_or_id, 'name')
 
     def list(self, size=100, offset=None, **filter_fields):
-        assert_dict_keys_in(filter_fields, ['id', 'name', 'public_dns', 'target_url'])
+        assert_dict_keys_in(filter_fields, ['id', 'name', 'inbound_dns', 'upstream_url'])
         return self._store.list(size, offset, **filter_fields)
 
     def delete(self, name_or_id):
@@ -633,49 +624,52 @@ class PluginAdminSimulator(PluginAdminContract):
                            'key': {'required': True, 'type': 'string', 'func': 'function'},
                            'only_https': {'default': False, 'required': False, 'type': 'boolean'},
                            '_key_der_cache': {'type': 'string', 'immutable': True}}, 'no_consumer': True},
-        'keyauth': {'fields': {'key_names': {'default': 'function', 'required': True, 'type': 'array'},
-                               'hide_credentials': {'default': False, 'type': 'boolean'}}},
-        'basicauth': {'fields': {'hide_credentials': {'default': False, 'type': 'boolean'}}},
-        'oauth2': {'fields': {'scopes': {'required': False, 'type': 'array'},
-                              'token_expiration': {'default': 7200, 'required': True, 'type': 'number'},
-                              'enable_implicit_grant': {'default': False, 'required': True, 'type': 'boolean'},
-                              'hide_credentials': {'default': False, 'type': 'boolean'},
-                              'provision_key': {'unique': True, 'type': 'string', 'func': 'function',
-                                                'required': False},
-                              'mandatory_scope': {'default': False, 'required': True, 'type': 'boolean',
-                                                  'func': 'function'}}},
-        'ratelimiting': {
+        'key-authentication': {'fields': {'key_names': {'default': 'function', 'required': True, 'type': 'array'},
+                                          'hide_credentials': {'default': False, 'type': 'boolean'}}},
+        'basic-authentication': {'fields': {'hide_credentials': {'default': False, 'type': 'boolean'}}},
+        'oauth2-authentication': {'fields': {'scopes': {'required': False, 'type': 'array'},
+                                             'token_expiration': {'default': 7200, 'required': True, 'type': 'number'},
+                                             'enable_implicit_grant': {
+                                                 'default': False, 'required': True, 'type': 'boolean'},
+                                             'hide_credentials': {'default': False, 'type': 'boolean'},
+                                             'provision_key': {
+                                                 'unique': True, 'type': 'string', 'func': 'function',
+                                                 'required': False},
+                                             'mandatory_scope': {
+                                                 'default': False, 'required': True, 'type': 'boolean', 'func':
+                                                     'function'}}},
+        'rate-limiting': {
             'fields': {'hour': {'type': 'number'}, 'month': {'type': 'number'}, 'second': {'type': 'number'},
                        'year': {'type': 'number'}, 'day': {'type': 'number'}, 'minute': {'type': 'number'}},
             'self_check': 'function'},
-        'tcplog': {
+        'tcp-log': {
             'fields': {'host': {'required': True, 'type': 'string'}, 'port': {'required': True, 'type': 'number'},
                        'timeout': {'default': 10000, 'type': 'number'},
                        'keepalive': {'default': 60000, 'type': 'number'}}},
-        'udplog': {
+        'udp-log': {
             'fields': {'host': {'required': True, 'type': 'string'}, 'port': {'required': True, 'type': 'number'},
                        'timeout': {'default': 10000, 'type': 'number'}}},
-        'filelog': {'fields': {'path': {'required': True, 'type': 'string', 'func': 'function'}}},
-        'httplog': {'fields': {'http_endpoint': {'required': True, 'type': 'url'},
-                               'method': {'default': 'POST', 'enum': ['POST', 'PUT', 'PATCH']},
-                               'timeout': {'default': 10000, 'type': 'number'},
-                               'keepalive': {'default': 60000, 'type': 'number'}}},
+        'file-log': {'fields': {'path': {'required': True, 'type': 'string', 'func': 'function'}}},
+        'http-log': {'fields': {'http_endpoint': {'required': True, 'type': 'url'},
+                                'method': {'default': 'POST', 'enum': ['POST', 'PUT', 'PATCH']},
+                                'timeout': {'default': 10000, 'type': 'number'},
+                                'keepalive': {'default': 60000, 'type': 'number'}}},
         'cors': {'fields': {'origin': {'type': 'string'}, 'max_age': {'type': 'number'},
                             'exposed_headers': {'type': 'array'},
                             'methods': {'enum': ['HEAD', 'GET', 'POST', 'PUT', 'PATCH', 'DELETE'], 'type': 'array'},
                             'headers': {'type': 'array'}, 'preflight_continue': {'default': False, 'type': 'boolean'},
                             'credentials': {'default': False, 'type': 'boolean'}}},
-        'request_transformer': {'fields': {'origin': {'type': 'string'}, 'max_age': {'type': 'number'},
+        'request-transformer': {'fields': {'origin': {'type': 'string'}, 'max_age': {'type': 'number'},
                                            'exposed_headers': {'type': 'array'},
                                            'methods': {'enum': ['HEAD', 'GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
                                                        'type': 'array'}, 'headers': {'type': 'array'},
                                            'preflight_continue': {'default': False, 'type': 'boolean'},
                                            'credentials': {'default': False, 'type': 'boolean'}}},
-        'response_transformer': {'fields': {
+        'response-transformer': {'fields': {
             'add': {'type': 'table', 'schema': {'fields': {'headers': {'type': 'array'}, 'json': {'type': 'array'}}}},
             'remove': {'type': 'table',
                        'schema': {'fields': {'headers': {'type': 'array'}, 'json': {'type': 'array'}}}}}},
-        'requestsizelimiting': {'fields': {'allowed_payload_size': {'default': 128, 'type': 'number'}}}
+        'request-size-limiting': {'fields': {'allowed_payload_size': {'default': 128, 'type': 'number'}}}
     })
 
     def destroy(self):
