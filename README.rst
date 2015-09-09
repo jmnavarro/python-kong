@@ -24,7 +24,7 @@ python-kong
 
 .. |coveralls| image:: http://img.shields.io/coveralls/vikingco/python-kong/master.svg?style=flat&label=Coveralls
     :alt: Coverage Status
-    :target: https://coveralls.io/r/vikingco/python-kong
+    :target: https://coveralls.io/github/vikingco/python-kong
 
 .. |version| image:: http://img.shields.io/pypi/v/python-kong.svg?style=flat
     :alt: PyPI Package latest release
@@ -50,7 +50,7 @@ python-kong
     :alt: Supported imlementations
     :target: https://pypi.python.org/pypi/python-kong
 
-A Python client for the Kong API (http://getkong.org/)
+A Python client for the Kong API (https://getkong.org/)
 
 * Free software: BSD license
 
