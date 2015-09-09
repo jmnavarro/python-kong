@@ -2,6 +2,11 @@
 Changelog
 =========
 
+0.2.0 (2015-09-09)
+------------------
+
+* Updated library to be compatible with Kong 0.5.x (WARNING: Not backwards compatible!)
+
 0.1.14 (2015-08-26)
 -------------------
 
