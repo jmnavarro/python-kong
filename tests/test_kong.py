@@ -72,12 +72,11 @@ class KongAdminTesting(object):
         def setUp(self):
             self.client = self.on_create_client()
             self.assertTrue(self.client.apis.count() == 0)
-            self._cleanup = []
             fake.seed(random.randint(1000, 10000000))
 
         def tearDown(self):
-            for name_or_id in set(self._cleanup):
-                self.client.apis.delete(name_or_id)
+            for api in list(self.client.apis.iterate()):
+                self.client.apis.delete(api['id'])
             self.assertEqual(self.client.apis.count(), 0)
 
         def test_add(self):
@@ -86,7 +85,6 @@ class KongAdminTesting(object):
             dns = fake.domain_name()
 
             result = self.client.apis.add(upstream_url=url, name=name, inbound_dns=dns)
-            self._cleanup_afterwards(result['id'])
 
             self.assertEqual(self.client.apis.count(), 1)
             self.assertEqual(result['upstream_url'], url)
@@ -103,7 +101,6 @@ class KongAdminTesting(object):
 
             result = self.client.apis.add(
                 upstream_url=url, name=name, inbound_dns=dns, strip_path=True)
-            self._cleanup_afterwards(result['id'])
 
             self.assertEqual(self.client.apis.count(), 1)
             self.assertEqual(result['upstream_url'], url)
@@ -120,7 +117,6 @@ class KongAdminTesting(object):
             dns = fake.domain_name()
 
             result = self.client.apis.add(upstream_url=url, name=name, inbound_dns=dns)
-            self._cleanup_afterwards(result['id'])
 
             self.assertEqual(self.client.apis.count(), 1)
 
@@ -141,7 +137,6 @@ class KongAdminTesting(object):
             dns = fake.domain_name()
 
             result = self.client.apis.add(upstream_url=url, name=name, inbound_dns=dns)
-            self._cleanup_afterwards(result['id'])
 
             self.assertEqual(self.client.apis.count(), 1)
 
@@ -165,12 +160,10 @@ class KongAdminTesting(object):
 
         def test_add_missing_public_dns(self):
             result = self.client.apis.add(upstream_url=fake.url(), path=fake.api_path())
-            self._cleanup_afterwards(result['id']),
             self.assertEqual(self.client.apis.count(), 1)
 
         def test_add_missing_path(self):
             result = self.client.apis.add(upstream_url=fake.url(), inbound_dns=fake.domain_name())
-            self._cleanup_afterwards(result['id']),
             self.assertEqual(self.client.apis.count(), 1)
 
         def test_update(self):
@@ -179,7 +172,6 @@ class KongAdminTesting(object):
             dns = fake.domain_name()
 
             result = self.client.apis.add(upstream_url=url, name=name, inbound_dns=dns)
-            self._cleanup_afterwards(result['id']),
 
             # Update by name
             new_path = fake.api_path()
@@ -211,19 +203,16 @@ class KongAdminTesting(object):
 
         def test_add_or_update(self):
             result = self.client.apis.add(upstream_url=fake.url(), name=fake.api_name(), inbound_dns=fake.domain_name())
-            self._cleanup_afterwards(result['id'])
             self.assertEqual(self.client.apis.count(), 1)
 
             # Test add_or_update without api_id -> Should ADD
             result2 = self.client.apis.add_or_update(
                 upstream_url=fake.url(), name=fake.api_name(), inbound_dns=fake.domain_name())
-            self._cleanup_afterwards(result2['id'])
             self.assertEqual(self.client.apis.count(), 2)
 
             # Test add_or_update with api_id -> Should UPDATE
             result3 = self.client.apis.add_or_update(
                 upstream_url=fake.url(), api_id=result['id'], name=fake.api_name(), inbound_dns=fake.domain_name())
-            self._cleanup_afterwards(result3['id'])
             self.assertEqual(self.client.apis.count(), 2)
             self.assertEqual(result3['id'], result['id'])
 
@@ -233,7 +222,6 @@ class KongAdminTesting(object):
             dns = fake.domain_name()
 
             result = self.client.apis.add(upstream_url=url, name=name, inbound_dns=dns)
-            self._cleanup_afterwards(result['id'])
 
             self.assertEqual(result['upstream_url'], url)
             self.assertEqual(result['name'], name)
@@ -254,7 +242,6 @@ class KongAdminTesting(object):
             dns_list = [fake.domain_name() for i in range(amount)]
             for i in range(amount):
                 result = self.client.apis.add(upstream_url=fake.url(), name=fake.api_name(), inbound_dns=dns_list[i])
-                self._cleanup_afterwards(result['id'])
 
             self.assertEqual(self.client.apis.count(), amount)
 
@@ -280,7 +267,6 @@ class KongAdminTesting(object):
             for i in range(amount):
                 result = self.client.apis.add(
                     upstream_url=fake.url(), name=fake.api_name(), inbound_dns=fake.domain_name())
-                self._cleanup_afterwards(result['id'])
 
             found = []
 
@@ -298,7 +284,6 @@ class KongAdminTesting(object):
             api_names = [fake.api_name() for i in range(amount)]
             for i in range(amount):
                 result = self.client.apis.add(upstream_url=fake.url(), name=api_names[i], inbound_dns=fake.domain_name())
-                self._cleanup_afterwards(result['id'])
 
             found = []
 
@@ -336,7 +321,6 @@ class KongAdminTesting(object):
             # Create test api
             result = self.client.apis.add(
                 upstream_url=fake.url(), name=api_name, inbound_dns=fake.domain_name())
-            self._cleanup_afterwards(result['id'])
             self.assertEqual(self.client.apis.plugins(api_name).count(), 0)
 
             # Create global plugin configuration for the api
@@ -354,7 +338,6 @@ class KongAdminTesting(object):
             # Create test api
             result = self.client.apis.add(
                 upstream_url=fake.url(), name=api_name, inbound_dns=fake.domain_name())
-            self._cleanup_afterwards(result['id'])
             self.assertEqual(self.client.apis.plugins(api_name).count(), 0)
 
             # Create global plugin configuration for the api
@@ -377,7 +360,6 @@ class KongAdminTesting(object):
             # Create test api
             result = self.client.apis.add(
                 upstream_url=fake.url(), name=api_name, inbound_dns=fake.domain_name())
-            self._cleanup_afterwards(result['id'])
             self.assertEqual(self.client.apis.plugins(api_name).count(), 0)
 
             result2 = None
@@ -395,7 +377,6 @@ class KongAdminTesting(object):
             # Create test api
             result = self.client.apis.add(
                 upstream_url=fake.url(), name=api_name, inbound_dns=fake.domain_name())
-            self._cleanup_afterwards(result['id'])
             self.assertEqual(self.client.apis.plugins(api_name).count(), 0)
 
             result2 = None
@@ -413,7 +394,6 @@ class KongAdminTesting(object):
             # Create test api
             result = self.client.apis.add(
                 upstream_url=fake.url(), name=api_name, inbound_dns=fake.domain_name())
-            self._cleanup_afterwards(result['id'])
             self.assertEqual(self.client.apis.plugins(api_name).count(), 0)
 
             # Create test consumer
@@ -437,7 +417,6 @@ class KongAdminTesting(object):
             # Create test api
             result = self.client.apis.add(
                 upstream_url=fake.url(), name=api_name, inbound_dns=fake.domain_name())
-            self._cleanup_afterwards(result['id'])
             self.assertEqual(self.client.apis.plugins(api_name).count(), 0)
 
             # Create global plugin configuration for the api
@@ -461,7 +440,6 @@ class KongAdminTesting(object):
             # Create test api
             result = self.client.apis.add(
                 upstream_url=fake.url(), name=api_name, inbound_dns=fake.domain_name())
-            self._cleanup_afterwards(result['id'])
             self.assertEqual(self.client.apis.plugins(api_name).count(), 0)
 
             # Create global plugin configuration for the api
@@ -487,7 +465,6 @@ class KongAdminTesting(object):
             # Create test api
             result = self.client.apis.add(
                 upstream_url=fake.url(), name=api_name, inbound_dns=fake.domain_name())
-            self._cleanup_afterwards(result['id'])
             self.assertEqual(self.client.apis.plugins(api_name).count(), 0)
 
             # Create global plugin configuration for the api
@@ -516,7 +493,6 @@ class KongAdminTesting(object):
             # Create test api
             result = self.client.apis.add(
                 upstream_url=fake.url(), name=api_name, inbound_dns=fake.domain_name())
-            self._cleanup_afterwards(result['id'])
             self.assertEqual(self.client.apis.plugins(api_name).count(), 0)
 
             # Create test consumer
@@ -551,7 +527,6 @@ class KongAdminTesting(object):
 
             result = self.client.apis.add(
                 upstream_url=fake.url(), name=api_name, inbound_dns=fake.domain_name())
-            self._cleanup_afterwards(result['id'])
             self.assertEqual(self.client.apis.plugins(api_name).count(), 0)
 
             result2 = self.client.apis.plugins(api_name).create('request-size-limiting', allowed_payload_size=512)
@@ -567,7 +542,6 @@ class KongAdminTesting(object):
 
             result = self.client.apis.add(
                 upstream_url=fake.url(), name=api_name, inbound_dns=fake.domain_name())
-            self._cleanup_afterwards(result['id'])
             self.assertEqual(self.client.apis.plugins(api_name).count(), 0)
 
             result2 = self.client.apis.plugins(api_name).create('rate-limiting', enabled=False, second=20)
@@ -590,7 +564,6 @@ class KongAdminTesting(object):
 
         def test_retrieve_plugin_configuration(self):
             result = self.client.apis.add(upstream_url=fake.url(), name=fake.api_name(), inbound_dns=fake.domain_name())
-            self._cleanup_afterwards(result['id'])
 
             api_id = result['id']
 
@@ -608,35 +581,30 @@ class KongAdminTesting(object):
             self.assertFalse(result3['enabled'])
             self.assertEqual(result3['config']['second'], 20)
 
-        def _cleanup_afterwards(self, name_or_id):
-            self._cleanup.append(name_or_id)
-            return name_or_id
-
     class ConsumerTestCase(ClientFactoryMixin, TestCase):
         __metaclass__ = ABCMeta
 
         def setUp(self):
             self.client = self.on_create_client()
             self.assertTrue(self.client.consumers.count() == 0)
-            self._cleanup = []
             fake.seed(random.randint(1000, 10000000))
 
         def tearDown(self):
-            for consumer_username_or_id in set(self._cleanup):
+            for consumer in list(self.client.consumers.iterate()):
                 # Cleanup basic_auth
-                for basic_auth_struct in self.client.consumers.basic_auth(consumer_username_or_id).iterate():
-                    self.client.consumers.basic_auth(consumer_username_or_id).delete(basic_auth_struct['id'])
+                for basic_auth_struct in self.client.consumers.basic_auth(consumer['id']).iterate():
+                    self.client.consumers.basic_auth(consumer['id']).delete(basic_auth_struct['id'])
 
                 # Cleanup key auth
-                for key_auth_struct in self.client.consumers.key_auth(consumer_username_or_id).iterate():
-                    self.client.consumers.key_auth(consumer_username_or_id).delete(key_auth_struct['id'])
+                for key_auth_struct in self.client.consumers.key_auth(consumer['id']).iterate():
+                    self.client.consumers.key_auth(consumer['id']).delete(key_auth_struct['id'])
 
                 # Cleanup oauth2
-                for oauth2_struct in self.client.consumers.oauth2(consumer_username_or_id).iterate():
-                    self.client.consumers.oauth2(consumer_username_or_id).delete(oauth2_struct['id'])
+                for oauth2_struct in self.client.consumers.oauth2(consumer['id']).iterate():
+                    self.client.consumers.oauth2(consumer['id']).delete(oauth2_struct['id'])
 
                 # Cleanup consumer
-                self.client.consumers.delete(consumer_username_or_id)
+                self.client.consumers.delete(consumer['id'])
             self.assertEqual(self.client.consumers.count(), 0)
 
         def test_create(self):
@@ -645,26 +613,22 @@ class KongAdminTesting(object):
 
             result = self.client.consumers.create(
                 username=username, custom_id=custom_id)
-            self._cleanup_afterwards(result['id'])
 
             self.assertEqual(result['username'], username)
             self.assertEqual(result['custom_id'], custom_id)
 
         def test_create_or_update(self):
             result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
-            self._cleanup_afterwards(result['id'])
             self.assertEqual(self.client.consumers.count(), 1)
 
             # Test add_or_update without consumer_id -> Should CREATE
             result2 = self.client.consumers.create_or_update(
                 username=fake.username(), custom_id=fake.uuid4())
-            self._cleanup_afterwards(result2['id'])
             self.assertEqual(self.client.consumers.count(), 2)
 
             # Test add_or_update with consumer_id -> Should UPDATE
             result3 = self.client.consumers.create_or_update(
                 consumer_id=result['id'], username=fake.username(), custom_id=fake.uuid4())
-            self._cleanup_afterwards(result3['id'])
             self.assertEqual(self.client.consumers.count(), 2)
             self.assertEqual(result3['id'], result['id'])
 
@@ -672,7 +636,6 @@ class KongAdminTesting(object):
             username = fake.username()
 
             result = self.client.consumers.create(username=username)
-            self._cleanup_afterwards(result['id'])
             self.assertFalse('custom_id' in result)
             self.assertEqual(result['username'], username)
 
@@ -680,7 +643,6 @@ class KongAdminTesting(object):
             custom_id = fake.uuid4()
 
             result = self.client.consumers.create(custom_id=custom_id)
-            self._cleanup_afterwards(result['id'])  # We have no username, so we can only delete afterwards with id
             self.assertFalse('username' in result)
             self.assertEqual(result['custom_id'], custom_id)
 
@@ -689,7 +651,6 @@ class KongAdminTesting(object):
             custom_id = fake.uuid4()
 
             result = self.client.consumers.create(username=username, custom_id=custom_id)
-            self._cleanup_afterwards(result['id'])
 
             result2 = None
             error_thrown = False
@@ -704,7 +665,6 @@ class KongAdminTesting(object):
             username = fake.username()
 
             result = self.client.consumers.create(username=username)
-            self._cleanup_afterwards(result['id'])
 
             result2 = None
             error_thrown = False
@@ -719,7 +679,6 @@ class KongAdminTesting(object):
             custom_id = fake.uuid4()
 
             result = self.client.consumers.create(custom_id=custom_id)
-            self._cleanup_afterwards(result['id'])  # We have no username, so we can only delete afterwards with id
 
             result2 = None
             error_thrown = False
@@ -736,7 +695,6 @@ class KongAdminTesting(object):
 
             result1 = self.client.consumers.create(username=username, custom_id=custom_id)
             self.assertIsNotNone(result1)
-            self._cleanup_afterwards(result1['id'])
 
             username = fake.username()
 
@@ -767,7 +725,6 @@ class KongAdminTesting(object):
             custom_id = fake.uuid4()
 
             result = self.client.consumers.create(username=username, custom_id=custom_id)
-            self._cleanup_afterwards(result['id'])
             self.assertEqual(result['username'], username)
             self.assertEqual(result['custom_id'], custom_id)
 
@@ -788,7 +745,6 @@ class KongAdminTesting(object):
 
             for i in range(amount):
                 result = self.client.consumers.create(username=usernames[i], custom_id=custom_ids[i])
-                self._cleanup_afterwards(result['id'])
 
             self.assertEqual(self.client.consumers.count(), amount)
 
@@ -816,7 +772,6 @@ class KongAdminTesting(object):
 
             for i in range(amount):
                 result = self.client.consumers.create(username=usernames[i], custom_id=custom_ids[i])
-                self._cleanup_afterwards(result['id'])
 
             found = []
 
@@ -849,7 +804,6 @@ class KongAdminTesting(object):
 
         def test_basic_auth_create(self):
             result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
-            self._cleanup_afterwards(result['id'])
 
             test_username = fake.username()
             test_password = fake.password()
@@ -863,7 +817,6 @@ class KongAdminTesting(object):
 
         def test_basic_auth_update(self):
             result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
-            self._cleanup_afterwards(result['id'])
 
             test_username = fake.username()
             test_password = fake.password()
@@ -891,7 +844,6 @@ class KongAdminTesting(object):
 
         def test_basic_auth_create_or_update(self):
             result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
-            self._cleanup_afterwards(result['id'])
 
             result2 = self.client.consumers.basic_auth(result['id']).create(
                 username=fake.username(), password=fake.password())
@@ -923,7 +875,6 @@ class KongAdminTesting(object):
 
         def test_basic_auth_retrieve(self):
             result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
-            self._cleanup_afterwards(result['id'])
             result2 = self.client.consumers.basic_auth(result['id']).create(
                 username=fake.username(), password=fake.password())
             self.assertIsNotNone(result2)
@@ -936,7 +887,6 @@ class KongAdminTesting(object):
 
         def test_basic_auth_list(self):
             result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
-            self._cleanup_afterwards(result['id'])
 
             amount = 5
 
@@ -966,7 +916,6 @@ class KongAdminTesting(object):
 
         def test_basic_auth_iterate(self):
             result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
-            self._cleanup_afterwards(result['id'])
 
             amount = 5
 
@@ -990,7 +939,6 @@ class KongAdminTesting(object):
 
         def test_basic_auth_delete(self):
             result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
-            self._cleanup_afterwards(result['id'])
 
             result2 = self.client.consumers.basic_auth(result['id']).create(
                 username=fake.username(), password=fake.password())
@@ -1004,7 +952,6 @@ class KongAdminTesting(object):
 
         def test_key_auth_create(self):
             result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
-            self._cleanup_afterwards(result['id'])
 
             result2 = self.client.consumers.key_auth(result['id']).create()
             self.assertIsNotNone(result2)
@@ -1020,7 +967,6 @@ class KongAdminTesting(object):
 
         def test_key_auth_update(self):
             result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
-            self._cleanup_afterwards(result['id'])
 
             # Create
             result2 = self.client.consumers.key_auth(result['id']).create(key=fake.password(length=128))
@@ -1041,7 +987,6 @@ class KongAdminTesting(object):
 
         def test_key_auth_create_or_update(self):
             result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
-            self._cleanup_afterwards(result['id'])
 
             result2 = self.client.consumers.key_auth(result['id']).create(key=fake.password(length=128))
             self.assertIsNotNone(result2)
@@ -1067,7 +1012,6 @@ class KongAdminTesting(object):
 
         def test_key_auth_retrieve(self):
             result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
-            self._cleanup_afterwards(result['id'])
 
             result2 = self.client.consumers.key_auth(result['id']).create(key=fake.password(length=128))
             self.assertIsNotNone(result2)
@@ -1079,7 +1023,6 @@ class KongAdminTesting(object):
 
         def test_key_auth_list(self):
             result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
-            self._cleanup_afterwards(result['id'])
 
             amount = 5
 
@@ -1108,7 +1051,6 @@ class KongAdminTesting(object):
 
         def test_key_auth_iterate(self):
             result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
-            self._cleanup_afterwards(result['id'])
 
             amount = 5
 
@@ -1131,7 +1073,6 @@ class KongAdminTesting(object):
 
         def test_key_auth_delete(self):
             result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
-            self._cleanup_afterwards(result['id'])
 
             result2 = self.client.consumers.key_auth(result['id']).create(key=fake.password(length=128))
             self.assertIsNotNone(result2)
@@ -1144,7 +1085,6 @@ class KongAdminTesting(object):
 
         def test_oauth2_create(self):
             result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
-            self._cleanup_afterwards(result['id'])
 
             name = fake.oauth2_app_name()
             redirect_uri = fake.uri()
@@ -1157,7 +1097,6 @@ class KongAdminTesting(object):
 
         def test_oauth2_update(self):
             result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
-            self._cleanup_afterwards(result['id'])
 
             # Create
             result2 = self.client.consumers.oauth2(result['id']).create(
@@ -1182,7 +1121,6 @@ class KongAdminTesting(object):
 
         def test_oauth2_create_or_update(self):
             result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
-            self._cleanup_afterwards(result['id'])
 
             result2 = self.client.consumers.oauth2(result['id']).create(
                 name=fake.oauth2_app_name(), redirect_uri=fake.uri())
@@ -1214,7 +1152,6 @@ class KongAdminTesting(object):
 
         def test_oauth2_retrieve(self):
             result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
-            self._cleanup_afterwards(result['id'])
 
             result2 = self.client.consumers.oauth2(result['id']).create(
                 name=fake.oauth2_app_name(), redirect_uri=fake.uri())
@@ -1228,7 +1165,6 @@ class KongAdminTesting(object):
 
         def test_oauth2_list(self):
             result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
-            self._cleanup_afterwards(result['id'])
 
             amount = 5
 
@@ -1258,7 +1194,6 @@ class KongAdminTesting(object):
 
         def test_oauth2_iterate(self):
             result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
-            self._cleanup_afterwards(result['id'])
 
             amount = 5
 
@@ -1282,7 +1217,6 @@ class KongAdminTesting(object):
 
         def test_oauth2_delete(self):
             result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
-            self._cleanup_afterwards(result['id'])
 
             result2 = self.client.consumers.oauth2(result['id']).create(
                 name=fake.oauth2_app_name(), redirect_uri=fake.uri())
@@ -1293,10 +1227,6 @@ class KongAdminTesting(object):
             # Delete by ID
             self.client.consumers.oauth2(result['id']).delete(result2['id'])
             self.assertEqual(self.client.consumers.oauth2(result['id']).count(), 0)
-
-        def _cleanup_afterwards(self, username_or_id):
-            self._cleanup.append(username_or_id)
-            return username_or_id
 
     class PluginTestCase(ClientFactoryMixin, TestCase):
         __metaclass__ = ABCMeta
