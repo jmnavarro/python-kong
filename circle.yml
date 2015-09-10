@@ -23,6 +23,12 @@ dependencies:
         - docker pull dirkmoors/kong
         - mkdir -p ~/docker; docker save dirkmoors/kong > ~/docker/kong.tar
 test:
+    pre:
+        - >
+            docker run -d
+            -p 8000:8000
+            -p 8001:8001
+            --name kong
+            dirkmoors/kong; sleep 5
     override:
-        - ./scripts/docker/kong.sh; sleep 5
         - tox
