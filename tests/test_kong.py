@@ -36,13 +36,8 @@ if LOG_HTTP_REQUESTS:
 ############################################################################
 
 API_URL = os.environ.get('PYKONG_TEST_API_URL', 'http://localhost:8001')
+FAKER_SEED = 1
 
-
-def kong_testserver_is_up():
-    try:
-        return requests.get(API_URL).status_code == 200
-    except IOError:
-        return False
 
 # Initialize fake
 fake = Factory.create()
@@ -64,8 +59,28 @@ class CustomInfoProvider(BaseProvider):
 
     def oauth2_app_name(self):
         return fake.sentence(nb_words=random.randint(1, 3), variable_nb_words=True).rstrip('.')
-
 fake.add_provider(CustomInfoProvider)
+
+
+def seed_faker():
+    """
+    Seeds the fake-factory
+    """
+    global FAKER_SEED
+    FAKER_SEED += 1
+    fake.seed(FAKER_SEED)
+
+
+def kong_testserver_is_up():
+    """
+    Tests whether the kong testserver is up
+    :rtype: bool
+    :return: Boolean indicating whether or not the kong testserver is up
+    """
+    try:
+        return requests.get(API_URL).status_code == 200
+    except IOError:
+        return False
 
 
 class KongAdminTesting(object):
@@ -85,7 +100,7 @@ class KongAdminTesting(object):
         def setUp(self):
             self.client = self.on_create_client()
             self.assertTrue(self.client.apis.count() == 0)
-            fake.seed(random.randint(1000, 10000000))
+            seed_faker()
 
         def tearDown(self):
             for api in list(self.client.apis.iterate()):
@@ -600,7 +615,7 @@ class KongAdminTesting(object):
         def setUp(self):
             self.client = self.on_create_client()
             self.assertTrue(self.client.consumers.count() == 0)
-            fake.seed(random.randint(1000, 10000000))
+            seed_faker()
 
         def tearDown(self):
             for consumer in list(self.client.consumers.iterate()):
@@ -1246,7 +1261,7 @@ class KongAdminTesting(object):
 
         def setUp(self):
             self.client = self.on_create_client()
-            fake.seed(random.randint(1000, 10000000))
+            seed_faker()
 
         def test_list(self):
             result = self.client.plugins.list()
