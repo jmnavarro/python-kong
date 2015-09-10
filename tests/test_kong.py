@@ -35,8 +35,8 @@ def kong_testserver_is_up():
 fake = Factory.create()
 
 
-# Create a provider for API Names
-class APIInfoProvider(BaseProvider):
+# Custom fake provider
+class CustomInfoProvider(BaseProvider):
     def api_name(self):
         return fake.name().replace(' ', '')
 
@@ -45,7 +45,14 @@ class APIInfoProvider(BaseProvider):
         if not path.startswith('/'):
             path = '/%s' % path
         return path
-fake.add_provider(APIInfoProvider)
+
+    def username(self):
+        return fake.first_name().lower().replace(' ', '')
+
+    def oauth2_app_name(self):
+        return fake.sentence(nb_words=random.randint(1, 3), variable_nb_words=True).rstrip('.')
+
+fake.add_provider(CustomInfoProvider)
 
 
 class KongAdminTesting(object):
@@ -326,151 +333,175 @@ class KongAdminTesting(object):
             self.assertEqual(self.client.apis.count(), 0)
 
         def test_create_global_plugin_configuration(self):
+            api_name = fake.api_name()
+
             # Create test api
             result = self.client.apis.add(
-                upstream_url='http://mockbin.com', name=self._cleanup_afterwards('Mockbin'), inbound_dns='mockbin.com')
+                upstream_url=fake.url(), name=api_name, inbound_dns=fake.domain_name())
+            self._cleanup_afterwards(result['id'])
             self.assertIsNotNone(result)
-            self.assertEqual(self.client.apis.plugins('Mockbin').count(), 0)
+            self.assertEqual(self.client.apis.plugins(api_name).count(), 0)
 
             # Create global plugin configuration for the api
-            result2 = self.client.apis.plugins('Mockbin').create('rate-limiting', enabled=False, second=20)
+            result2 = self.client.apis.plugins(api_name).create('rate-limiting', enabled=False, second=20)
             self.assertIsNotNone(result2)
             self.assertIsNotNone(result2['id'])
             self.assertIsNotNone(result2['api_id'])
             self.assertFalse(result2['enabled'])
             self.assertEqual(result2['config']['second'], 20)
-            self.assertEqual(self.client.apis.plugins('Mockbin').count(), 1)
+            self.assertEqual(self.client.apis.plugins(api_name).count(), 1)
 
         def test_create_plugin_configuration_conflict(self):
+            api_name = fake.api_name()
+
             # Create test api
             result = self.client.apis.add(
-                upstream_url='http://mockbin.com', name=self._cleanup_afterwards('Mockbin'), inbound_dns='mockbin.com')
+                upstream_url=fake.url(), name=api_name, inbound_dns=fake.domain_name())
+            self._cleanup_afterwards(result['id'])
             self.assertIsNotNone(result)
-            self.assertEqual(self.client.apis.plugins('Mockbin').count(), 0)
+            self.assertEqual(self.client.apis.plugins(api_name).count(), 0)
 
             # Create global plugin configuration for the api
-            result2 = self.client.apis.plugins('Mockbin').create('rate-limiting', enabled=False, second=20)
+            result2 = self.client.apis.plugins(api_name).create('rate-limiting', enabled=False, second=20)
             self.assertIsNotNone(result2)
             self.assertIsNotNone(result2['id'])
 
             result3 = None
             error_thrown = False
             try:
-                result3 = self.client.apis.plugins('Mockbin').create('rate-limiting', enabled=False, second=35)
+                result3 = self.client.apis.plugins(api_name).create('rate-limiting', enabled=False, second=35)
             except ConflictError as e:
                 error_thrown = True
             self.assertTrue(error_thrown)
             self.assertIsNone(result3)
 
         def test_create_non_existing_plugin_configuration(self):
+            api_name = fake.api_name()
+
             # Create test api
             result = self.client.apis.add(
-                upstream_url='http://mockbin.com', name=self._cleanup_afterwards('Mockbin'), inbound_dns='mockbin.com')
+                upstream_url=fake.url(), name=api_name, inbound_dns=fake.domain_name())
+            self._cleanup_afterwards(result['id'])
             self.assertIsNotNone(result)
-            self.assertEqual(self.client.apis.plugins('Mockbin').count(), 0)
+            self.assertEqual(self.client.apis.plugins(api_name).count(), 0)
 
             result2 = None
             error_thrown = False
             try:
-                result2 = self.client.apis.plugins('Mockbin').create('unknown_plugin', second=20)
+                result2 = self.client.apis.plugins(api_name).create('unknown_plugin', second=20)
             except ValueError:
                 error_thrown = True
             self.assertTrue(error_thrown)
             self.assertIsNone(result2)
 
         def test_create_incorrect_plugin_configuration(self):
+            api_name = fake.api_name()
+
             # Create test api
             result = self.client.apis.add(
-                upstream_url='http://mockbin.com', name=self._cleanup_afterwards('Mockbin'), inbound_dns='mockbin.com')
+                upstream_url=fake.url(), name=api_name, inbound_dns=fake.domain_name())
+            self._cleanup_afterwards(result['id'])
             self.assertIsNotNone(result)
-            self.assertEqual(self.client.apis.plugins('Mockbin').count(), 0)
+            self.assertEqual(self.client.apis.plugins(api_name).count(), 0)
 
             result2 = None
             error_thrown = False
             try:
-                result2 = self.client.apis.plugins('Mockbin').create('rate-limiting', unknown_parameter=20)
+                result2 = self.client.apis.plugins(api_name).create('rate-limiting', unknown_parameter=20)
             except ValueError:
                 error_thrown = True
             self.assertTrue(error_thrown)
             self.assertIsNone(result2)
 
         def test_create_consumer_specific_plugin_configuration(self):
+            api_name = fake.api_name()
+
             # Create test api
             result = self.client.apis.add(
-                upstream_url='http://mockbin.com', name=self._cleanup_afterwards('Mockbin'), inbound_dns='mockbin.com')
+                upstream_url=fake.url(), name=api_name, inbound_dns=fake.domain_name())
+            self._cleanup_afterwards(result['id'])
             self.assertIsNotNone(result)
-            self.assertEqual(self.client.apis.plugins('Mockbin').count(), 0)
+            self.assertEqual(self.client.apis.plugins(api_name).count(), 0)
 
             # Create test consumer
             consumer = self.client.consumers.create(username='abc1234')
 
             try:
                 # Create consumer specific plugin configuration for the api
-                result2 = self.client.apis.plugins('Mockbin').create(
+                result2 = self.client.apis.plugins(api_name).create(
                     'request-size-limiting', consumer_id=consumer['id'], allowed_payload_size=512)
                 self.assertIsNotNone(result2)
                 self.assertIsNotNone(result2['consumer_id'])
                 self.assertEqual(result2['consumer_id'], consumer['id'])
-                self.assertEqual(self.client.apis.plugins('Mockbin').count(), 1)
+                self.assertEqual(self.client.apis.plugins(api_name).count(), 1)
             finally:
                 # Delete the test consumer
                 self.client.consumers.delete(consumer['id'])
 
         def test_update_global_plugin_configuration(self):
+            api_name = fake.api_name()
+
             # Create test api
             result = self.client.apis.add(
-                upstream_url='http://mockbin.com', name=self._cleanup_afterwards('Mockbin'), inbound_dns='mockbin.com')
+                upstream_url=fake.url(), name=api_name, inbound_dns=fake.domain_name())
+            self._cleanup_afterwards(result['id'])
             self.assertIsNotNone(result)
-            self.assertEqual(self.client.apis.plugins('Mockbin').count(), 0)
+            self.assertEqual(self.client.apis.plugins(api_name).count(), 0)
 
             # Create global plugin configuration for the api
-            result2 = self.client.apis.plugins('Mockbin').create('rate-limiting', enabled=False, second=20)
+            result2 = self.client.apis.plugins(api_name).create('rate-limiting', enabled=False, second=20)
             self.assertIsNotNone(result2)
             self.assertEqual(result2['enabled'], False)
             self.assertEqual(result2['config']['second'], 20)
 
             # Update
-            result3 = self.client.apis.plugins('Mockbin').update(result2['id'], enabled=True, second=27)
+            result3 = self.client.apis.plugins(api_name).update(result2['id'], enabled=True, second=27)
             self.assertIsNotNone(result3)
             self.assertEqual(result3['enabled'], True)
             self.assertEqual(result3['config']['second'], 27)
 
             # Make sure we still have only 1 configuration
-            self.assertEqual(self.client.apis.plugins('Mockbin').count(), 1)
+            self.assertEqual(self.client.apis.plugins(api_name).count(), 1)
 
         def test_create_or_update_global_plugin_configuration(self):
+            api_name = fake.api_name()
+
             # Create test api
             result = self.client.apis.add(
-                upstream_url='http://mockbin.com', name=self._cleanup_afterwards('Mockbin'), inbound_dns='mockbin.com')
+                upstream_url=fake.url(), name=api_name, inbound_dns=fake.domain_name())
+            self._cleanup_afterwards(result['id'])
             self.assertIsNotNone(result)
-            self.assertEqual(self.client.apis.plugins('Mockbin').count(), 0)
+            self.assertEqual(self.client.apis.plugins(api_name).count(), 0)
 
             # Create global plugin configuration for the api
-            result2 = self.client.apis.plugins('Mockbin').create('rate-limiting', enabled=False, second=20)
+            result2 = self.client.apis.plugins(api_name).create('rate-limiting', enabled=False, second=20)
             self.assertIsNotNone(result2)
-            self.assertEqual(self.client.apis.plugins('Mockbin').count(), 1)
+            self.assertEqual(self.client.apis.plugins(api_name).count(), 1)
 
             # Test create_or_update without plugin_id -> Should CREATE
-            result3 = self.client.apis.plugins('Mockbin').create_or_update(
+            result3 = self.client.apis.plugins(api_name).create_or_update(
                 'request-size-limiting', enabled=True, allowed_payload_size=128)
             self.assertIsNotNone(result3)
-            self.assertEqual(self.client.apis.plugins('Mockbin').count(), 2)
+            self.assertEqual(self.client.apis.plugins(api_name).count(), 2)
 
             # Test create_or_update with plugin_configuration_id -> Should UPDATE
-            result4 = self.client.apis.plugins('Mockbin').create_or_update(
+            result4 = self.client.apis.plugins(api_name).create_or_update(
                 'request-size-limiting', plugin_configuration_id=result3['id'], allowed_payload_size=512)
             self.assertIsNotNone(result4)
-            self.assertEqual(self.client.apis.plugins('Mockbin').count(), 2)
+            self.assertEqual(self.client.apis.plugins(api_name).count(), 2)
 
         def test_update_incorrect_plugin_configuration(self):
+            api_name = fake.api_name()
+
             # Create test api
             result = self.client.apis.add(
-                upstream_url='http://mockbin.com', name=self._cleanup_afterwards('Mockbin'), inbound_dns='mockbin.com')
+                upstream_url=fake.url(), name=api_name, inbound_dns=fake.domain_name())
+            self._cleanup_afterwards(result['id'])
             self.assertIsNotNone(result)
-            self.assertEqual(self.client.apis.plugins('Mockbin').count(), 0)
+            self.assertEqual(self.client.apis.plugins(api_name).count(), 0)
 
             # Create global plugin configuration for the api
-            result2 = self.client.apis.plugins('Mockbin').create('rate-limiting', enabled=False, second=20)
+            result2 = self.client.apis.plugins(api_name).create('rate-limiting', enabled=False, second=20)
             self.assertIsNotNone(result2)
             self.assertEqual(result2['enabled'], False)
             self.assertEqual(result2['config']['second'], 20)
@@ -479,7 +510,7 @@ class KongAdminTesting(object):
             result3 = None
             error_thrown = False
             try:
-                result3 = self.client.apis.plugins('Mockbin').update(
+                result3 = self.client.apis.plugins(api_name).update(
                     result2['name'], enabled=True, unknown_parameter=27)
             except ValueError:
                 error_thrown = True
@@ -487,29 +518,32 @@ class KongAdminTesting(object):
             self.assertIsNone(result3)
 
             # Make sure we still have only 1 configuration
-            self.assertEqual(self.client.apis.plugins('Mockbin').count(), 1)
+            self.assertEqual(self.client.apis.plugins(api_name).count(), 1)
 
         def test_update_consumer_specific_plugin_configuration(self):
+            api_name = fake.api_name()
+
             # Create test api
             result = self.client.apis.add(
-                upstream_url='http://mockbin.com', name=self._cleanup_afterwards('Mockbin'), inbound_dns='mockbin.com')
+                upstream_url=fake.url(), name=api_name, inbound_dns=fake.domain_name())
+            self._cleanup_afterwards(result['id'])
             self.assertIsNotNone(result)
-            self.assertEqual(self.client.apis.plugins('Mockbin').count(), 0)
+            self.assertEqual(self.client.apis.plugins(api_name).count(), 0)
 
             # Create test consumer
             consumer = self.client.consumers.create(username='abc1234')
 
             try:
                 # Create consumer specific plugin configuration for the api
-                result2 = self.client.apis.plugins('Mockbin').create(
+                result2 = self.client.apis.plugins(api_name).create(
                     'request-size-limiting', consumer_id=consumer['id'], allowed_payload_size=512)
                 self.assertIsNotNone(result2)
                 self.assertIsNotNone(result2['consumer_id'])
                 self.assertEqual(result2['consumer_id'], consumer['id'])
-                self.assertEqual(self.client.apis.plugins('Mockbin').count(), 1)
+                self.assertEqual(self.client.apis.plugins(api_name).count(), 1)
 
                 # Update
-                result3 = self.client.apis.plugins('Mockbin').update(
+                result3 = self.client.apis.plugins(api_name).update(
                     result2['id'], consumer_id=consumer['id'], allowed_payload_size=1024)
                 self.assertIsNotNone(result3)
                 self.assertEqual(result3['enabled'], True)
@@ -518,45 +552,51 @@ class KongAdminTesting(object):
                 self.assertEqual(result3['consumer_id'], consumer['id'])
 
                 # Make sure we still have only 1 configuration
-                self.assertEqual(self.client.apis.plugins('Mockbin').count(), 1)
+                self.assertEqual(self.client.apis.plugins(api_name).count(), 1)
             finally:
                 # Delete the test consumer
                 self.client.consumers.delete(consumer['id'])
 
         def test_delete_plugin_configuration(self):
-            result = self.client.apis.add(
-                upstream_url='http://mockbin.com', name=self._cleanup_afterwards('Mockbin'), inbound_dns='mockbin.com')
-            self.assertIsNotNone(result)
-            self.assertEqual(self.client.apis.plugins('Mockbin').count(), 0)
+            api_name = fake.api_name()
 
-            result2 = self.client.apis.plugins('Mockbin').create('request-size-limiting', allowed_payload_size=512)
+            result = self.client.apis.add(
+                upstream_url=fake.url(), name=api_name, inbound_dns=fake.domain_name())
+            self._cleanup_afterwards(result['id'])
+            self.assertIsNotNone(result)
+            self.assertEqual(self.client.apis.plugins(api_name).count(), 0)
+
+            result2 = self.client.apis.plugins(api_name).create('request-size-limiting', allowed_payload_size=512)
             self.assertIsNotNone(result2)
-            self.assertEqual(self.client.apis.plugins('Mockbin').count(), 1)
+            self.assertEqual(self.client.apis.plugins(api_name).count(), 1)
 
             # delete by id
-            self.client.apis.plugins('Mockbin').delete(result2['id'])
-            self.assertEqual(self.client.apis.plugins('Mockbin').count(), 0)
+            self.client.apis.plugins(api_name).delete(result2['id'])
+            self.assertEqual(self.client.apis.plugins(api_name).count(), 0)
 
         def test_list_plugin_configuration(self):
+            api_name = fake.api_name()
+
             result = self.client.apis.add(
-                upstream_url='http://mockbin.com', name=self._cleanup_afterwards('Mockbin'), inbound_dns='mockbin.com')
+                upstream_url=fake.url(), name=api_name, inbound_dns=fake.domain_name())
+            self._cleanup_afterwards(result['id'])
             self.assertIsNotNone(result)
-            self.assertEqual(self.client.apis.plugins('Mockbin').count(), 0)
+            self.assertEqual(self.client.apis.plugins(api_name).count(), 0)
 
-            result2 = self.client.apis.plugins('Mockbin').create('rate-limiting', enabled=False, second=20)
+            result2 = self.client.apis.plugins(api_name).create('rate-limiting', enabled=False, second=20)
             self.assertIsNotNone(result2)
-            self.assertEqual(self.client.apis.plugins('Mockbin').count(), 1)
+            self.assertEqual(self.client.apis.plugins(api_name).count(), 1)
 
-            result3 = self.client.apis.plugins('Mockbin').create('request-size-limiting', allowed_payload_size=512)
+            result3 = self.client.apis.plugins(api_name).create('request-size-limiting', allowed_payload_size=512)
             self.assertIsNotNone(result3)
-            self.assertEqual(self.client.apis.plugins('Mockbin').count(), 2)
+            self.assertEqual(self.client.apis.plugins(api_name).count(), 2)
 
-            result4 = self.client.apis.plugins('Mockbin').list()
+            result4 = self.client.apis.plugins(api_name).list()
             data = result4['data']
 
             self.assertEqual(len(data), 2)
 
-            result5 = self.client.apis.plugins('Mockbin').list(name='request-size-limiting')
+            result5 = self.client.apis.plugins(api_name).list(name='request-size-limiting')
             data = result5['data']
 
             self.assertEqual(len(data), 1)
@@ -614,118 +654,140 @@ class KongAdminTesting(object):
             self.assertEqual(self.client.consumers.count(), 0)
 
         def test_create(self):
+            username = fake.username()
+            custom_id = fake.uuid4()
+
             result = self.client.consumers.create(
-                username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+                username=username, custom_id=custom_id)
+            self._cleanup_afterwards(result['id'])
+
             self.assertIsNotNone(result)
-            self.assertEqual(result['username'], 'abc1234')
-            self.assertEqual(result['custom_id'], '41245871-1s7q-awdd35aw-d8a6s2d12345')
+            self.assertEqual(result['username'], username)
+            self.assertEqual(result['custom_id'], custom_id)
 
         def test_create_or_update(self):
-            result = self.client.consumers.create(username='abc1234', custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+            result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
             self._cleanup_afterwards(result['id'])
             self.assertEqual(self.client.consumers.count(), 1)
 
             # Test add_or_update without consumer_id -> Should CREATE
             result2 = self.client.consumers.create_or_update(
-                username='abc12345', custom_id='41245871-1s7q-awdd35aw-d8a6s2d12346')
+                username=fake.username(), custom_id=fake.uuid4())
             self._cleanup_afterwards(result2['id'])
             self.assertEqual(self.client.consumers.count(), 2)
 
             # Test add_or_update with consumer_id -> Should UPDATE
             result3 = self.client.consumers.create_or_update(
-                consumer_id=result['id'], username='abc123456', custom_id='41245871-1s7q-awdd35aw-d8a6s2d12347')
+                consumer_id=result['id'], username=fake.username(), custom_id=fake.uuid4())
             self._cleanup_afterwards(result3['id'])
             self.assertEqual(self.client.consumers.count(), 2)
             self.assertEqual(result3['id'], result['id'])
 
         def test_create_only_username(self):
-            result = self.client.consumers.create(username=self._cleanup_afterwards('abc123'))
-            self.assertIsNotNone(result)
+            username = fake.username()
+
+            result = self.client.consumers.create(username=username)
+            self._cleanup_afterwards(result['id'])
             self.assertFalse('custom_id' in result)
-            self.assertEqual(result['username'], 'abc123')
+            self.assertEqual(result['username'], username)
 
         def test_create_only_custom_id(self):
-            result = self.client.consumers.create(custom_id='41245871-1s7q-awdd35aw-d8a6s2d4a8q9')
-            self.assertIsNotNone(result)
+            custom_id = fake.uuid4()
+
+            result = self.client.consumers.create(custom_id=custom_id)
             self._cleanup_afterwards(result['id'])  # We have no username, so we can only delete afterwards with id
             self.assertFalse('username' in result)
-            self.assertEqual(result['custom_id'], '41245871-1s7q-awdd35aw-d8a6s2d4a8q9')
+            self.assertEqual(result['custom_id'], custom_id)
 
         def test_create_conflict(self):
-            result1 = self.client.consumers.create(
-                username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
-            self.assertIsNotNone(result1)
+            username = fake.username()
+            custom_id = fake.uuid4()
+
+            result = self.client.consumers.create(username=username, custom_id=custom_id)
+            self._cleanup_afterwards(result['id'])
 
             result2 = None
             error_thrown = False
             try:
-                result2 = self.client.consumers.create(
-                    username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+                result2 = self.client.consumers.create(username=username, custom_id=custom_id)
             except ConflictError:
                 error_thrown = True
             self.assertTrue(error_thrown)
             self.assertIsNone(result2)
 
         def test_create_conflict_only_username(self):
-            result1 = self.client.consumers.create(username=self._cleanup_afterwards('abc123'))
-            self.assertIsNotNone(result1)
+            username = fake.username()
+
+            result = self.client.consumers.create(username=username)
+            self._cleanup_afterwards(result['id'])
 
             result2 = None
             error_thrown = False
             try:
-                result2 = self.client.consumers.create(username=self._cleanup_afterwards('abc123'))
+                result2 = self.client.consumers.create(username=username)
             except ConflictError:
                 error_thrown = True
             self.assertTrue(error_thrown)
             self.assertIsNone(result2)
 
         def test_create_conflict_only_custom_id(self):
-            result1 = self.client.consumers.create(custom_id='41245871-1s7q-awdd35aw-d8a6s2d4a8q9')
-            self.assertIsNotNone(result1)
-            self._cleanup_afterwards(result1['id'])  # We have no username, so we can only delete afterwards with id
+            custom_id = fake.uuid4()
+
+            result = self.client.consumers.create(custom_id=custom_id)
+            self._cleanup_afterwards(result['id'])  # We have no username, so we can only delete afterwards with id
 
             result2 = None
             error_thrown = False
             try:
-                result2 = self.client.consumers.create(custom_id='41245871-1s7q-awdd35aw-d8a6s2d4a8q9')
+                result2 = self.client.consumers.create(custom_id=custom_id)
             except ConflictError:
                 error_thrown = True
             self.assertTrue(error_thrown)
             self.assertIsNone(result2)
 
         def test_update(self):
-            result1 = self.client.consumers.create(username='abc123', custom_id='123456789')
+            username = fake.username()
+            custom_id = fake.uuid4()
+
+            result1 = self.client.consumers.create(username=username, custom_id=custom_id)
             self.assertIsNotNone(result1)
             self._cleanup_afterwards(result1['id'])
 
+            username = fake.username()
+
             # update by username
-            result2 = self.client.consumers.update(result1['username'], username='abc456')
+            result2 = self.client.consumers.update(result1['username'], username=username)
             self.assertIsNotNone(result2)
             self.assertEqual(result2['id'], result1['id'])
-            self.assertEqual(result2['username'], 'abc456')
+            self.assertEqual(result2['username'], username)
+
+            username = fake.username()
+            custom_id = fake.uuid4()
 
             # update by id
-            result3 = self.client.consumers.update(result1['id'], username='abc789', custom_id='987654321')
+            result3 = self.client.consumers.update(result1['id'], username=username, custom_id=custom_id)
             self.assertIsNotNone(result3)
             self.assertEqual(result3['id'], result1['id'])
-            self.assertEqual(result3['username'], 'abc789')
-            self.assertEqual(result3['custom_id'], '987654321')
+            self.assertEqual(result3['username'], username)
+            self.assertEqual(result3['custom_id'], custom_id)
 
             # retrieve to check
             result4 = self.client.consumers.retrieve(result1['id'])
             self.assertIsNotNone(result4)
-            self.assertEqual(result4['username'], 'abc789')
-            self.assertEqual(result4['custom_id'], '987654321')
+            self.assertEqual(result4['username'], username)
+            self.assertEqual(result4['custom_id'], custom_id)
 
         def test_retrieve(self):
-            result = self.client.consumers.create(
-                username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
-            self.assertIsNotNone(result)
-            self.assertEqual(result['username'], 'abc1234')
-            self.assertEqual(result['custom_id'], '41245871-1s7q-awdd35aw-d8a6s2d12345')
+            username = fake.username()
+            custom_id = fake.uuid4()
+
+            result = self.client.consumers.create(username=username, custom_id=custom_id)
+            self._cleanup_afterwards(result['id'])
+            self.assertEqual(result['username'], username)
+            self.assertEqual(result['custom_id'], custom_id)
 
             # Retrieve by username
-            result2 = self.client.consumers.retrieve('abc1234')
+            result2 = self.client.consumers.retrieve(username)
             self.assertEqual(result2, result)
 
             # Retrieve by id
@@ -736,10 +798,12 @@ class KongAdminTesting(object):
         def test_list(self):
             amount = 5
 
+            usernames = [fake.username() for i in range(amount)]
+            custom_ids = [fake.uuid4() for i in range(amount)]
+
             for i in range(amount):
-                self.client.consumers.create(
-                    username=self._cleanup_afterwards('abc1234_%s' % i),
-                    custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345_%s' % i)
+                result = self.client.consumers.create(username=usernames[i], custom_id=custom_ids[i])
+                self._cleanup_afterwards(result['id'])
 
             self.assertEqual(self.client.consumers.count(), amount)
 
@@ -749,7 +813,7 @@ class KongAdminTesting(object):
 
             self.assertEqual(len(data), amount)
 
-            result = self.client.consumers.list(custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345_4')
+            result = self.client.consumers.list(custom_id=custom_ids[4])
             self.assertTrue('data' in result)
             data = result['data']
 
@@ -762,10 +826,12 @@ class KongAdminTesting(object):
         def test_iterate(self):
             amount = 5
 
+            usernames = [fake.username() for i in range(amount)]
+            custom_ids = [fake.uuid4() for i in range(amount)]
+
             for i in range(amount):
-                self.client.consumers.create(
-                    username=self._cleanup_afterwards('abc1234_%s' % i),
-                    custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345_%s' % i)
+                result = self.client.consumers.create(username=usernames[i], custom_id=custom_ids[i])
+                self._cleanup_afterwards(result['id'])
 
             found = []
 
@@ -778,13 +844,15 @@ class KongAdminTesting(object):
                 sorted([item['id'] for item in self.client.consumers.list().get('data')]))
 
         def test_delete(self):
-            result1 = self.client.consumers.create(
-                username='abc1234', custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
-            result2 = self.client.consumers.create(
-                username='abc12345', custom_id='51245871-1s7q-awdd35aw-d8a6s2d12346')
+            usernames = [fake.username() for i in range(2)]
+            custom_ids = [fake.uuid4() for i in range(2)]
+
+            result1 = self.client.consumers.create(username=usernames[0], custom_id=custom_ids[0])
+            self.assertEqual(result1['username'], usernames[0])
+            result2 = self.client.consumers.create(username=usernames[1], custom_id=custom_ids[1])
+            self.assertEqual(result2['username'], usernames[1])
+
             self.assertEqual(self.client.consumers.count(), 2)
-            self.assertEqual(result1['username'], 'abc1234')
-            self.assertEqual(result2['username'], 'abc12345')
 
             # Delete by id
             self.client.consumers.delete(result1['id'])
@@ -795,33 +863,42 @@ class KongAdminTesting(object):
             self.assertEqual(self.client.consumers.count(), 0)
 
         def test_basic_auth_create(self):
-            result = self.client.consumers.create(
-                username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+            result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
+            self._cleanup_afterwards(result['id'])
             self.assertIsNotNone(result)
+
+            test_username = fake.username()
+            test_password = fake.password()
 
             result2 = self.client.consumers.basic_auth(result['id']).create(
-                username=result['username'], password='testpw')
+                username=test_username, password=test_password)
             self.assertIsNotNone(result2)
             self.assertTrue('id' in result2)
-            self.assertEqual(result2['username'], result['username'])
-            self.assertEqual(result2['password'], 'testpw')
+            self.assertEqual(result2['username'], test_username)
+            self.assertEqual(result2['password'], test_password)
 
         def test_basic_auth_update(self):
-            result = self.client.consumers.create(
-                username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+            result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
+            self._cleanup_afterwards(result['id'])
             self.assertIsNotNone(result)
+
+            test_username = fake.username()
+            test_password = fake.password()
 
             # Create
             result2 = self.client.consumers.basic_auth(result['id']).create(
-                username=result['username'], password='testpw')
+                username=test_username, password=test_password)
             self.assertIsNotNone(result2)
+
+            test_username = fake.username()
+            test_password = fake.password()
 
             # Update
             result3 = self.client.consumers.basic_auth(result['id']).update(
-                result2['id'], username='efg1234', password='testpw2')
+                result2['id'], username=test_username, password=test_password)
             self.assertIsNotNone(result3)
-            self.assertEqual(result3['username'], 'efg1234')
-            self.assertEqual(result3['password'], 'testpw2')
+            self.assertEqual(result3['username'], test_username)
+            self.assertEqual(result3['password'], test_password)
 
             # Retrieve and verify
             result4 = self.client.consumers.basic_auth(result['id']).retrieve(result2['id'])
@@ -830,39 +907,45 @@ class KongAdminTesting(object):
             self.assertEqual(result4['password'], result3['password'])
 
         def test_basic_auth_create_or_update(self):
-            result = self.client.consumers.create(
-                username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+            result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
+            self._cleanup_afterwards(result['id'])
             self.assertIsNotNone(result)
 
             result2 = self.client.consumers.basic_auth(result['id']).create(
-                username=result['username'], password='testpw')
+                username=fake.username(), password=fake.password())
             self.assertIsNotNone(result2)
+
+            test_username = fake.username()
+            test_password = fake.password()
 
             # Test create_or_update without basic_auth_id -> Should CREATE
             result3 = self.client.consumers.basic_auth(result['id']).create_or_update(
-                username='efg12345', password='testpw')
+                username=test_username, password=test_password)
             self.assertIsNotNone(result3)
             self.assertNotEqual(result3['id'], result2['id'])
-            self.assertEqual(result3['username'], 'efg12345')
-            self.assertEqual(result3['password'], 'testpw')
+            self.assertEqual(result3['username'], test_username)
+            self.assertEqual(result3['password'], test_password)
             self.assertEqual(self.client.consumers.basic_auth(result['id']).count(), 2)
+
+            test_username = fake.username()
+            test_password = fake.password()
 
             # Test create_or_update with basic_auth_id -> Should UPDATE
             result4 = self.client.consumers.basic_auth(result['id']).create_or_update(
-                basic_auth_id=result3['id'], username='hij12345', password='testpw2')
+                basic_auth_id=result3['id'], username=test_username, password=test_password)
             self.assertIsNotNone(result4)
             self.assertEqual(result4['id'], result3['id'])
-            self.assertEqual(result4['username'], 'hij12345')
-            self.assertEqual(result4['password'], 'testpw2')
+            self.assertEqual(result4['username'], test_username)
+            self.assertEqual(result4['password'], test_password)
             self.assertEqual(self.client.consumers.basic_auth(result['id']).count(), 2)
 
         def test_basic_auth_retrieve(self):
-            result = self.client.consumers.create(
-                username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+            result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
+            self._cleanup_afterwards(result['id'])
             self.assertIsNotNone(result)
 
             result2 = self.client.consumers.basic_auth(result['id']).create(
-                username=result['username'], password='testpw')
+                username=fake.username(), password=fake.password())
             self.assertIsNotNone(result2)
 
             # Retrieve by id
@@ -872,15 +955,17 @@ class KongAdminTesting(object):
             self.assertEqual(result3['password'], result2['password'])
 
         def test_basic_auth_list(self):
-            result = self.client.consumers.create(
-                username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+            result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
+            self._cleanup_afterwards(result['id'])
             self.assertIsNotNone(result)
 
             amount = 5
 
+            usernames = [fake.username() for i in range(amount)]
+            passwords = [fake.password() for i in range(amount)]
+
             for i in range(amount):
-                self.client.consumers.basic_auth(result['id']).create(
-                    username='username %s' % i, password='testpw %s' % i)
+                self.client.consumers.basic_auth(result['id']).create(username=usernames[i], password=passwords[i])
 
             self.assertEqual(self.client.consumers.basic_auth(result['id']).count(), amount)
 
@@ -890,7 +975,7 @@ class KongAdminTesting(object):
 
             self.assertEqual(len(data), amount)
 
-            result3 = self.client.consumers.basic_auth(result['id']).list(username='username 3')
+            result3 = self.client.consumers.basic_auth(result['id']).list(username=usernames[2])
             self.assertTrue('data' in result3)
             data = result3['data']
 
@@ -901,15 +986,17 @@ class KongAdminTesting(object):
             self.assertEqual(len(result4['data']), 3)
 
         def test_basic_auth_iterate(self):
-            result = self.client.consumers.create(
-                username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+            result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
+            self._cleanup_afterwards(result['id'])
             self.assertIsNotNone(result)
 
             amount = 5
 
+            usernames = [fake.username() for i in range(amount)]
+            passwords = [fake.password() for i in range(amount)]
+
             for i in range(amount):
-                self.client.consumers.basic_auth(result['id']).create(
-                    username='username %s' % i, password='testpw %s' % i)
+                self.client.consumers.basic_auth(result['id']).create(username=usernames[i], password=passwords[i])
 
             self.assertEqual(self.client.consumers.basic_auth(result['id']).count(), amount)
 
@@ -924,12 +1011,12 @@ class KongAdminTesting(object):
                 sorted([item['id'] for item in self.client.consumers.basic_auth(result['id']).list().get('data')]))
 
         def test_basic_auth_delete(self):
-            result = self.client.consumers.create(
-                username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+            result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
+            self._cleanup_afterwards(result['id'])
             self.assertIsNotNone(result)
 
             result2 = self.client.consumers.basic_auth(result['id']).create(
-                username='abc1234', password='testpw1')
+                username=fake.username(), password=fake.password())
             self.assertIsNotNone(result2)
             self.assertTrue('id' in result2)
             self.assertEqual(self.client.consumers.basic_auth(result['id']).count(), 1)
@@ -939,8 +1026,8 @@ class KongAdminTesting(object):
             self.assertEqual(self.client.consumers.basic_auth(result['id']).count(), 0)
 
         def test_key_auth_create(self):
-            result = self.client.consumers.create(
-                username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+            result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
+            self._cleanup_afterwards(result['id'])
             self.assertIsNotNone(result)
 
             result2 = self.client.consumers.key_auth(result['id']).create()
@@ -948,60 +1035,68 @@ class KongAdminTesting(object):
             self.assertTrue('id' in result2)
             self.assertIsNotNone(result2['key'])
 
-            result3 = self.client.consumers.key_auth(result['id']).create(key='testkey123')
+            test_key = fake.password(length=128)
+
+            result3 = self.client.consumers.key_auth(result['id']).create(key=test_key)
             self.assertIsNotNone(result3)
             self.assertTrue('id' in result3)
-            self.assertEqual(result3['key'], 'testkey123')
+            self.assertEqual(result3['key'], test_key)
 
         def test_key_auth_update(self):
-            result = self.client.consumers.create(
-                username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+            result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
+            self._cleanup_afterwards(result['id'])
             self.assertIsNotNone(result)
 
             # Create
-            result2 = self.client.consumers.key_auth(result['id']).create(key='testkey123')
+            result2 = self.client.consumers.key_auth(result['id']).create(key=fake.password(length=128))
             self.assertIsNotNone(result2)
+
+            test_key = fake.password(length=128)
 
             # Update
             result3 = self.client.consumers.key_auth(result['id']).update(
-                result2['id'], key='blabla123')
+                result2['id'], key=test_key)
             self.assertIsNotNone(result3)
-            self.assertEqual(result3['key'], 'blabla123')
+            self.assertEqual(result3['key'], test_key)
 
             # Retrieve and verify
             result4 = self.client.consumers.key_auth(result['id']).retrieve(result2['id'])
             self.assertIsNotNone(result4)
-            self.assertEqual(result4['key'], 'blabla123')
+            self.assertEqual(result4['key'], test_key)
 
         def test_key_auth_create_or_update(self):
-            result = self.client.consumers.create(
-                username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+            result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
+            self._cleanup_afterwards(result['id'])
             self.assertIsNotNone(result)
 
-            result2 = self.client.consumers.key_auth(result['id']).create(key='testkey123')
+            result2 = self.client.consumers.key_auth(result['id']).create(key=fake.password(length=128))
             self.assertIsNotNone(result2)
 
+            test_key = fake.password(length=128)
+
             # Test create_or_update without key_auth_id -> Should CREATE
-            result3 = self.client.consumers.key_auth(result['id']).create_or_update(key='testkey567')
+            result3 = self.client.consumers.key_auth(result['id']).create_or_update(key=test_key)
             self.assertIsNotNone(result3)
             self.assertNotEqual(result3['id'], result2['id'])
-            self.assertEqual(result3['key'], 'testkey567')
+            self.assertEqual(result3['key'], test_key)
             self.assertEqual(self.client.consumers.key_auth(result['id']).count(), 2)
+
+            test_key = fake.password(length=128)
 
             # Test create_or_update with key_auth_id -> Should UPDATE
             result4 = self.client.consumers.key_auth(result['id']).create_or_update(
-                key_auth_id=result3['id'], key='blabla1234')
+                key_auth_id=result3['id'], key=test_key)
             self.assertIsNotNone(result4)
             self.assertEqual(result4['id'], result3['id'])
-            self.assertEqual(result4['key'], 'blabla1234')
+            self.assertEqual(result4['key'], test_key)
             self.assertEqual(self.client.consumers.key_auth(result['id']).count(), 2)
 
         def test_key_auth_retrieve(self):
-            result = self.client.consumers.create(
-                username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+            result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
+            self._cleanup_afterwards(result['id'])
             self.assertIsNotNone(result)
 
-            result2 = self.client.consumers.key_auth(result['id']).create(key='blabla654')
+            result2 = self.client.consumers.key_auth(result['id']).create(key=fake.password(length=128))
             self.assertIsNotNone(result2)
 
             # Retrieve by id
@@ -1010,14 +1105,16 @@ class KongAdminTesting(object):
             self.assertEqual(result3['key'], result2['key'])
 
         def test_key_auth_list(self):
-            result = self.client.consumers.create(
-                username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+            result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
+            self._cleanup_afterwards(result['id'])
             self.assertIsNotNone(result)
 
             amount = 5
 
+            keys = [fake.password(length=128) for i in range(amount)]
+
             for i in range(amount):
-                self.client.consumers.key_auth(result['id']).create(key='key_%s' % i)
+                self.client.consumers.key_auth(result['id']).create(key=keys[i])
 
             self.assertEqual(self.client.consumers.key_auth(result['id']).count(), amount)
 
@@ -1027,7 +1124,7 @@ class KongAdminTesting(object):
 
             self.assertEqual(len(data), amount)
 
-            result3 = self.client.consumers.key_auth(result['id']).list(key='key_3')
+            result3 = self.client.consumers.key_auth(result['id']).list(key=keys[3])
             self.assertTrue('data' in result3)
             data = result3['data']
 
@@ -1038,14 +1135,16 @@ class KongAdminTesting(object):
             self.assertEqual(len(result4['data']), 3)
 
         def test_key_auth_iterate(self):
-            result = self.client.consumers.create(
-                username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+            result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
+            self._cleanup_afterwards(result['id'])
             self.assertIsNotNone(result)
 
             amount = 5
 
+            keys = [fake.password(length=128) for i in range(amount)]
+
             for i in range(amount):
-                self.client.consumers.key_auth(result['id']).create(key='key_%s' % i)
+                self.client.consumers.key_auth(result['id']).create(key=keys[i])
 
             self.assertEqual(self.client.consumers.key_auth(result['id']).count(), amount)
 
@@ -1060,11 +1159,11 @@ class KongAdminTesting(object):
                 sorted([item['id'] for item in self.client.consumers.key_auth(result['id']).list().get('data')]))
 
         def test_key_auth_delete(self):
-            result = self.client.consumers.create(
-                username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+            result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
+            self._cleanup_afterwards(result['id'])
             self.assertIsNotNone(result)
 
-            result2 = self.client.consumers.key_auth(result['id']).create(key='blabla654')
+            result2 = self.client.consumers.key_auth(result['id']).create(key=fake.password(length=128))
             self.assertIsNotNone(result2)
             self.assertTrue('id' in result2)
             self.assertEqual(self.client.consumers.key_auth(result['id']).count(), 1)
@@ -1074,33 +1173,38 @@ class KongAdminTesting(object):
             self.assertEqual(self.client.consumers.basic_auth(result['id']).count(), 0)
 
         def test_oauth2_create(self):
-            result = self.client.consumers.create(
-                username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+            result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
+            self._cleanup_afterwards(result['id'])
             self.assertIsNotNone(result)
 
-            result2 = self.client.consumers.oauth2(result['id']).create(
-                name='Test Application', redirect_uri='http://some-domain/endpoint/')
+            name = fake.oauth2_app_name()
+            redirect_uri = fake.uri()
+
+            result2 = self.client.consumers.oauth2(result['id']).create(name=name, redirect_uri=redirect_uri)
             self.assertIsNotNone(result2)
             self.assertTrue('id' in result2)
-            self.assertEqual(result2['name'], 'Test Application')
-            self.assertEqual(result2['redirect_uri'], 'http://some-domain/endpoint/')
+            self.assertEqual(result2['name'], name)
+            self.assertEqual(result2['redirect_uri'], redirect_uri)
 
         def test_oauth2_update(self):
-            result = self.client.consumers.create(
-                username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+            result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
+            self._cleanup_afterwards(result['id'])
             self.assertIsNotNone(result)
 
             # Create
             result2 = self.client.consumers.oauth2(result['id']).create(
-                name='Test Application', redirect_uri='http://some-domain/endpoint/')
+                name=fake.oauth2_app_name(), redirect_uri=fake.uri())
             self.assertIsNotNone(result2)
+
+            test_name = fake.oauth2_app_name()
+            test_redirect_uri = fake.uri()
 
             # Update
             result3 = self.client.consumers.oauth2(result['id']).update(
-                result2['id'], name='Test Application 2', redirect_uri='http://some-domain/endpoint2/')
+                result2['id'], name=test_name, redirect_uri=test_redirect_uri)
             self.assertIsNotNone(result3)
-            self.assertEqual(result3['name'], 'Test Application 2')
-            self.assertEqual(result3['redirect_uri'], 'http://some-domain/endpoint2/')
+            self.assertEqual(result3['name'], test_name)
+            self.assertEqual(result3['redirect_uri'], test_redirect_uri)
 
             # Retrieve and verify
             result4 = self.client.consumers.oauth2(result['id']).retrieve(result2['id'])
@@ -1109,39 +1213,45 @@ class KongAdminTesting(object):
             self.assertEqual(result4['redirect_uri'], result3['redirect_uri'])
 
         def test_oauth2_create_or_update(self):
-            result = self.client.consumers.create(
-                username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+            result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
+            self._cleanup_afterwards(result['id'])
             self.assertIsNotNone(result)
 
             result2 = self.client.consumers.oauth2(result['id']).create(
-                name='Test Application', redirect_uri='http://some-domain/endpoint/')
+                name=fake.oauth2_app_name(), redirect_uri=fake.uri())
             self.assertIsNotNone(result2)
+
+            test_name = fake.oauth2_app_name()
+            test_redirect_uri = fake.uri()
 
             # Test create_or_update without oauth2_id -> Should CREATE
             result3 = self.client.consumers.oauth2(result['id']).create_or_update(
-                name='Test Application 2', redirect_uri='http://some-domain/endpoint2/')
+                name=test_name, redirect_uri=test_redirect_uri)
             self.assertIsNotNone(result3)
             self.assertNotEqual(result3['id'], result2['id'])
-            self.assertEqual(result3['name'], 'Test Application 2')
-            self.assertEqual(result3['redirect_uri'], 'http://some-domain/endpoint2/')
+            self.assertEqual(result3['name'], test_name)
+            self.assertEqual(result3['redirect_uri'], test_redirect_uri)
             self.assertEqual(self.client.consumers.oauth2(result['id']).count(), 2)
+
+            test_name = fake.oauth2_app_name()
+            test_redirect_uri = fake.uri()
 
             # Test create_or_update with oauth2_id -> Should UPDATE
             result4 = self.client.consumers.oauth2(result['id']).create_or_update(
-                oauth2_id=result3['id'], name='Test Application 3', redirect_uri='http://some-domain/endpoint3/')
+                oauth2_id=result3['id'], name=test_name, redirect_uri=test_redirect_uri)
             self.assertIsNotNone(result4)
             self.assertEqual(result4['id'], result3['id'])
-            self.assertEqual(result4['name'], 'Test Application 3')
-            self.assertEqual(result4['redirect_uri'], 'http://some-domain/endpoint3/')
+            self.assertEqual(result4['name'], test_name)
+            self.assertEqual(result4['redirect_uri'], test_redirect_uri)
             self.assertEqual(self.client.consumers.oauth2(result['id']).count(), 2)
 
         def test_oauth2_retrieve(self):
-            result = self.client.consumers.create(
-                username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+            result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
+            self._cleanup_afterwards(result['id'])
             self.assertIsNotNone(result)
 
             result2 = self.client.consumers.oauth2(result['id']).create(
-                name='Test Application', redirect_uri='http://some-domain/endpoint/')
+                name=fake.oauth2_app_name(), redirect_uri=fake.uri())
             self.assertIsNotNone(result2)
 
             # Retrieve by id
@@ -1151,15 +1261,17 @@ class KongAdminTesting(object):
             self.assertEqual(result3['redirect_uri'], result2['redirect_uri'])
 
         def test_oauth2_list(self):
-            result = self.client.consumers.create(
-                username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+            result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
+            self._cleanup_afterwards(result['id'])
             self.assertIsNotNone(result)
 
             amount = 5
 
+            names = [fake.oauth2_app_name() for i in range(amount)]
+            redirect_uri = [fake.uri() for i in range(amount)]
+
             for i in range(amount):
-                self.client.consumers.oauth2(result['id']).create(
-                    name='Test Application %d' % i, redirect_uri='http://some-domain/endpoint%d/' % i)
+                self.client.consumers.oauth2(result['id']).create(name=names[i], redirect_uri=redirect_uri[i])
 
             self.assertEqual(self.client.consumers.oauth2(result['id']).count(), amount)
 
@@ -1169,7 +1281,7 @@ class KongAdminTesting(object):
 
             self.assertEqual(len(data), amount)
 
-            result3 = self.client.consumers.oauth2(result['id']).list(name='Test Application 3')
+            result3 = self.client.consumers.oauth2(result['id']).list(name=names[3])
             self.assertTrue('data' in result3)
             data = result3['data']
 
@@ -1180,15 +1292,17 @@ class KongAdminTesting(object):
             self.assertEqual(len(result4['data']), 3)
 
         def test_oauth2_iterate(self):
-            result = self.client.consumers.create(
-                username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+            result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
+            self._cleanup_afterwards(result['id'])
             self.assertIsNotNone(result)
 
             amount = 5
 
+            names = [fake.oauth2_app_name() for i in range(amount)]
+            redirect_uri = [fake.uri() for i in range(amount)]
+
             for i in range(amount):
-                self.client.consumers.oauth2(result['id']).create(
-                    name='Test Application %d' % i, redirect_uri='http://some-domain/endpoint%d/' % i)
+                self.client.consumers.oauth2(result['id']).create(name=names[i], redirect_uri=redirect_uri[i])
 
             self.assertEqual(self.client.consumers.oauth2(result['id']).count(), amount)
 
@@ -1203,12 +1317,12 @@ class KongAdminTesting(object):
                 sorted([item['id'] for item in self.client.consumers.oauth2(result['id']).list().get('data')]))
 
         def test_oauth2_delete(self):
-            result = self.client.consumers.create(
-                username=self._cleanup_afterwards('abc1234'), custom_id='41245871-1s7q-awdd35aw-d8a6s2d12345')
+            result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
+            self._cleanup_afterwards(result['id'])
             self.assertIsNotNone(result)
 
             result2 = self.client.consumers.oauth2(result['id']).create(
-                name='Test Application', redirect_uri='http://some-domain/endpoint/')
+                name=fake.oauth2_app_name(), redirect_uri=fake.uri())
             self.assertIsNotNone(result2)
             self.assertTrue('id' in result2)
             self.assertEqual(self.client.consumers.oauth2(result['id']).count(), 1)
@@ -1270,10 +1384,11 @@ class UtilTestCase(TestCase):
             'bla3': True,
             'bla4': sorted_ordered_dict({'a': 1, 'b': ['a', 2, False]})
         })
-        result = add_url_params('http://localhost/?x=0', params)
+        url = '%s%s' % (fake.url(), fake.uri_path())
+        result = add_url_params('%s/?x=0' % url, params)
         expected_result = \
-            'http://localhost/?bla1=1&bla2=hello&bla3=%s&%s&x=0' % (
-                json.dumps(True),
+            '%s/?bla1=1&bla2=hello&bla3=%s&%s&x=0' % (
+                url, json.dumps(True),
                 urlencode({
                     'bla4': json.dumps(params['bla4'])
                 }))
