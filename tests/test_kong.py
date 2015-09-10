@@ -165,13 +165,11 @@ class KongAdminTesting(object):
 
         def test_add_missing_public_dns(self):
             result = self.client.apis.add(upstream_url=fake.url(), path=fake.api_path())
-            self.assertIsNotNone(result)
             self._cleanup_afterwards(result['id']),
             self.assertEqual(self.client.apis.count(), 1)
 
         def test_add_missing_path(self):
             result = self.client.apis.add(upstream_url=fake.url(), inbound_dns=fake.domain_name())
-            self.assertIsNotNone(result)
             self._cleanup_afterwards(result['id']),
             self.assertEqual(self.client.apis.count(), 1)
 
@@ -339,7 +337,6 @@ class KongAdminTesting(object):
             result = self.client.apis.add(
                 upstream_url=fake.url(), name=api_name, inbound_dns=fake.domain_name())
             self._cleanup_afterwards(result['id'])
-            self.assertIsNotNone(result)
             self.assertEqual(self.client.apis.plugins(api_name).count(), 0)
 
             # Create global plugin configuration for the api
@@ -358,7 +355,6 @@ class KongAdminTesting(object):
             result = self.client.apis.add(
                 upstream_url=fake.url(), name=api_name, inbound_dns=fake.domain_name())
             self._cleanup_afterwards(result['id'])
-            self.assertIsNotNone(result)
             self.assertEqual(self.client.apis.plugins(api_name).count(), 0)
 
             # Create global plugin configuration for the api
@@ -382,7 +378,6 @@ class KongAdminTesting(object):
             result = self.client.apis.add(
                 upstream_url=fake.url(), name=api_name, inbound_dns=fake.domain_name())
             self._cleanup_afterwards(result['id'])
-            self.assertIsNotNone(result)
             self.assertEqual(self.client.apis.plugins(api_name).count(), 0)
 
             result2 = None
@@ -401,7 +396,6 @@ class KongAdminTesting(object):
             result = self.client.apis.add(
                 upstream_url=fake.url(), name=api_name, inbound_dns=fake.domain_name())
             self._cleanup_afterwards(result['id'])
-            self.assertIsNotNone(result)
             self.assertEqual(self.client.apis.plugins(api_name).count(), 0)
 
             result2 = None
@@ -420,7 +414,6 @@ class KongAdminTesting(object):
             result = self.client.apis.add(
                 upstream_url=fake.url(), name=api_name, inbound_dns=fake.domain_name())
             self._cleanup_afterwards(result['id'])
-            self.assertIsNotNone(result)
             self.assertEqual(self.client.apis.plugins(api_name).count(), 0)
 
             # Create test consumer
@@ -445,7 +438,6 @@ class KongAdminTesting(object):
             result = self.client.apis.add(
                 upstream_url=fake.url(), name=api_name, inbound_dns=fake.domain_name())
             self._cleanup_afterwards(result['id'])
-            self.assertIsNotNone(result)
             self.assertEqual(self.client.apis.plugins(api_name).count(), 0)
 
             # Create global plugin configuration for the api
@@ -470,7 +462,6 @@ class KongAdminTesting(object):
             result = self.client.apis.add(
                 upstream_url=fake.url(), name=api_name, inbound_dns=fake.domain_name())
             self._cleanup_afterwards(result['id'])
-            self.assertIsNotNone(result)
             self.assertEqual(self.client.apis.plugins(api_name).count(), 0)
 
             # Create global plugin configuration for the api
@@ -497,7 +488,6 @@ class KongAdminTesting(object):
             result = self.client.apis.add(
                 upstream_url=fake.url(), name=api_name, inbound_dns=fake.domain_name())
             self._cleanup_afterwards(result['id'])
-            self.assertIsNotNone(result)
             self.assertEqual(self.client.apis.plugins(api_name).count(), 0)
 
             # Create global plugin configuration for the api
@@ -527,7 +517,6 @@ class KongAdminTesting(object):
             result = self.client.apis.add(
                 upstream_url=fake.url(), name=api_name, inbound_dns=fake.domain_name())
             self._cleanup_afterwards(result['id'])
-            self.assertIsNotNone(result)
             self.assertEqual(self.client.apis.plugins(api_name).count(), 0)
 
             # Create test consumer
@@ -563,7 +552,6 @@ class KongAdminTesting(object):
             result = self.client.apis.add(
                 upstream_url=fake.url(), name=api_name, inbound_dns=fake.domain_name())
             self._cleanup_afterwards(result['id'])
-            self.assertIsNotNone(result)
             self.assertEqual(self.client.apis.plugins(api_name).count(), 0)
 
             result2 = self.client.apis.plugins(api_name).create('request-size-limiting', allowed_payload_size=512)
@@ -580,7 +568,6 @@ class KongAdminTesting(object):
             result = self.client.apis.add(
                 upstream_url=fake.url(), name=api_name, inbound_dns=fake.domain_name())
             self._cleanup_afterwards(result['id'])
-            self.assertIsNotNone(result)
             self.assertEqual(self.client.apis.plugins(api_name).count(), 0)
 
             result2 = self.client.apis.plugins(api_name).create('rate-limiting', enabled=False, second=20)
@@ -607,7 +594,6 @@ class KongAdminTesting(object):
 
             api_id = result['id']
 
-            self.assertIsNotNone(result)
             self.assertEqual(self.client.apis.plugins(api_id).count(), 0)
 
             result2 = self.client.apis.plugins(api_id).create('rate-limiting', enabled=False, second=20)
@@ -661,7 +647,6 @@ class KongAdminTesting(object):
                 username=username, custom_id=custom_id)
             self._cleanup_afterwards(result['id'])
 
-            self.assertIsNotNone(result)
             self.assertEqual(result['username'], username)
             self.assertEqual(result['custom_id'], custom_id)
 
@@ -865,7 +850,6 @@ class KongAdminTesting(object):
         def test_basic_auth_create(self):
             result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
             self._cleanup_afterwards(result['id'])
-            self.assertIsNotNone(result)
 
             test_username = fake.username()
             test_password = fake.password()
@@ -880,7 +864,6 @@ class KongAdminTesting(object):
         def test_basic_auth_update(self):
             result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
             self._cleanup_afterwards(result['id'])
-            self.assertIsNotNone(result)
 
             test_username = fake.username()
             test_password = fake.password()
@@ -909,7 +892,6 @@ class KongAdminTesting(object):
         def test_basic_auth_create_or_update(self):
             result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
             self._cleanup_afterwards(result['id'])
-            self.assertIsNotNone(result)
 
             result2 = self.client.consumers.basic_auth(result['id']).create(
                 username=fake.username(), password=fake.password())
@@ -942,8 +924,6 @@ class KongAdminTesting(object):
         def test_basic_auth_retrieve(self):
             result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
             self._cleanup_afterwards(result['id'])
-            self.assertIsNotNone(result)
-
             result2 = self.client.consumers.basic_auth(result['id']).create(
                 username=fake.username(), password=fake.password())
             self.assertIsNotNone(result2)
@@ -957,7 +937,6 @@ class KongAdminTesting(object):
         def test_basic_auth_list(self):
             result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
             self._cleanup_afterwards(result['id'])
-            self.assertIsNotNone(result)
 
             amount = 5
 
@@ -988,7 +967,6 @@ class KongAdminTesting(object):
         def test_basic_auth_iterate(self):
             result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
             self._cleanup_afterwards(result['id'])
-            self.assertIsNotNone(result)
 
             amount = 5
 
@@ -1013,7 +991,6 @@ class KongAdminTesting(object):
         def test_basic_auth_delete(self):
             result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
             self._cleanup_afterwards(result['id'])
-            self.assertIsNotNone(result)
 
             result2 = self.client.consumers.basic_auth(result['id']).create(
                 username=fake.username(), password=fake.password())
@@ -1028,7 +1005,6 @@ class KongAdminTesting(object):
         def test_key_auth_create(self):
             result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
             self._cleanup_afterwards(result['id'])
-            self.assertIsNotNone(result)
 
             result2 = self.client.consumers.key_auth(result['id']).create()
             self.assertIsNotNone(result2)
@@ -1045,7 +1021,6 @@ class KongAdminTesting(object):
         def test_key_auth_update(self):
             result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
             self._cleanup_afterwards(result['id'])
-            self.assertIsNotNone(result)
 
             # Create
             result2 = self.client.consumers.key_auth(result['id']).create(key=fake.password(length=128))
@@ -1067,7 +1042,6 @@ class KongAdminTesting(object):
         def test_key_auth_create_or_update(self):
             result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
             self._cleanup_afterwards(result['id'])
-            self.assertIsNotNone(result)
 
             result2 = self.client.consumers.key_auth(result['id']).create(key=fake.password(length=128))
             self.assertIsNotNone(result2)
@@ -1094,7 +1068,6 @@ class KongAdminTesting(object):
         def test_key_auth_retrieve(self):
             result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
             self._cleanup_afterwards(result['id'])
-            self.assertIsNotNone(result)
 
             result2 = self.client.consumers.key_auth(result['id']).create(key=fake.password(length=128))
             self.assertIsNotNone(result2)
@@ -1107,7 +1080,6 @@ class KongAdminTesting(object):
         def test_key_auth_list(self):
             result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
             self._cleanup_afterwards(result['id'])
-            self.assertIsNotNone(result)
 
             amount = 5
 
@@ -1137,7 +1109,6 @@ class KongAdminTesting(object):
         def test_key_auth_iterate(self):
             result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
             self._cleanup_afterwards(result['id'])
-            self.assertIsNotNone(result)
 
             amount = 5
 
@@ -1161,7 +1132,6 @@ class KongAdminTesting(object):
         def test_key_auth_delete(self):
             result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
             self._cleanup_afterwards(result['id'])
-            self.assertIsNotNone(result)
 
             result2 = self.client.consumers.key_auth(result['id']).create(key=fake.password(length=128))
             self.assertIsNotNone(result2)
@@ -1175,7 +1145,6 @@ class KongAdminTesting(object):
         def test_oauth2_create(self):
             result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
             self._cleanup_afterwards(result['id'])
-            self.assertIsNotNone(result)
 
             name = fake.oauth2_app_name()
             redirect_uri = fake.uri()
@@ -1189,7 +1158,6 @@ class KongAdminTesting(object):
         def test_oauth2_update(self):
             result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
             self._cleanup_afterwards(result['id'])
-            self.assertIsNotNone(result)
 
             # Create
             result2 = self.client.consumers.oauth2(result['id']).create(
@@ -1215,7 +1183,6 @@ class KongAdminTesting(object):
         def test_oauth2_create_or_update(self):
             result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
             self._cleanup_afterwards(result['id'])
-            self.assertIsNotNone(result)
 
             result2 = self.client.consumers.oauth2(result['id']).create(
                 name=fake.oauth2_app_name(), redirect_uri=fake.uri())
@@ -1248,7 +1215,6 @@ class KongAdminTesting(object):
         def test_oauth2_retrieve(self):
             result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
             self._cleanup_afterwards(result['id'])
-            self.assertIsNotNone(result)
 
             result2 = self.client.consumers.oauth2(result['id']).create(
                 name=fake.oauth2_app_name(), redirect_uri=fake.uri())
@@ -1263,7 +1229,6 @@ class KongAdminTesting(object):
         def test_oauth2_list(self):
             result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
             self._cleanup_afterwards(result['id'])
-            self.assertIsNotNone(result)
 
             amount = 5
 
@@ -1294,7 +1259,6 @@ class KongAdminTesting(object):
         def test_oauth2_iterate(self):
             result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
             self._cleanup_afterwards(result['id'])
-            self.assertIsNotNone(result)
 
             amount = 5
 
@@ -1319,7 +1283,6 @@ class KongAdminTesting(object):
         def test_oauth2_delete(self):
             result = self.client.consumers.create(username=fake.username(), custom_id=fake.uuid4())
             self._cleanup_afterwards(result['id'])
-            self.assertIsNotNone(result)
 
             result2 = self.client.consumers.oauth2(result['id']).create(
                 name=fake.oauth2_app_name(), redirect_uri=fake.uri())
@@ -1344,13 +1307,11 @@ class KongAdminTesting(object):
 
         def test_list(self):
             result = self.client.plugins.list()
-            self.assertIsNotNone(result)
             self.assertTrue('enabled_plugins' in result)
             self.assertTrue(isinstance(result['enabled_plugins'], collections.Iterable))
 
         def test_retrieve_schema(self):
             result = self.client.plugins.list()
-            self.assertIsNotNone(result)
 
             # sanity check
             self.assertTrue(len(result['enabled_plugins']) >= 1)
