@@ -2,9 +2,9 @@
 from __future__ import unicode_literals, print_function
 
 try:
-    from http.client import OK, CREATED, CONFLICT, NO_CONTENT, NOT_FOUND, BAD_REQUEST, INTERNAL_SERVER_ERROR
+    from http.client import OK, CREATED, CONFLICT, NO_CONTENT, NOT_FOUND, BAD_REQUEST, INTERNAL_SERVER_ERROR, HTTPConnection
 except ImportError:  # pragma: no cover
-    from httplib import OK, CREATED, CONFLICT, NO_CONTENT, NOT_FOUND, BAD_REQUEST, INTERNAL_SERVER_ERROR
+    from httplib import OK, CREATED, CONFLICT, NO_CONTENT, NOT_FOUND, BAD_REQUEST, INTERNAL_SERVER_ERROR, HTTPConnection
 
 try:
     from urllib.parse import urlparse, urljoin, urlencode, quote, unquote, parse_qs, parse_qsl, ParseResult

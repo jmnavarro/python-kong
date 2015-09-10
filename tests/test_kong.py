@@ -4,10 +4,11 @@ from abc import ABCMeta, abstractmethod
 import os
 import sys
 import collections
-import requests
 import uuid
 import json
 import random
+import requests
+import logging
 
 # To run the standalone test script
 if __name__ == '__main__':
@@ -16,11 +17,23 @@ if __name__ == '__main__':
 from kong.exceptions import ConflictError
 from kong.simulator import KongAdminSimulator
 from kong.client import KongAdminClient
-from kong.compat import TestCase, skipIf, run_unittests, OrderedDict, urlencode
+from kong.compat import TestCase, skipIf, run_unittests, OrderedDict, urlencode, HTTPConnection
 from kong.utils import uuid_or_string, add_url_params, sorted_ordered_dict
 
 from faker import Factory
 from faker.providers import BaseProvider
+
+############################### LOGGING ####################################
+LOG_HTTP_REQUESTS = os.getenv('LOG_HTTP_REQUESTS', '0') == '1'
+if LOG_HTTP_REQUESTS:
+    HTTPConnection.debuglevel = 1
+
+    logging.basicConfig()
+    logging.getLogger().setLevel(logging.DEBUG)
+    requests_log = logging.getLogger("requests.packages.urllib3")
+    requests_log.setLevel(logging.DEBUG)
+    requests_log.propagate = True
+############################################################################
 
 API_URL = os.environ.get('PYKONG_TEST_API_URL', 'http://localhost:8001')
 
