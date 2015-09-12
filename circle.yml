@@ -12,7 +12,7 @@ machine:
 
 database:
     pre:
-        - circle.cassandra.sh
+        - ./circle.cassandra.sh
 
 dependencies:
     cache_directories:
