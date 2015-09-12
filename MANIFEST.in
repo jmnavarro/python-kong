@@ -13,6 +13,8 @@ include .pylintrc
 include .coveralls.yml
 
 include circle.yml
+include circle.cassandra.sh
+
 include *.txt
 
 include AUTHORS.rst
