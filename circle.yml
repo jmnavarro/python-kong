@@ -1,4 +1,6 @@
 machine:
+    pre:
+        - sudo bash -c "echo \"listen_address = '0.0.0.0'\" >> /etc/cassandra/cassandra.yaml"
     services:
         - docker
         - cassandra
@@ -25,8 +27,6 @@ dependencies:
 
 database:
     pre:
-        - sudo bash -c "echo \"listen_address = '0.0.0.0'\" >> /etc/cassandra/cassandra.yaml"
-        - sudo service cassandra restart
         - ./circle.cassandra.sh
 
 test:
