@@ -251,12 +251,11 @@ class APIAdminClient(APIAdminContract, RestClient):
         amount = result.get('total', len(result.get('data')))
         return amount
 
-    def add(self, upstream_url, name=None, inbound_dns=None, path=None, strip_path=False):
+    def add(self, upstream_url, name=None, request_host=None, request_path=None):
         response = self.session.post(self.get_url('apis'), data={
             'name': name,
-            'inbound_dns': inbound_dns or None,  # Empty strings are not allowed
-            'path': path or None,  # Empty strings are not allowed
-            'strip_path': strip_path,
+            'request_host': request_host or None,  # Empty strings are not allowed
+            'request_path': request_path or None,  # Empty strings are not allowed
             'upstream_url': upstream_url
         }, headers=self.get_headers())
         result = response.json()
@@ -269,12 +268,12 @@ class APIAdminClient(APIAdminContract, RestClient):
 
         return result
 
-    def add_or_update(self, upstream_url, api_id=None, name=None, inbound_dns=None, path=None, strip_path=False):
+    def add_or_update(
+            self, upstream_url, api_id=None, name=None, request_host=None, request_path=None):
         data = {
             'name': name,
-            'inbound_dns': inbound_dns or None,  # Empty strings are not allowed
-            'path': path or None,  # Empty strings are not allowed
-            'strip_path': strip_path,
+            'request_host': request_host or None,  # Empty strings are not allowed
+            'request_path': request_path or None,  # Empty strings are not allowed
             'upstream_url': upstream_url
         }
 
@@ -293,7 +292,7 @@ class APIAdminClient(APIAdminContract, RestClient):
         return result
 
     def update(self, name_or_id, upstream_url, **fields):
-        assert_dict_keys_in(fields, ['name', 'inbound_dns', 'path', 'strip_path', 'preserve_host'])
+        assert_dict_keys_in(fields, ['name', 'request_host', 'request_path', 'preserve_host'])
         response = self.session.patch(self.get_url('apis', name_or_id), data=dict({
             'upstream_url': upstream_url
         }, **fields), headers=self.get_headers())
@@ -327,7 +326,7 @@ class APIAdminClient(APIAdminContract, RestClient):
 
     @backoff.on_exception(backoff.expo, ServerError, max_tries=3)
     def list(self, size=100, offset=None, **filter_fields):
-        assert_dict_keys_in(filter_fields, ['id', 'name', 'inbound_dns', 'path'])
+        assert_dict_keys_in(filter_fields, ['id', 'name', 'request_host', 'request_path'])
 
         query_params = filter_fields
         query_params['size'] = size
