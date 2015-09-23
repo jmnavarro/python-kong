@@ -251,11 +251,14 @@ class APIAdminClient(APIAdminContract, RestClient):
         amount = result.get('total', len(result.get('data')))
         return amount
 
-    def add(self, upstream_url, name=None, request_host=None, request_path=None):
+    def add(self, upstream_url, name=None, request_host=None, request_path=None, strip_request_path=False,
+            preserve_host=False):
         response = self.session.post(self.get_url('apis'), data={
             'name': name,
             'request_host': request_host or None,  # Empty strings are not allowed
             'request_path': request_path or None,  # Empty strings are not allowed
+            'strip_request_path': strip_request_path,
+            'preserve_host': preserve_host,
             'upstream_url': upstream_url
         }, headers=self.get_headers())
         result = response.json()
@@ -269,11 +272,14 @@ class APIAdminClient(APIAdminContract, RestClient):
         return result
 
     def add_or_update(
-            self, upstream_url, api_id=None, name=None, request_host=None, request_path=None):
+            self, upstream_url, api_id=None, name=None, request_host=None, request_path=None, strip_request_path=False,
+            preserve_host=False):
         data = {
             'name': name,
             'request_host': request_host or None,  # Empty strings are not allowed
             'request_path': request_path or None,  # Empty strings are not allowed
+            'strip_request_path': strip_request_path,
+            'preserve_host': preserve_host,
             'upstream_url': upstream_url
         }
 
@@ -292,7 +298,7 @@ class APIAdminClient(APIAdminContract, RestClient):
         return result
 
     def update(self, name_or_id, upstream_url, **fields):
-        assert_dict_keys_in(fields, ['name', 'request_host', 'request_path', 'preserve_host'])
+        assert_dict_keys_in(fields, ['name', 'request_host', 'request_path', 'strip_request_path', 'preserve_host'])
         response = self.session.patch(self.get_url('apis', name_or_id), data=dict({
             'upstream_url': upstream_url
         }, **fields), headers=self.get_headers())

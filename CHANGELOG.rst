@@ -2,6 +2,11 @@
 Changelog
 =========
 
+0.3.1 (2015-09-23)
+------------------
+
+* Now supporting 'preserve_host' and 'strip_request_path' options
+
 0.3.0 (2015-09-22)
 ------------------
 
