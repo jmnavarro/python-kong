@@ -22,8 +22,8 @@ dependencies:
         - docker pull mashape/cassandra
         - mkdir -p ~/docker; docker save mashape/cassandra > ~/docker/cassandra.tar
         - if [[ -e ~/docker/kong.tar ]]; then docker load --input ~/docker/kong.tar; fi
-        - docker pull dirkmoors/kong
-        - mkdir -p ~/docker; docker save dirkmoors/kong > ~/docker/kong.tar
+        - docker pull vikingco/kong
+        - mkdir -p ~/docker; docker save vikingco/kong > ~/docker/kong.tar
 test:
     override:
         - ./scripts/docker/cassandra.sh; sleep 5
