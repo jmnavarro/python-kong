@@ -1,2 +1,9 @@
 unittest2==1.1.0
--e git+https://github.com/joke2k/faker.git@master#egg=fake-factory
+coverage
+mock>=1.0.1
+flake8>=2.1.0
+factory_boy==2.5.2
+pytest==2.7.3
+pytest-cov==2.1.0
+pytest-capturelog==0.7
+fake-factory==0.5.3
