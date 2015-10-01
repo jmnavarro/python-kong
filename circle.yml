@@ -19,13 +19,24 @@ dependencies:
         - pip install tox
         - docker info
         - if [[ -e ~/docker/cassandra.tar ]]; then docker load --input ~/docker/cassandra.tar; fi
-        - docker pull mashape/cassandra
-        - mkdir -p ~/docker; docker save mashape/cassandra > ~/docker/cassandra.tar
+        - docker pull vikingco/cassandra:latest
+        - mkdir -p ~/docker; docker save vikingco/cassandra:latest > ~/docker/cassandra.tar
         - if [[ -e ~/docker/kong.tar ]]; then docker load --input ~/docker/kong.tar; fi
-        - docker pull vikingco/kong
-        - mkdir -p ~/docker; docker save vikingco/kong > ~/docker/kong.tar
+        - docker pull vikingco/kong:latest
+        - mkdir -p ~/docker; docker save vikingco/kong:latest > ~/docker/kong.tar
+    post:
+        - >
+            docker run -d
+            -p 9042:9042
+            --name cassandra
+            vikingco/cassandra:latest; sleep 10
+        - >
+            docker run -d
+            -p 8000:8000
+            -p 8001:8001
+            --name kong
+            --link cassandra:cassandra
+            vikingco/kong:latest; sleep 5
 test:
     override:
-        - ./scripts/docker/cassandra.sh; sleep 5
-        - ./scripts/docker/kong.sh; sleep 5
         - tox

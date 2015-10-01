@@ -1,5 +1,6 @@
 cassandra:
-  image: mashape/cassandra
+  image: vikingco/cassandra:latest
+
 
 kong:
   image: vikingco/kong:latest
