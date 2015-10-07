@@ -122,6 +122,9 @@ class KongAdminTesting(object):
             self.assertIsNotNone(result['created_at'])
             self.assertFalse('request_path' in result)
 
+        def test_add_flaming_pile_of_poo(self):
+            raise NotImplementedError('To be implemented!')
+
         def test_add_extra(self):
             url = fake.url()
             name = fake.api_name()

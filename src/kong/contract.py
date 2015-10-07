@@ -28,12 +28,12 @@ class APIPluginConfigurationAdminContract(CollectionMixin):
         """
         :param plugin_name: The name of the Plugin that's going to be added. Currently the Plugin must be installed in
             every Kong instance separately.
-        :type plugin_name: str
+        :type plugin_name: six.text_type
         :param enabled: Whether or not the pluginconfiguration is enabled
         :type enabled: bool
         :param consumer_id: The unique identifier of the consumer that overrides the existing settings for this
             specific consumer on incoming requests.
-        :type consumer_id: str | uuid.UUID
+        :type consumer_id: six.text_type | uuid.UUID
         :param fields: The configuration properties for the Plugin which can be found on the plugins documentation page
             in the Plugin Gallery.
         :type fields: dict
@@ -57,14 +57,14 @@ class APIPluginConfigurationAdminContract(CollectionMixin):
         """
         :param plugin_name: The name of the Plugin that's going to be added. Currently the Plugin must be installed in
             every Kong instance separately.
-        :type plugin_name: str
+        :type plugin_name: six.text_type
         :param plugin_configuration_id: The unique identifier of the plugin configuration to update
-        :type plugin_configuration_id: str | uuid.UUID
+        :type plugin_configuration_id: six.text_type | uuid.UUID
         :param enabled: Whether or not the pluginconfiguration is enabled
         :type enabled: bool
         :param consumer_id: The unique identifier of the consumer that overrides the existing settings for this
             specific consumer on incoming requests.
-        :type consumer_id: str | uuid.UUID
+        :type consumer_id: six.text_type | uuid.UUID
         :param fields: The configuration properties for the Plugin which can be found on the plugins documentation page
             in the Plugin Gallery.
         :type fields: dict
@@ -129,12 +129,12 @@ class APIPluginConfigurationAdminContract(CollectionMixin):
         """
         :param plugin_name: The name of the Plugin that's going to be updated. Currently the Plugin must be installed in
             every Kong instance separately.
-        :type plugin_name: str
+        :type plugin_name: six.text_type
         :param enabled: Whether or not the pluginconfiguration is enabled
         :type enabled: bool
         :param consumer_id: The unique identifier of the consumer that overrides the existing settings for this specific
             consumer on incoming requests.
-        :type consumer_id: str | uuid.UUID
+        :type consumer_id: six.text_type | uuid.UUID
         :param fields: Optional dictionary which values will be used to overwrite the existing values
         :type fields: dict
         :rtype: dict
@@ -156,14 +156,14 @@ class APIPluginConfigurationAdminContract(CollectionMixin):
     def retrieve(self, plugin_id):
         """
         :param plugin_id: The unique identifier of the plugin for which to retrieve the configuration on this API
-        :type plugin_id: str | uuid.UUID
+        :type plugin_id: six.text_type | uuid.UUID
         """
 
     @abstractmethod
     def delete(self, plugin_id):
         """
         :param plugin_id: The unique identifier of the plugin for which to delete the configuration on this API
-        :type plugin_id: str | uuid.UUID
+        :type plugin_id: six.text_type | uuid.UUID
         """
 
 
@@ -189,13 +189,13 @@ class APIAdminContract(CollectionMixin):
         """
         :param upstream_url: The base target URL that points to your API server, this URL will be used for proxying
             requests. For example, https://mockbin.com.
-        :type upstream_url: str
+        :type upstream_url: six.text_type
         :param name:
-        :type name: str
+        :type name: six.text_type
         :param request_host:
-        :type request_host: str
+        :type request_host: six.text_type
         :param request_path:
-        :type request_path: str
+        :type request_path: six.text_type
         :param strip_request_path:
         :type strip_request_path: bool
         :param preserve_host:
@@ -217,15 +217,15 @@ class APIAdminContract(CollectionMixin):
         """
         :param upstream_url: The base target URL that points to your API server, this URL will be used for proxying
             requests. For example, https://mockbin.com.
-        :type upstream_url: str
+        :type upstream_url: six.text_type
         :param api_id: The unique identifier of the API to update
-        :type api_id: str | uuid.UUID
+        :type api_id: six.text_type | uuid.UUID
         :param name:
-        :type name: str
+        :type name: six.text_type
         :param request_host:
-        :type request_host: str
+        :type request_host: six.text_type
         :param request_path:
-        :type request_path: str
+        :type request_path: six.text_type
         :param strip_request_path:
         :type strip_request_path: bool
         :param preserve_host:
@@ -245,7 +245,7 @@ class APIAdminContract(CollectionMixin):
     def retrieve(self, name_or_id):
         """
         :param name_or_id: The unique identifier or the name of the API to retrieve
-        :type name_or_id: str | uuid.UUID
+        :type name_or_id: six.text_type | uuid.UUID
         :rtype: dict
         :return: Dictionary containing the API description. Example:
                 {
@@ -294,10 +294,10 @@ class APIAdminContract(CollectionMixin):
     def update(self, name_or_id, upstream_url, **fields):
         """
         :param name_or_id: The unique identifier or the name of the API to update
-        :type name_or_id: str | uuid.UUID
+        :type name_or_id: six.text_type | uuid.UUID
         :param upstream_url: The base target URL that points to your API server, this URL will be used for proxying
             requests. For example, https://mockbin.com.
-        :type upstream_url: str
+        :type upstream_url: six.text_type
         :param fields: Optional dictionary which values will be used to overwrite the existing values
         :type fields: dict
         :rtype: dict
@@ -315,7 +315,7 @@ class APIAdminContract(CollectionMixin):
     def delete(self, name_or_id):
         """
         :param name_or_id: The unique identifier or the name of the API to delete
-        :type name_or_id: str | uuid.UUID
+        :type name_or_id: six.text_type | uuid.UUID
         """
 
     @abstractmethod
@@ -347,9 +347,9 @@ class BasicAuthAdminContract(CollectionMixin):
     def create(self, username, password):
         """
         :param username: The username
-        :type username: str
+        :type username: six.text_type
         :param password: The password
-        :type password: str
+        :type password: six.text_type
         :rtype: dict
         :return: Dictionary containing the BasicAuth description. Example:
                 {
@@ -365,11 +365,11 @@ class BasicAuthAdminContract(CollectionMixin):
     def create_or_update(self, basic_auth_id=None, username=None, password=None):
         """
         :param basic_auth_id: The unique identifier of the basic_auth info to update
-        :type basic_auth_id: str | uuid.UUID
+        :type basic_auth_id: six.text_type | uuid.UUID
         :param username: The username
-        :type username: str
+        :type username: six.text_type
         :param password: The password
-        :type password: str
+        :type password: six.text_type
         :rtype: dict
         :return: Dictionary containing the BasicAuth description. Example:
                 {
@@ -385,7 +385,7 @@ class BasicAuthAdminContract(CollectionMixin):
     def update(self, basic_auth_id, **fields):
         """
         :param basic_auth_id: The unique identifier of the basic_auth info to update
-        :type basic_auth_id: str | uuid.UUID
+        :type basic_auth_id: six.text_type | uuid.UUID
         :param fields: Optional dictionary which values will be used to overwrite the existing values
         :type fields: dict
         :rtype: dict
@@ -403,7 +403,7 @@ class BasicAuthAdminContract(CollectionMixin):
     def retrieve(self, basic_auth_id):
         """
         :param basic_auth_id: The unique identifier of the basic_auth info to retrieve
-        :type basic_auth_id: str | uuid.UUID
+        :type basic_auth_id: six.text_type | uuid.UUID
         :rtype: dict
         :return: Dictionary containing the BasicAuth description. Example:
                 {
@@ -450,7 +450,7 @@ class BasicAuthAdminContract(CollectionMixin):
     def delete(self, basic_auth_id):
         """
         :param basic_auth_id: The unique identifier of the basic_auth info to delete
-        :type basic_auth_id: str | uuid.UUID
+        :type basic_auth_id: six.text_type | uuid.UUID
         """
 
 
@@ -475,7 +475,7 @@ class KeyAuthAdminContract(CollectionMixin):
         """
         :param key: You can optionally set your own unique key to authenticate the client. If missing, the plugin will
             generate one.
-        :type key: str
+        :type key: six.text_type
         :rtype: dict
         :return: Dictionary containing the KeyAuth description. Example:
                 {
@@ -490,7 +490,7 @@ class KeyAuthAdminContract(CollectionMixin):
     def create_or_update(self, key_auth_id=None, key=None):
         """
         :param key_auth_id: The unique identifier of the key_auth info to update
-        :type key_auth_id: str | uuid.UUID
+        :type key_auth_id: six.text_type | uuid.UUID
         :param key: You can optionally set your own unique key to authenticate the client. If missing, the plugin will
             generate one.
         :rtype: dict
@@ -507,7 +507,7 @@ class KeyAuthAdminContract(CollectionMixin):
     def update(self, key_auth_id, **fields):
         """
         :param key_auth_id: The unique identifier of the key_auth info to update
-        :type key_auth_id: str | uuid.UUID
+        :type key_auth_id: six.text_type | uuid.UUID
         :param fields: Optional dictionary which values will be used to overwrite the existing values
         :type fields: dict
         :rtype: dict
@@ -524,7 +524,7 @@ class KeyAuthAdminContract(CollectionMixin):
     def retrieve(self, key_auth_id):
         """
         :param key_auth_id: The unique identifier of the key_auth info to retrieve
-        :type key_auth_id: str | uuid.UUID
+        :type key_auth_id: six.text_type | uuid.UUID
         :rtype: dict
         :return: Dictionary containing the KeyAuth description. Example:
                 {
@@ -568,7 +568,7 @@ class KeyAuthAdminContract(CollectionMixin):
     def delete(self, key_auth_id):
         """
         :param key_auth_id: The unique identifier of the key_auth info to delete
-        :type key_auth_id: str | uuid.UUID
+        :type key_auth_id: six.text_type | uuid.UUID
         """
 
 
@@ -592,14 +592,14 @@ class OAuth2AdminContract(CollectionMixin):
     def create(self, name, redirect_uri, client_id=None, client_secret=None):
         """
         :param name: The name to associate to the credential. In OAuth 2.0 this would be the application name.
-        :type name: str
+        :type name: six.text_type
         :param redirect_uri: The URL in your app where users will be sent after authorization (RFC 6742 Section 3.1.2)
-        :type redirect_uri: str
+        :type redirect_uri: six.text_type
         :param client_id: You can optionally set your own unique client_id. If missing, the plugin will generate one.
-        :type client_id: str
+        :type client_id: six.text_type
         :param client_secret: You can optionally set your own unique client_secret. If missing, the plugin will
             generate one.
-        :type client_secret: str
+        :type client_secret: six.text_type
         :rtype: dict
         :return: Dictionary containing the OAuthAuth description. Example:
                 {
@@ -617,16 +617,16 @@ class OAuth2AdminContract(CollectionMixin):
     def create_or_update(self, oauth2_id=None, name=None, redirect_uri=None, client_id=None, client_secret=None):
         """
         :param oauth2_id: The unique identifier of the oauth2 info to update
-        :type oauth2_id: str | uuid.UUID
+        :type oauth2_id: six.text_type | uuid.UUID
         :param name: The name to associate to the credential. In OAuth 2.0 this would be the application name.
-        :type name: str
+        :type name: six.text_type
         :param redirect_uri: The URL in your app where users will be sent after authorization (RFC 6742 Section 3.1.2)
-        :type redirect_uri: str
+        :type redirect_uri: six.text_type
         :param client_id: You can optionally set your own unique client_id. If missing, the plugin will generate one.
-        :type client_id: str
+        :type client_id: six.text_type
         :param client_secret: You can optionally set your own unique client_secret. If missing, the plugin will
             generate one.
-        :type client_secret: str
+        :type client_secret: six.text_type
         :rtype: dict
         :return: Dictionary containing the OAuthAuth description. Example:
                 {
@@ -644,7 +644,7 @@ class OAuth2AdminContract(CollectionMixin):
     def update(self, oauth2_id, **fields):
         """
         :param oauth2_id: The unique identifier of the oauth2 info to update
-        :type oauth2_id: str | uuid.UUID
+        :type oauth2_id: six.text_type | uuid.UUID
         :param fields: Optional dictionary which values will be used to overwrite the existing values
         :type fields: dict
         :rtype: dict
@@ -664,7 +664,7 @@ class OAuth2AdminContract(CollectionMixin):
     def retrieve(self, oauth2_id):
         """
         :param oauth2_id: The unique identifier of the oauth2 info to retrieve
-        :type oauth2_id: str | uuid.UUID
+        :type oauth2_id: six.text_type | uuid.UUID
         :rtype: dict
         :return: Dictionary containing the OAuthAuth description. Example:
                 {
@@ -717,7 +717,7 @@ class OAuth2AdminContract(CollectionMixin):
     def delete(self, oauth2_id):
         """
         :param oauth2_id: The unique identifier of the oauth2 info to delete
-        :type oauth2_id: str | uuid.UUID
+        :type oauth2_id: six.text_type | uuid.UUID
         """
 
 
@@ -741,10 +741,10 @@ class ConsumerAdminContract(CollectionMixin):
     def create(self, username=None, custom_id=None):
         """
         :param username: The username of the consumer. You must send either this field or custom_id with the request.
-        :type username: str
+        :type username: six.text_type
         :param custom_id: Field for storing an existing ID for the consumer, useful for mapping Kong with users in your
             existing database. You must send either this field or username with the request.
-        :type custom_id: str
+        :type custom_id: six.text_type
         :rtype: dict
         :return: Dictionary containing the Consumer description. Example:
                 {
@@ -758,12 +758,12 @@ class ConsumerAdminContract(CollectionMixin):
     def create_or_update(self, consumer_id=None, username=None, custom_id=None):
         """
         :param consumer_id: The unique identifier of the consumer to update
-        :type consumer_id: str | uuid.UUID
+        :type consumer_id: six.text_type | uuid.UUID
         :param username: The username of the consumer. You must send either this field or custom_id with the request.
-        :type username: str
+        :type username: six.text_type
         :param custom_id: Field for storing an existing ID for the consumer, useful for mapping Kong with users in your
             existing database. You must send either this field or username with the request.
-        :type custom_id: str
+        :type custom_id: six.text_type
         :rtype: dict
         :return: Dictionary containing the Consumer description. Example:
                 {
@@ -777,7 +777,7 @@ class ConsumerAdminContract(CollectionMixin):
     def retrieve(self, username_or_id):
         """
         :param username_or_id: The unique identifier or the username of the consumer to retrieve
-        :type username_or_id: str | uuid.UUID
+        :type username_or_id: six.text_type | uuid.UUID
         :rtype: dict
         :return: Dictionary containing the Consumer description. Example:
                 {
@@ -820,7 +820,7 @@ class ConsumerAdminContract(CollectionMixin):
     def update(self, username_or_id, **fields):
         """
         :param username_or_id: The unique identifier or the username of the consumer to update
-        :type username_or_id: str | uuid.UUID
+        :type username_or_id: six.text_type | uuid.UUID
         :param fields: Optional dictionary which values will be used to overwrite the existing values
         :type fields: dict
         :rtype: dict
@@ -836,7 +836,7 @@ class ConsumerAdminContract(CollectionMixin):
     def delete(self, username_or_id):
         """
         :param username_or_id: The unique identifier or the name of the consumer to delete
-        :type username_or_id: str | uuid.UUID
+        :type username_or_id: six.text_type | uuid.UUID
         """
 
     @abstractmethod
@@ -888,7 +888,7 @@ class PluginAdminContract(with_metaclass(ABCMeta, object)):
     def retrieve_schema(self, plugin_name):
         """
         :param plugin_name:
-        :type plugin_name: str
+        :type plugin_name: six.text_type
         :rtype: dict
         :return: Returns the schema of a plugin's configuration.
         """

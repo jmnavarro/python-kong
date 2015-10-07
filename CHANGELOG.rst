@@ -2,6 +2,11 @@
 Changelog
 =========
 
+0.3.2 (2015-10-07)
+------------------
+
+* Updated contract docstrings to explicitly support 'six.text_type' instead of 'str'
+
 0.3.1 (2015-09-23)
 ------------------
 
