@@ -34,14 +34,6 @@ def get_default_kong_headers():
     return headers
 
 
-def raise_response_error(response, exception_class=None, is_json=True):
-    exception_class = exception_class or ValueError
-    assert issubclass(exception_class, BaseException)
-    if is_json:
-        raise exception_class(', '.join(['%s: %s' % (key, value) for (key, value) in response.json().items()]))
-    raise exception_class(str(response))
-
-
 class ThrottlingHTTPAdapter(HTTPAdapter):
     def __init__(self, *args, **kwargs):
         super(ThrottlingHTTPAdapter, self).__init__(*args, **kwargs)
@@ -62,6 +54,12 @@ THROTTLING_ADAPTER = ThrottlingHTTPAdapter()
 ########################################################################################################################
 # END: CI fixes
 ########################################################################################################################
+
+
+def raise_response_error(response, exception_class=None):
+    exception_class = exception_class or ValueError
+    assert issubclass(exception_class, BaseException)
+    raise exception_class(response.content)
 
 
 class RestClient(object):
