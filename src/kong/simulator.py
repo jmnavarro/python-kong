@@ -6,8 +6,8 @@ import hashlib
 
 from .contract import KongAdminContract, APIPluginConfigurationAdminContract, APIAdminContract, ConsumerAdminContract, \
     PluginAdminContract, BasicAuthAdminContract, KeyAuthAdminContract, OAuth2AdminContract
-from .utils import timestamp, uuid_or_string, add_url_params, filter_api_struct, filter_dict_list, assert_dict_keys_in, \
-    ensure_trailing_slash
+from .utils import timestamp, uuid_or_string, add_url_params, filter_api_struct, filter_dict_list, \
+    assert_dict_keys_in, ensure_trailing_slash
 from .compat import OrderedDict
 from .exceptions import ConflictError
 
