@@ -3,13 +3,29 @@ from __future__ import unicode_literals, print_function
 
 import uuid
 import hashlib
+import copy
 
 from .contract import KongAdminContract, APIPluginConfigurationAdminContract, APIAdminContract, ConsumerAdminContract, \
     PluginAdminContract, BasicAuthAdminContract, KeyAuthAdminContract, OAuth2AdminContract
-from .utils import timestamp, uuid_or_string, add_url_params, filter_api_struct, filter_dict_list, \
-    assert_dict_keys_in, ensure_trailing_slash
+from .utils import timestamp, uuid_or_string, add_url_params, filter_api_struct, assert_dict_keys_in, \
+    ensure_trailing_slash
 from .compat import OrderedDict
 from .exceptions import ConflictError
+
+
+def filter_dict_list(list_of_dicts, **field_filter):
+    """
+    This utility removes keys from a dictionary if their respective value did not differ from their default value.
+      This is used by the Simulator classes to match the responses with Kong's responses.
+    """
+    def _filter(_dicts, key, value):
+        return [d for d in _dicts if d[key] == value]
+
+    list_of_dicts = copy.copy(list_of_dicts)
+    for key in field_filter:
+        list_of_dicts = _filter(list_of_dicts, key, field_filter[key])
+
+    return list_of_dicts
 
 
 class SimulatorDataStore(object):

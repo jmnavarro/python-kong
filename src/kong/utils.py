@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals, print_function
-import six
 import time
 import uuid
-import copy
 from json import dumps
+
+import six
 
 from .compat import urlparse, urlencode, unquote, parse_qs, parse_qsl, ParseResult, OrderedDict
 
@@ -37,17 +37,6 @@ def uuid_or_string(data):
 
 def filter_api_struct(api_struct, filter_dict):
     return {k: v for k, v in api_struct.items() if k not in filter_dict or filter_dict[k] != api_struct[k]}
-
-
-def filter_dict_list(list_of_dicts, **field_filter):
-    def _filter(_dicts, key, value):
-        return [d for d in _dicts if d[key] == value]
-
-    list_of_dicts = copy.copy(list_of_dicts)
-    for key in field_filter:
-        list_of_dicts = _filter(list_of_dicts, key, field_filter[key])
-
-    return list_of_dicts
 
 
 def add_url_params(url, params):
