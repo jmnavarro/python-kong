@@ -7,16 +7,22 @@ import copy
 
 from .contract import KongAdminContract, APIPluginConfigurationAdminContract, APIAdminContract, ConsumerAdminContract, \
     PluginAdminContract, BasicAuthAdminContract, KeyAuthAdminContract, OAuth2AdminContract
-from .utils import timestamp, uuid_or_string, add_url_params, filter_api_struct, assert_dict_keys_in, \
-    ensure_trailing_slash
+from .utils import timestamp, uuid_or_string, add_url_params, assert_dict_keys_in, ensure_trailing_slash
 from .compat import OrderedDict
 from .exceptions import ConflictError
 
 
-def filter_dict_list(list_of_dicts, **field_filter):
+def filter_api_struct(api_struct, filter_dict):
     """
     This utility removes keys from a dictionary if their respective value did not differ from their default value.
       This is used by the Simulator classes to match the responses with Kong's responses.
+    """
+    return {k: v for k, v in api_struct.items() if k not in filter_dict or filter_dict[k] != api_struct[k]}
+
+
+def filter_dict_list(list_of_dicts, **field_filter):
+    """
+    This utility filters a list of dictionaries based on the values of one or more keys
     """
     def _filter(_dicts, key, value):
         return [d for d in _dicts if d[key] == value]
