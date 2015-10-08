@@ -15,6 +15,14 @@ from .utils import add_url_params, assert_dict_keys_in, ensure_trailing_slash
 from .compat import OK, CREATED, NO_CONTENT, NOT_FOUND, CONFLICT, INTERNAL_SERVER_ERROR, urljoin
 from .exceptions import ConflictError, ServerError
 
+########################################################################################################################
+# BEGIN: CI fixes
+#
+#   Because of memory/performance limitations in the CI, it often happened that connections to Kong got messed up
+#   during unittests. To prevent this from happening, we've implemented both throttling and connection dropping as
+#   optional measures during testing.
+########################################################################################################################
+
 KONG_MINIMUM_REQUEST_INTERVAL = float(os.getenv('KONG_MINIMUM_REQUEST_INTERVAL', 0))
 KONG_REUSE_CONNECTIONS = int(os.getenv('KONG_REUSE_CONNECTIONS', '1')) == 1
 
@@ -47,7 +55,13 @@ class ThrottlingHTTPAdapter(HTTPAdapter):
         result = super(ThrottlingHTTPAdapter, self).send(request, stream, timeout, verify, cert, proxies)
         self._last_request = time.time()
         return result
-throttlingHTTPAdapterSingleton = ThrottlingHTTPAdapter()
+
+# Create a singleton
+THROTTLING_ADAPTER = ThrottlingHTTPAdapter()
+
+########################################################################################################################
+# END: CI fixes
+########################################################################################################################
 
 
 class RestClient(object):
@@ -69,7 +83,7 @@ class RestClient(object):
         if self._session is None:
             self._session = requests.session()
             if KONG_MINIMUM_REQUEST_INTERVAL > 0:
-                self._session.mount(self.api_url, throttlingHTTPAdapterSingleton)
+                self._session.mount(self.api_url, THROTTLING_ADAPTER)
         elif not KONG_REUSE_CONNECTIONS:
             self._session.close()
             self._session = None
