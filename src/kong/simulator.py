@@ -309,7 +309,7 @@ class APIAdminSimulator(APIAdminContract):
         return self._store.count()
 
     def create(self, upstream_url, name=None, request_host=None, request_path=None, strip_request_path=False,
-            preserve_host=False):
+               preserve_host=False):
         assert upstream_url is not None
         if not request_host and not request_path:
             raise ValueError('At least a \'request_host\' or a \'request_path\' must be specified, '
@@ -329,7 +329,7 @@ class APIAdminSimulator(APIAdminContract):
         }, check_conflict_keys=('name', 'request_host'))
 
     def create_or_update(self, upstream_url, api_id=None, name=None, request_host=None, request_path=None,
-                      strip_request_path=False, preserve_host=False):
+                         strip_request_path=False, preserve_host=False):
         data = {
             'name': name or request_host,
             'request_host': request_host,
