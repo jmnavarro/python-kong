@@ -8,12 +8,15 @@ import requests
 import backoff
 
 from requests.adapters import HTTPAdapter
+import six
 
 from .contract import KongAdminContract, APIAdminContract, ConsumerAdminContract, PluginAdminContract, \
     APIPluginConfigurationAdminContract, BasicAuthAdminContract, KeyAuthAdminContract, OAuth2AdminContract
-from .utils import add_url_params, assert_dict_keys_in, ensure_trailing_slash
+from .utils import add_url_params, assert_dict_keys_in, ensure_trailing_slash, API_ENCODING
 from .compat import OK, CREATED, NO_CONTENT, NOT_FOUND, CONFLICT, INTERNAL_SERVER_ERROR, urljoin
 from .exceptions import ConflictError, ServerError
+
+# WTF: As this is CI/Test specific, maybe better to only have this piece of code in your tests directory?
 
 ########################################################################################################################
 # BEGIN: CI fixes
@@ -100,7 +103,8 @@ class RestClient(object):
         return result
 
     def get_url(self, *path, **query_params):
-        path = [str(p) for p in path]
+        # WTF: Never use str, unless in some very specific cases, like in compatibility layers! Fixed for you.
+        path = [six.text_type(p) for p in path]
         url = ensure_trailing_slash(urljoin(self.api_url, '/'.join(path)))
         return add_url_params(url, query_params)
 
@@ -314,6 +318,10 @@ class APIAdminClient(APIAdminContract, RestClient):
         assert_dict_keys_in(
             fields, ['name', 'request_host', 'request_path', 'strip_request_path', 'preserve_host'],
             INVALID_FIELD_ERROR_TEMPLATE)
+
+        # Explicitly encode on beforehand before passing to requests!
+        fields = {k: v.encode(API_ENCODING) if isinstance(v, six.text_type) else v for k, v in fields.items()}
+
         response = self.session.patch(self.get_url('apis', name_or_id), data=dict({
             'upstream_url': upstream_url
         }, **fields), headers=self.get_headers())
@@ -381,8 +389,8 @@ class BasicAuthAdminClient(BasicAuthAdminContract, RestClient):
 
     def create_or_update(self, basic_auth_id=None, username=None, password=None):
         data = {
-            'username': username,
-            'password': password,
+            'username': username.encode(API_ENCODING),
+            'password': password.encode(API_ENCODING),
         }
 
         if basic_auth_id is not None:
@@ -402,8 +410,8 @@ class BasicAuthAdminClient(BasicAuthAdminContract, RestClient):
 
     def create(self, username, password):
         response = self.session.post(self.get_url('consumers', self.consumer_id, 'basicauth'), data={
-            'username': username,
-            'password': password,
+            'username': username.encode(API_ENCODING),
+            'password': password.encode(API_ENCODING),
         }, headers=self.get_headers())
 
         if response.status_code == CONFLICT:

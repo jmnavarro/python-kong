@@ -35,6 +35,9 @@ def uuid_or_string(data):
     raise ValueError('Expected string or UUID, got %r' % data)
 
 
+API_ENCODING = 'utf-8'
+
+
 def add_url_params(url, params):
     """ Add GET params to provided URL being aware of existing.
 
@@ -50,7 +53,7 @@ def add_url_params(url, params):
     Source: http://stackoverflow.com/a/25580545/591217
     """
     # Unquoting URL first so we don't loose existing args
-    url = unquote(url)
+    url = unquote(url.encode(API_ENCODING))  # ``unquote`` operates on BYTES, not unicode strings...
 
     # Extracting url info
     parsed_url = urlparse(url)
@@ -73,8 +76,15 @@ def add_url_params(url, params):
 
     parsed_get_args = sorted_ordered_dict(parsed_get_args)
 
+    # Encoding parsed args to given encoding to make sure ``urlencode`` does not try to "encode" the string himself
+    # because he is clearly not able to do it correctly. (See the comments inside the function for the ins and outs)
+    parsed_get_args_encoded = OrderedDict(
+        (k, v.encode(API_ENCODING) if isinstance(v, six.text_type) else v)
+        for k, v in parsed_get_args.items()
+    )
+
     # Converting URL argument to proper query string
-    encoded_get_args = urlencode(parsed_get_args, doseq=True)
+    encoded_get_args = urlencode(parsed_get_args_encoded, doseq=True)
 
     # Creating new parsed result object based on provided with new
     # URL arguments. Same thing happens inside of urlparse.

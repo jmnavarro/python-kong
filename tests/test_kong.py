@@ -55,7 +55,7 @@ class CustomInfoProvider(BaseProvider):
         return path
 
     def username(self):
-        return fake.first_name().lower().replace(' ', '')
+        return fake.first_name().lower().replace(' ', '') + '🔥💩💣'
 
     def oauth2_app_name(self):
         return fake.sentence(nb_words=random.randint(1, 3), variable_nb_words=True).rstrip('.')
@@ -1298,18 +1298,19 @@ class UtilTestCase(TestCase):
     def test_add_url_params(self):
         params = OrderedDict({
             'bla1': 1,
-            'bla2': 'hello',
+            'bla2': 'hello🔥💩💣',
             'bla3': True,
             'bla4': sorted_ordered_dict({'a': 1, 'b': ['a', 2, False]})
         })
         url = '%s%s' % (fake.url(), fake.uri_path())
         result = add_url_params('%s/?x=0' % url, params)
-        expected_result = \
-            '%s/?bla1=1&bla2=hello&bla3=%s&%s&x=0' % (
-                url, json.dumps(True),
-                urlencode({
-                    'bla4': json.dumps(params['bla4'])
-                }))
+        expected_result = '{0}/?bla1=1&bla2=hello%F0%9F%94%A5%F0%9F%92%A9%F0%9F%92%A3&bla3={1}&{2}&x=0'.format(
+            url,
+            json.dumps(True),
+            urlencode({
+                'bla4': json.dumps(params['bla4'])
+            })
+        )
         self.assertEqual(result, expected_result)
 
 

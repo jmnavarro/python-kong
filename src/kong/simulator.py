@@ -3,7 +3,6 @@ from __future__ import unicode_literals, print_function
 
 import uuid
 import hashlib
-import copy
 
 from .contract import KongAdminContract, APIPluginConfigurationAdminContract, APIAdminContract, ConsumerAdminContract, \
     PluginAdminContract, BasicAuthAdminContract, KeyAuthAdminContract, OAuth2AdminContract
@@ -29,7 +28,7 @@ def filter_dict_list(list_of_dicts, **field_filter):
     def _filter(_dicts, key, value):
         return [d for d in _dicts if d[key] == value]
 
-    list_of_dicts = copy.copy(list_of_dicts)
+    list_of_dicts = list_of_dicts[:]
     for key in field_filter:
         list_of_dicts = _filter(list_of_dicts, key, field_filter[key])
 
