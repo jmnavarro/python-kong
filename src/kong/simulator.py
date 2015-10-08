@@ -284,7 +284,7 @@ class APIAdminSimulator(APIAdminContract):
     def count(self):
         return self._store.count()
 
-    def add(self, upstream_url, name=None, request_host=None, request_path=None, strip_request_path=False,
+    def create(self, upstream_url, name=None, request_host=None, request_path=None, strip_request_path=False,
             preserve_host=False):
         assert upstream_url is not None
         if not request_host and not request_path:
@@ -304,7 +304,7 @@ class APIAdminSimulator(APIAdminContract):
             'created_at': timestamp()
         }, check_conflict_keys=('name', 'request_host'))
 
-    def add_or_update(self, upstream_url, api_id=None, name=None, request_host=None, request_path=None,
+    def create_or_update(self, upstream_url, api_id=None, name=None, request_host=None, request_path=None,
                       strip_request_path=False, preserve_host=False):
         data = {
             'name': name or request_host,
@@ -318,7 +318,7 @@ class APIAdminSimulator(APIAdminContract):
         if api_id is not None:
             return self.update(api_id, **data)
 
-        return self.add(**data)
+        return self.create(**data)
 
     def update(self, name_or_id, upstream_url, **fields):
         assert_dict_keys_in(fields, ['name', 'request_host', 'request_path', 'strip_request_path', 'preserve_host'])

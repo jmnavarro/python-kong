@@ -188,8 +188,8 @@ class APIAdminContract(CollectionMixin):
         """
 
     @abstractmethod
-    def add(self, upstream_url, name=None, request_host=None, request_path=None, strip_request_path=False,
-            preserve_host=False):
+    def create(self, upstream_url, name=None, request_host=None, request_path=None, strip_request_path=False,
+               preserve_host=False):
         """
         :param upstream_url: The base target URL that points to your API server, this URL will be used for proxying
             requests. For example, https://mockbin.com.
@@ -216,8 +216,8 @@ class APIAdminContract(CollectionMixin):
         """
 
     @abstractmethod
-    def add_or_update(self, upstream_url, api_id=None, name=None, request_host=None, request_path=None,
-                      strip_request_path=False, preserve_host=False):
+    def create_or_update(self, upstream_url, api_id=None, name=None, request_host=None, request_path=None,
+                         strip_request_path=False, preserve_host=False):
         """
         :param upstream_url: The base target URL that points to your API server, this URL will be used for proxying
             requests. For example, https://mockbin.com.

@@ -260,7 +260,7 @@ class APIAdminClient(APIAdminContract, RestClient):
         amount = result.get('total', len(result.get('data')))
         return amount
 
-    def add(self, upstream_url, name=None, request_host=None, request_path=None, strip_request_path=False,
+    def create(self, upstream_url, name=None, request_host=None, request_path=None, strip_request_path=False,
             preserve_host=False):
         response = self.session.post(self.get_url('apis'), data={
             'name': name,
@@ -280,7 +280,7 @@ class APIAdminClient(APIAdminContract, RestClient):
 
         return response.json()
 
-    def add_or_update(
+    def create_or_update(
             self, upstream_url, api_id=None, name=None, request_host=None, request_path=None, strip_request_path=False,
             preserve_host=False):
         data = {
