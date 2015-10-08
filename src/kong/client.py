@@ -23,7 +23,10 @@ from .exceptions import ConflictError, ServerError
 #   optional measures during testing.
 ########################################################################################################################
 
+# Minimum interval between requests (measured in seconds)
 KONG_MINIMUM_REQUEST_INTERVAL = float(os.getenv('KONG_MINIMUM_REQUEST_INTERVAL', 0))
+
+# Whether or not to reuse connections after a request (1 = true, otherwise false)
 KONG_REUSE_CONNECTIONS = int(os.getenv('KONG_REUSE_CONNECTIONS', '1')) == 1
 
 
