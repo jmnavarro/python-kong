@@ -11,6 +11,8 @@ from .utils import timestamp, uuid_or_string, add_url_params, assert_dict_keys_i
 from .compat import OrderedDict
 from .exceptions import ConflictError
 
+INVALID_FIELD_ERROR_TEMPLATE = '%r is not a valid field. Allowed fields: %r'
+
 
 def filter_api_struct(api_struct, filter_dict):
     """
@@ -343,7 +345,9 @@ class APIAdminSimulator(APIAdminContract):
         return self.create(**data)
 
     def update(self, name_or_id, upstream_url, **fields):
-        assert_dict_keys_in(fields, ['name', 'request_host', 'request_path', 'strip_request_path', 'preserve_host'])
+        assert_dict_keys_in(
+            fields, ['name', 'request_host', 'request_path', 'strip_request_path', 'preserve_host'],
+            INVALID_FIELD_ERROR_TEMPLATE)
 
         # ensure trailing slash
         upstream_url = ensure_trailing_slash(upstream_url)
@@ -356,7 +360,7 @@ class APIAdminSimulator(APIAdminContract):
         return self._store.retrieve(name_or_id, 'name')
 
     def list(self, size=100, offset=None, **filter_fields):
-        assert_dict_keys_in(filter_fields, ['id', 'name', 'request_host', 'upstream_url'])
+        assert_dict_keys_in(filter_fields, ['id', 'name', 'request_host', 'upstream_url'], INVALID_FIELD_ERROR_TEMPLATE)
         return self._store.list(size, offset, **filter_fields)
 
     def delete(self, name_or_id):

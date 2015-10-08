@@ -86,9 +86,10 @@ def add_url_params(url, params):
     return new_url
 
 
-def assert_dict_keys_in(d, allowed_keys):
+def assert_dict_keys_in(d, allowed_keys, error_template=None):
+    error_template = error_template or '%r is not a valid key. Allowed keys: %r'
     for key in d:
-        assert key in allowed_keys
+        assert key in allowed_keys, error_template % (key, allowed_keys)
 
 
 def ensure_trailing_slash(url):

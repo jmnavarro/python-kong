@@ -61,6 +61,8 @@ def raise_response_error(response, exception_class=None):
     assert issubclass(exception_class, BaseException)
     raise exception_class(response.content)
 
+INVALID_FIELD_ERROR_TEMPLATE = '%r is not a valid field. Allowed fields: %r'
+
 
 class RestClient(object):
     def __init__(self, api_url, headers=None):
@@ -191,7 +193,7 @@ class APIPluginConfigurationAdminClient(APIPluginConfigurationAdminContract, Res
 
     @backoff.on_exception(backoff.expo, ServerError, max_tries=3)
     def list(self, size=100, offset=None, **filter_fields):
-        assert_dict_keys_in(filter_fields, ['id', 'name', 'api_id', 'consumer_id'])
+        assert_dict_keys_in(filter_fields, ['id', 'name', 'api_id', 'consumer_id'], INVALID_FIELD_ERROR_TEMPLATE)
 
         query_params = filter_fields
         query_params['size'] = size
@@ -307,7 +309,9 @@ class APIAdminClient(APIAdminContract, RestClient):
         return response.json()
 
     def update(self, name_or_id, upstream_url, **fields):
-        assert_dict_keys_in(fields, ['name', 'request_host', 'request_path', 'strip_request_path', 'preserve_host'])
+        assert_dict_keys_in(
+            fields, ['name', 'request_host', 'request_path', 'strip_request_path', 'preserve_host'],
+            INVALID_FIELD_ERROR_TEMPLATE)
         response = self.session.patch(self.get_url('apis', name_or_id), data=dict({
             'upstream_url': upstream_url
         }, **fields), headers=self.get_headers())
@@ -339,7 +343,7 @@ class APIAdminClient(APIAdminContract, RestClient):
 
     @backoff.on_exception(backoff.expo, ServerError, max_tries=3)
     def list(self, size=100, offset=None, **filter_fields):
-        assert_dict_keys_in(filter_fields, ['id', 'name', 'request_host', 'request_path'])
+        assert_dict_keys_in(filter_fields, ['id', 'name', 'request_host', 'request_path'], INVALID_FIELD_ERROR_TEMPLATE)
 
         query_params = filter_fields
         query_params['size'] = size
@@ -411,7 +415,7 @@ class BasicAuthAdminClient(BasicAuthAdminContract, RestClient):
 
     @backoff.on_exception(backoff.expo, ServerError, max_tries=3)
     def list(self, size=100, offset=None, **filter_fields):
-        assert_dict_keys_in(filter_fields, ['id', 'username'])
+        assert_dict_keys_in(filter_fields, ['id', 'username'], INVALID_FIELD_ERROR_TEMPLATE)
 
         query_params = filter_fields
         query_params['size'] = size
@@ -465,7 +469,7 @@ class BasicAuthAdminClient(BasicAuthAdminContract, RestClient):
         return amount
 
     def update(self, basic_auth_id, **fields):
-        assert_dict_keys_in(fields, ['username', 'password'])
+        assert_dict_keys_in(fields, ['username', 'password'], INVALID_FIELD_ERROR_TEMPLATE)
         response = self.session.patch(
             self.get_url('consumers', self.consumer_id, 'basicauth', basic_auth_id), data=fields,
             headers=self.get_headers())
@@ -526,7 +530,7 @@ class KeyAuthAdminClient(KeyAuthAdminContract, RestClient):
 
     @backoff.on_exception(backoff.expo, ServerError, max_tries=3)
     def list(self, size=100, offset=None, **filter_fields):
-        assert_dict_keys_in(filter_fields, ['id', 'key'])
+        assert_dict_keys_in(filter_fields, ['id', 'key'], INVALID_FIELD_ERROR_TEMPLATE)
 
         query_params = filter_fields
         query_params['size'] = size
@@ -580,7 +584,7 @@ class KeyAuthAdminClient(KeyAuthAdminContract, RestClient):
         return amount
 
     def update(self, key_auth_id, **fields):
-        assert_dict_keys_in(fields, ['key'])
+        assert_dict_keys_in(fields, ['key'], INVALID_FIELD_ERROR_TEMPLATE)
         response = self.session.patch(
             self.get_url('consumers', self.consumer_id, 'keyauth', key_auth_id), data=fields,
             headers=self.get_headers())
@@ -647,7 +651,7 @@ class OAuth2AdminClient(OAuth2AdminContract, RestClient):
 
     @backoff.on_exception(backoff.expo, ServerError, max_tries=3)
     def list(self, size=100, offset=None, **filter_fields):
-        assert_dict_keys_in(filter_fields, ['id', 'name', 'redirect_url', 'client_id'])
+        assert_dict_keys_in(filter_fields, ['id', 'name', 'redirect_url', 'client_id'], INVALID_FIELD_ERROR_TEMPLATE)
 
         query_params = filter_fields
         query_params['size'] = size
@@ -701,7 +705,8 @@ class OAuth2AdminClient(OAuth2AdminContract, RestClient):
         return amount
 
     def update(self, oauth2_id, **fields):
-        assert_dict_keys_in(fields, ['name', 'redirect_uri', 'client_id', 'client_secret'])
+        assert_dict_keys_in(
+            fields, ['name', 'redirect_uri', 'client_id', 'client_secret'], INVALID_FIELD_ERROR_TEMPLATE)
         response = self.session.patch(
             self.get_url('consumers', self.consumer_id, 'oauth2', oauth2_id), data=fields,
             headers=self.get_headers())
@@ -768,7 +773,7 @@ class ConsumerAdminClient(ConsumerAdminContract, RestClient):
         return response.json()
 
     def update(self, username_or_id, **fields):
-        assert_dict_keys_in(fields, ['username', 'custom_id'])
+        assert_dict_keys_in(fields, ['username', 'custom_id'], INVALID_FIELD_ERROR_TEMPLATE)
         response = self.session.patch(self.get_url('consumers', username_or_id), data=fields,
                                       headers=self.get_headers())
 
@@ -781,7 +786,7 @@ class ConsumerAdminClient(ConsumerAdminContract, RestClient):
 
     @backoff.on_exception(backoff.expo, ServerError, max_tries=3)
     def list(self, size=100, offset=None, **filter_fields):
-        assert_dict_keys_in(filter_fields, ['id', 'custom_id', 'username'])
+        assert_dict_keys_in(filter_fields, ['id', 'custom_id', 'username'], INVALID_FIELD_ERROR_TEMPLATE)
 
         query_params = filter_fields
         query_params['size'] = size
