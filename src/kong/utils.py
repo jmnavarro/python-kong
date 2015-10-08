@@ -36,18 +36,7 @@ def uuid_or_string(data):
 
 
 def filter_api_struct(api_struct, filter_dict):
-    result = copy.copy(api_struct)
-
-    keys_to_remove = []
-
-    for key in filter_dict:
-        if result[key] == filter_dict[key]:
-            keys_to_remove.append(key)
-
-    for key in keys_to_remove:
-        del result[key]
-
-    return result
+    return {k: v for k, v in api_struct.items() if k not in filter_dict or filter_dict[k] != api_struct[k]}
 
 
 def filter_dict_list(list_of_dicts, **field_filter):
