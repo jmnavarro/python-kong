@@ -8,6 +8,10 @@ from .mixins import CollectionMixin
 
 
 class APIPluginConfigurationAdminContract(CollectionMixin):
+    """
+    Because we are already mixing with CollectionMixin, we cannot use 'with_metaclass(ABCMeta, ...)'. The solution is
+      to explicitly define the __metaclass__ property on the class like below.
+    """
     __metaclass__ = ABCMeta
 
     @abstractmethod
