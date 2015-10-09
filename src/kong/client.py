@@ -12,8 +12,8 @@ import six
 
 from .contract import KongAdminContract, APIAdminContract, ConsumerAdminContract, PluginAdminContract, \
     APIPluginConfigurationAdminContract, BasicAuthAdminContract, KeyAuthAdminContract, OAuth2AdminContract
-from .utils import add_url_params, assert_dict_keys_in, ensure_trailing_slash, utf8
-from .compat import OK, CREATED, NO_CONTENT, NOT_FOUND, CONFLICT, INTERNAL_SERVER_ERROR, urljoin
+from .utils import add_url_params, assert_dict_keys_in, ensure_trailing_slash
+from .compat import OK, CREATED, NO_CONTENT, NOT_FOUND, CONFLICT, INTERNAL_SERVER_ERROR, urljoin, utf8_or_str
 from .exceptions import ConflictError, ServerError
 
 # WTF: As this is CI/Test specific, maybe better to only have this piece of code in your tests directory?
@@ -320,7 +320,7 @@ class APIAdminClient(APIAdminContract, RestClient):
             INVALID_FIELD_ERROR_TEMPLATE)
 
         # Explicitly encode on beforehand before passing to requests!
-        fields = {k: utf8(v) if isinstance(v, six.text_type) else v for k, v in fields.items()}
+        fields = {k: utf8_or_str(v) if isinstance(v, six.text_type) else v for k, v in fields.items()}
 
         response = self.session.patch(self.get_url('apis', name_or_id), data=dict({
             'upstream_url': upstream_url
@@ -389,8 +389,8 @@ class BasicAuthAdminClient(BasicAuthAdminContract, RestClient):
 
     def create_or_update(self, basic_auth_id=None, username=None, password=None):
         data = {
-            'username': utf8(username),
-            'password': utf8(password),
+            'username': utf8_or_str(username),
+            'password': utf8_or_str(password),
         }
 
         if basic_auth_id is not None:
@@ -410,8 +410,8 @@ class BasicAuthAdminClient(BasicAuthAdminContract, RestClient):
 
     def create(self, username, password):
         response = self.session.post(self.get_url('consumers', self.consumer_id, 'basicauth'), data={
-            'username': utf8(username),
-            'password': utf8(password),
+            'username': utf8_or_str(username),
+            'password': utf8_or_str(password),
         }, headers=self.get_headers())
 
         if response.status_code == CONFLICT:
