@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals, print_function
+import six
 
 try:
     from http.client import OK, CREATED, CONFLICT, NO_CONTENT, NOT_FOUND, BAD_REQUEST, INTERNAL_SERVER_ERROR, HTTPConnection
@@ -21,3 +22,9 @@ try:
     from unittest import TestCase, skipIf, main as run_unittests
 except ImportError:  # pragma: no cover
     from unittest2 import TestCase, skipIf, main as run_unittests
+
+
+def utf8_or_str(text):
+    if six.PY2:
+        return text.encode('utf-8')
+    return text

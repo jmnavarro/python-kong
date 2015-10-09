@@ -4,6 +4,8 @@ from abc import ABCMeta, abstractmethod
 
 from six import with_metaclass
 
+from .utils import parse_query_parameters
+
 
 class CollectionMixin(with_metaclass(ABCMeta, object)):
     @abstractmethod
@@ -20,7 +22,6 @@ class CollectionMixin(with_metaclass(ABCMeta, object)):
         """
 
     def iterate(self, window_size=10, **filter_fields):
-        from .utils import parse_query_parameters
         current_offset = None
         while True:
             response = self.list(size=window_size, offset=current_offset, **filter_fields)

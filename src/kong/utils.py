@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals, print_function
-import six
 import time
 import uuid
-import copy
 from json import dumps
 
-from .compat import urlparse, urlencode, unquote, parse_qs, parse_qsl, ParseResult, OrderedDict
+import six
+
+from .compat import urlparse, urlencode, unquote, parse_qs, parse_qsl, ParseResult, OrderedDict, utf8_or_str
 
 
 def timestamp():
@@ -35,32 +35,6 @@ def uuid_or_string(data):
     raise ValueError('Expected string or UUID, got %r' % data)
 
 
-def filter_api_struct(api_struct, filter_dict):
-    result = copy.copy(api_struct)
-
-    keys_to_remove = []
-
-    for key in filter_dict:
-        if result[key] == filter_dict[key]:
-            keys_to_remove.append(key)
-
-    for key in keys_to_remove:
-        del result[key]
-
-    return result
-
-
-def filter_dict_list(list_of_dicts, **field_filter):
-    def _filter(_dicts, key, value):
-        return [d for d in _dicts if d[key] == value]
-
-    list_of_dicts = copy.copy(list_of_dicts)
-    for key in field_filter:
-        list_of_dicts = _filter(list_of_dicts, key, field_filter[key])
-
-    return list_of_dicts
-
-
 def add_url_params(url, params):
     """ Add GET params to provided URL being aware of existing.
 
@@ -76,18 +50,21 @@ def add_url_params(url, params):
     Source: http://stackoverflow.com/a/25580545/591217
     """
     # Unquoting URL first so we don't loose existing args
-    url = unquote(url)
+    url = unquote(utf8_or_str(url))  # ``unquote`` operates on BYTES, not unicode strings...
+
     # Extracting url info
     parsed_url = urlparse(url)
+
     # Extracting URL arguments from parsed URL
     get_args = parsed_url.query
+
     # Converting URL arguments to dict
     parsed_get_args = dict(parse_qsl(get_args))
+
     # Merging URL arguments dict with new params
     parsed_get_args.update(params)
 
     # Bool and Dict values should be converted to json-friendly values
-    # you may throw this part away if you don't like it :)
     json_friendly_data = {}
     for k, v in parsed_get_args.items():
         if isinstance(v, (bool, dict)):
@@ -96,8 +73,16 @@ def add_url_params(url, params):
 
     parsed_get_args = sorted_ordered_dict(parsed_get_args)
 
+    # Encoding parsed args to given encoding to make sure ``urlencode`` does not try to "encode" the string himself
+    # because he is clearly not able to do it correctly. (See the comments inside the function for the ins and outs)
+    parsed_get_args_encoded = OrderedDict(
+        (k, utf8_or_str(v) if isinstance(v, six.text_type) else v)
+        for k, v in parsed_get_args.items()
+    )
+
     # Converting URL argument to proper query string
-    encoded_get_args = urlencode(parsed_get_args, doseq=True)
+    encoded_get_args = urlencode(parsed_get_args_encoded, doseq=True)
+
     # Creating new parsed result object based on provided with new
     # URL arguments. Same thing happens inside of urlparse.
     new_url = ParseResult(
@@ -108,9 +93,10 @@ def add_url_params(url, params):
     return new_url
 
 
-def assert_dict_keys_in(d, allowed_keys):
+def assert_dict_keys_in(d, allowed_keys, error_template=None):
+    error_template = error_template or '%r is not a valid key. Allowed keys: %r'
     for key in d:
-        assert key in allowed_keys
+        assert key in allowed_keys, error_template % (key, allowed_keys)
 
 
 def ensure_trailing_slash(url):

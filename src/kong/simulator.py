@@ -2,14 +2,39 @@
 from __future__ import unicode_literals, print_function
 
 import uuid
+import copy
 import hashlib
 
 from .contract import KongAdminContract, APIPluginConfigurationAdminContract, APIAdminContract, ConsumerAdminContract, \
     PluginAdminContract, BasicAuthAdminContract, KeyAuthAdminContract, OAuth2AdminContract
-from .utils import timestamp, uuid_or_string, add_url_params, filter_api_struct, filter_dict_list, assert_dict_keys_in, \
-    ensure_trailing_slash
+from .utils import timestamp, uuid_or_string, add_url_params, assert_dict_keys_in, ensure_trailing_slash
 from .compat import OrderedDict
 from .exceptions import ConflictError
+
+INVALID_FIELD_ERROR_TEMPLATE = '%r is not a valid field. Allowed fields: %r'
+
+
+def filter_api_struct(api_struct, filter_dict):
+    """
+    This utility removes keys from a dictionary if their respective value did not differ from their default value.
+      This is used by the Simulator classes to match the responses with Kong's responses.
+    """
+
+    return dict((k, v) for k, v in api_struct.items() if k not in filter_dict or filter_dict[k] != api_struct[k])
+
+
+def filter_dict_list(list_of_dicts, **field_filter):
+    """
+    This utility filters a list of dictionaries based on the values of one or more keys
+    """
+    def _filter(_dicts, key, value):
+        return [d for d in _dicts if d[key] == value]
+
+    list_of_dicts = copy.copy(list_of_dicts)
+    for key in field_filter:
+        list_of_dicts = _filter(list_of_dicts, key, field_filter[key])
+
+    return list_of_dicts
 
 
 class SimulatorDataStore(object):
@@ -284,8 +309,8 @@ class APIAdminSimulator(APIAdminContract):
     def count(self):
         return self._store.count()
 
-    def add(self, upstream_url, name=None, request_host=None, request_path=None, strip_request_path=False,
-            preserve_host=False):
+    def create(self, upstream_url, name=None, request_host=None, request_path=None, strip_request_path=False,
+               preserve_host=False):
         assert upstream_url is not None
         if not request_host and not request_path:
             raise ValueError('At least a \'request_host\' or a \'request_path\' must be specified, '
@@ -304,8 +329,8 @@ class APIAdminSimulator(APIAdminContract):
             'created_at': timestamp()
         }, check_conflict_keys=('name', 'request_host'))
 
-    def add_or_update(self, upstream_url, api_id=None, name=None, request_host=None, request_path=None,
-                      strip_request_path=False, preserve_host=False):
+    def create_or_update(self, upstream_url, api_id=None, name=None, request_host=None, request_path=None,
+                         strip_request_path=False, preserve_host=False):
         data = {
             'name': name or request_host,
             'request_host': request_host,
@@ -318,10 +343,12 @@ class APIAdminSimulator(APIAdminContract):
         if api_id is not None:
             return self.update(api_id, **data)
 
-        return self.add(**data)
+        return self.create(**data)
 
     def update(self, name_or_id, upstream_url, **fields):
-        assert_dict_keys_in(fields, ['name', 'request_host', 'request_path', 'strip_request_path', 'preserve_host'])
+        assert_dict_keys_in(
+            fields, ['name', 'request_host', 'request_path', 'strip_request_path', 'preserve_host'],
+            INVALID_FIELD_ERROR_TEMPLATE)
 
         # ensure trailing slash
         upstream_url = ensure_trailing_slash(upstream_url)
@@ -334,7 +361,7 @@ class APIAdminSimulator(APIAdminContract):
         return self._store.retrieve(name_or_id, 'name')
 
     def list(self, size=100, offset=None, **filter_fields):
-        assert_dict_keys_in(filter_fields, ['id', 'name', 'request_host', 'upstream_url'])
+        assert_dict_keys_in(filter_fields, ['id', 'name', 'request_host', 'upstream_url'], INVALID_FIELD_ERROR_TEMPLATE)
         return self._store.list(size, offset, **filter_fields)
 
     def delete(self, name_or_id):
