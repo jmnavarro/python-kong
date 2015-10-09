@@ -320,7 +320,7 @@ class APIAdminClient(APIAdminContract, RestClient):
             INVALID_FIELD_ERROR_TEMPLATE)
 
         # Explicitly encode on beforehand before passing to requests!
-        fields = {k: utf8_or_str(v) if isinstance(v, six.text_type) else v for k, v in fields.items()}
+        fields = dict((k, utf8_or_str(v)) if isinstance(v, six.text_type) else v for k, v in fields.items())
 
         response = self.session.patch(self.get_url('apis', name_or_id), data=dict({
             'upstream_url': upstream_url
