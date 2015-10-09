@@ -18,7 +18,7 @@ from pip.req import parse_requirements
 from setuptools import find_packages
 from setuptools import setup
 
-__version__ = '0.3.2'
+__version__ = '0.4.0'
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
