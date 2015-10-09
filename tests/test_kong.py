@@ -55,7 +55,7 @@ class CustomInfoProvider(BaseProvider):
         return path
 
     def username(self):
-        return fake.first_name().lower().replace(' ', '') + '🔥💩💣'
+        return fake.first_name().lower().replace(' ', '')  # + '{ÆÞ}'
 
     def oauth2_app_name(self):
         return fake.sentence(nb_words=random.randint(1, 3), variable_nb_words=True).rstrip('.')
