@@ -2,6 +2,12 @@
 Changelog
 =========
 
+0.4.0 (2015-10-09)
+------------------
+
+* Changed 'add' to 'create' and 'add_or_update' to 'create_or_update' (WARNING: Not backwards compatible!)
+* Code cleanup
+
 0.3.2 (2015-10-07)
 ------------------
 
