@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-APIS = "APIS"
+APIS = "apis"
 PLUGINS = "plugins"
 CONSUMERS = "consumers"
 KEY_AUTH = "key-auth"
